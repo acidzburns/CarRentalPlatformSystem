@@ -1,0 +1,34 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore environment/config files
+.env
+*.env
+
+# Ignore IDE/project files
+.vscode/
+.idea/
+*.iml
+
+# Ignore composer vendor (if using composer)
+vendor/
+#
+# Ignore logs
+*.log
+
+# Ignore cache
+cache/
+tmp/
+storage/
+sessions/
+
+# Ignore Oracle temporary or connection files
+*.dbf
+*.ctl
+*.log
+*.ora
+
+# Ignore uploaded files
+uploads/
+files/

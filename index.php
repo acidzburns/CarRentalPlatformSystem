@@ -1,3 +1,3 @@
 <?php
-echo "Hello World!";
+echo "CSC577 PROJECT TESTINGG";
 ?>

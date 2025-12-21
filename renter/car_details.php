@@ -281,7 +281,7 @@ if ($car_id <= 0) {
             <!-- Book Now Button -->
             <div>
                 <h2>Book This Car</h2>
-                <a href="create_booking.php?car_id=<?php echo $car['CARID']; ?>">
+                <a href="create_booking.php?carid=<?php echo $car['CARID']; ?>">
                     <button type="button">Book Now</button>
                 </a>
                 <a href="search_cars.php">Back to Search</a>

@@ -125,7 +125,7 @@ $locations = db_fetch_all($sql_locations);
     
     <main>
         <div>
-            <h1>🔍 Search Available Cars</h1>
+            <h1>Search Available Cars</h1>
             <p>Find your perfect rental car</p>
         </div>
         

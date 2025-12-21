@@ -106,9 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <a href="../index.php">Back to Home</a>
         </div>
         
-        <div>
-            <small>Admin access only. Unauthorized access will be logged.</small>
-        </div>
+        
     </div>
 </body>
 </html>

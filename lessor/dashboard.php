@@ -160,27 +160,16 @@ $total_earnings = $earnings_result && $earnings_result['TOTAL'] ? $earnings_resu
         <!-- Getting Started Guide (if no cars) -->
         <?php if ($total_cars == 0): ?>
         <div style="background: #e7f3ff; padding: 20px; border-left: 4px solid #007bff; margin-top: 30px;">
-            <h2 style="margin-top: 0; color: #004085;">🚗 Get Started</h2>
+            <h2 style="margin-top: 0; color: #004085;"> Get Started</h2>
             <p>You haven't listed any cars yet. Here's how to get started:</p>
-            <ol>
-                <li><strong>Add Your First Car</strong> - Click "Add New Car" to list your vehicle</li>
-                <li><strong>Upload Quality Photos</strong> - Clear photos attract more renters</li>
-                <li><strong>Set Competitive Rates</strong> - Research similar cars in your area</li>
-                <li><strong>Wait for Bookings</strong> - Renters will find your car and request bookings</li>
-                <li><strong>Approve Bookings</strong> - Review and approve booking requests</li>
-                <li><strong>Earn Money</strong> - Get paid for each completed rental</li>
-            </ol>
+            
             <a href="add_car.php" style="display: inline-block; padding: 12px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">
                 List Your First Car Now
             </a>
         </div>
         <?php endif; ?>
         
-        <!-- Recent Activity (Optional - can implement later) -->
-        <div>
-            <h2>Recent Activity</h2>
-            <p>Recent bookings and updates will appear here</p>
-        </div>
+        
     </main>
 </body>
 </html>

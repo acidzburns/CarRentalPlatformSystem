@@ -154,11 +154,7 @@ $total_tickets = $tickets ? $tickets['TOTAL'] : 0;
             </div>
         </div>
         
-        <!-- Recent Activity (Optional - can be implemented later) -->
-        <div>
-            <h2>Recent Activity</h2>
-            <p>Recent registrations, bookings, and system events will appear here</p>
-        </div>
+       
     </main>
 </body>
 </html>

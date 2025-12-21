@@ -190,26 +190,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Hash password
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                     
-                    // Sanitize data for database (after validation, before insertion)
-                    $name_clean = sanitize_input($name);
-                    $email_clean = sanitize_input($email);
-                    $phone_clean = sanitize_input($phone);
-                    $business_name_clean = sanitize_input($business_name);
-                    $bank_account_clean = sanitize_input($bank_account);
-                    
                     // Insert new lessor with PENDING verification status including document paths
+                    // Don't use sanitize_input here - it converts apostrophes to HTML entities
+                    // Database binding already prevents SQL injection
                     $sql_insert = "INSERT INTO LESSOR (LESSORID, NAME, EMAIL, PHONE, PASSWORD, BUSINESS_NAME, BANK_ACCOUNT, 
                                   DRIVER_LICENSE_PATH, VEHICLE_OWNERSHIP_PATH, INSURANCE_PATH, VERIFICATION_STATUS, CREATED_AT) 
                                   VALUES (SEQ_LESSOR.NEXTVAL, :name, :email, :phone, :password, :business_name, :bank_account,
                                   :driver_license, :vehicle_ownership, :insurance, 'PENDING', SYSDATE)";
                     
                     $params = [
-                        'name' => $name_clean,
-                        'email' => $email_clean,
-                        'phone' => $phone_clean,
+                        'name' => $name,
+                        'email' => $email,
+                        'phone' => $phone,
                         'password' => $hashed_password,
-                        'business_name' => $business_name_clean,
-                        'bank_account' => $bank_account_clean,
+                        'business_name' => $business_name,
+                        'bank_account' => $bank_account,
                         'driver_license' => $uploaded_files['driver_license'],
                         'vehicle_ownership' => $uploaded_files['vehicle_ownership'],
                         'insurance' => $uploaded_files['insurance']

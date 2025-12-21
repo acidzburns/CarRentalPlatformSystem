@@ -37,7 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $error = "Your account is pending verification. Please wait for admin approval.";
                 }
                 elseif ($user['VERIFICATION_STATUS'] === 'REJECTED') {
-                    $error = "Your account has been rejected. Please contact support for more information.";
+                    // Allow rejected lessors to login so they can re-submit
+                    set_session($user['LESSORID'], $user['NAME'], $user['EMAIL'], 'lessor');
+                    
+                    // Redirect to re-submission page
+                    header('Location: ../lessor/resubmit_verification.php');
+                    exit();
                 }
                 elseif ($user['VERIFICATION_STATUS'] === 'VERIFIED') {
                     // Set session

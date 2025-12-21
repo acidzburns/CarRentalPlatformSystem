@@ -114,6 +114,19 @@ function db_fetch_one($sql, $params = []) {
 }
 
 /**
+ * Execute SELECT query and return all rows
+ * Alias for db_query for consistency
+ * 
+ * @param string $sql SQL query
+ * @param array $params Parameters
+ * @return array Returns array of rows (empty array if no results)
+ */
+function db_fetch_all($sql, $params = []) {
+    $results = db_query($sql, $params);
+    return $results ? $results : [];
+}
+
+/**
  * Get the last inserted ID from a sequence
  * 
  * @param string $sequence_name Name of the sequence

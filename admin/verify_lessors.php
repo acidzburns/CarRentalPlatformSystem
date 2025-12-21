@@ -31,10 +31,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $sql_approve = "UPDATE LESSOR SET VERIFICATION_STATUS = 'VERIFIED' WHERE LESSORID = :lessorid";
         
         if (db_execute($sql_approve, ['lessorid' => $lessor_id])) {
-            $success = "Lessor account has been approved successfully! The lessor can now login and list cars.";
+            // Get lessor details for email
+            $sql_lessor = "SELECT NAME, EMAIL FROM LESSOR WHERE LESSORID = :lessorid";
+            $lessor_data = db_fetch_one($sql_lessor, ['lessorid' => $lessor_id]);
             
-            // In production: Send email notification to lessor
-            // get lessor email and send: "Congratulations! Your account has been verified..."
+            if ($lessor_data) {
+                // Send approval email
+                require_once '../config/email_test.php';
+                
+                $subject = "Your Car Rental Account Has Been Approved!";
+                $message = "Dear {$lessor_data['NAME']},\n\n";
+                $message .= "Congratulations! Your car rental lessor account has been verified and approved.\n\n";
+                $message .= "You can now login and start listing your vehicles at:\n";
+                $message .= "http://localhost/CarRentalPlatformSystem/auth/lessor_login.php\n\n";
+                $message .= "Thank you for joining our platform!\n\n";
+                $message .= "Best regards,\nCar Rental Platform Team";
+                
+                send_test_email($lessor_data['EMAIL'], $subject, $message);
+                
+                $success = "Lessor account has been approved successfully! Confirmation email sent to {$lessor_data['EMAIL']}.";
+            } else {
+                $success = "Lessor account has been approved successfully!";
+            }
         } else {
             $error = "Approval failed due to system error. Please try again.";
         }
@@ -50,10 +68,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $sql_reject = "UPDATE LESSOR SET VERIFICATION_STATUS = 'REJECTED' WHERE LESSORID = :lessorid";
             
             if (db_execute($sql_reject, ['lessorid' => $lessor_id])) {
-                $success = "Lessor account has been rejected. Rejection reason has been recorded.";
+                // Get lessor details for email
+                $sql_lessor = "SELECT NAME, EMAIL FROM LESSOR WHERE LESSORID = :lessorid";
+                $lessor_data = db_fetch_one($sql_lessor, ['lessorid' => $lessor_id]);
                 
-                // In production: Send email to lessor with rejection reason
-                // "Your account has been rejected. Reason: {$rejection_reason}. You may re-apply after addressing the issues."
+                if ($lessor_data) {
+                    // Send rejection email
+                    require_once '../config/email_test.php';
+                    
+                    $subject = "Car Rental Account - Verification Update";
+                    $message = "Dear {$lessor_data['NAME']},\n\n";
+                    $message .= "Thank you for registering with our Car Rental Platform.\n\n";
+                    $message .= "Unfortunately, your account verification was not approved.\n\n";
+                    $message .= "Reason: $rejection_reason\n\n";
+                    $message .= "You may re-apply after addressing the issues mentioned above.\n\n";
+                    $message .= "If you have questions, please contact our support team.\n\n";
+                    $message .= "Best regards,\nCar Rental Platform Team";
+                    
+                    send_test_email($lessor_data['EMAIL'], $subject, $message);
+                    
+                    $success = "Lessor account has been rejected. Notification email sent to {$lessor_data['EMAIL']}.";
+                } else {
+                    $success = "Lessor account has been rejected. Rejection reason has been recorded.";
+                }
             } else {
                 $error = "Rejection failed due to system error. Please try again.";
             }

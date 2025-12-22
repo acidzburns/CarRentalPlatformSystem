@@ -80,7 +80,21 @@ $fpx_details = isset($_SESSION['payment_success']) ? $_SESSION['payment_success'
             <p>Confirmation sent to <?php echo htmlspecialchars($payment['RENTER_EMAIL']); ?></p>
         </div>
         
-        
+        <!-- Escrow Notice -->
+        <div class="escrow-notice">
+            <h3>🔒 Payment Escrow Protection</h3>
+            <p><strong>Your payment is secure!</strong></p>
+            <p>Your payment of <strong>RM <?php echo number_format($payment['TOTAL_AMOUNT'], 2); ?></strong> 
+               is now being held safely by our platform. Here's what happens next:</p>
+            <ol>
+                <li><strong>Now:</strong> Payment is held in escrow (secure holding)</li>
+                <li><strong>During Rental:</strong> Money remains protected</li>
+                <li><strong>After Return:</strong> Platform releases payment to car owner</li>
+                <li><strong>Commission:</strong> Platform keeps 10% service fee</li>
+                <li><strong>Owner Receives:</strong> 90% of payment (RM <?php echo number_format($payment['TOTAL_AMOUNT'] * 0.90, 2); ?>)</li>
+            </ol>
+            <p><strong>This protects you:</strong> If there are any issues, the payment can be refunded before release.</p>
+        </div>
         
         <!-- Booking Details -->
         <div class="info-section">
@@ -129,7 +143,11 @@ $fpx_details = isset($_SESSION['payment_success']) ? $_SESSION['payment_success'
                     <td><strong>Payment Method:</strong></td>
                     <td><?php echo htmlspecialchars($payment['PAYMENT_METHOD']); ?></td>
                 </tr>
-                <?php if ($fpx_details): ?>
+                
+                <?php 
+                // Only show bank/FPX details if payment method is ONLINE_BANKING
+                if ($fpx_details && $payment['PAYMENT_METHOD'] === 'ONLINE_BANKING'): 
+                ?>
                 <tr>
                     <td><strong>Bank:</strong></td>
                     <td><?php echo htmlspecialchars($fpx_details['bank']); ?></td>
@@ -139,6 +157,27 @@ $fpx_details = isset($_SESSION['payment_success']) ? $_SESSION['payment_success'
                     <td><?php echo htmlspecialchars($fpx_details['fpx_reference']); ?></td>
                 </tr>
                 <?php endif; ?>
+                
+                <?php 
+                // Show card details if payment method is CREDIT_CARD or DEBIT_CARD
+                if ($fpx_details && ($payment['PAYMENT_METHOD'] === 'CREDIT_CARD' || $payment['PAYMENT_METHOD'] === 'DEBIT_CARD') && isset($fpx_details['card_last4'])): 
+                ?>
+                <tr>
+                    <td><strong>Card Number:</strong></td>
+                    <td>**** **** **** <?php echo htmlspecialchars($fpx_details['card_last4']); ?></td>
+                </tr>
+                <?php endif; ?>
+                
+                <?php 
+                // Show wallet details if payment method is E_WALLET
+                if ($fpx_details && $payment['PAYMENT_METHOD'] === 'E_WALLET' && isset($fpx_details['wallet'])): 
+                ?>
+                <tr>
+                    <td><strong>E-Wallet:</strong></td>
+                    <td><?php echo htmlspecialchars($fpx_details['wallet']); ?></td>
+                </tr>
+                <?php endif; ?>
+                
                 <tr>
                     <td><strong>Payment Date:</strong></td>
                     <td><?php echo htmlspecialchars($payment['PAYMENT_DATE_FMT']); ?></td>
@@ -178,7 +217,7 @@ $fpx_details = isset($_SESSION['payment_success']) ? $_SESSION['payment_success'
         
         <!-- Next Steps -->
         <div class="info-section">
-            <h3> Next Steps</h3>
+            <h3>📋 Next Steps</h3>
             <ol>
                 <li>Wait for car owner to contact you via email/phone</li>
                 <li>Arrange pickup time and location</li>

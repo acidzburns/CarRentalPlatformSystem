@@ -1,57 +1,60 @@
 <?php
-require_once '../config/database.php';
-require_once '../config/session.php';
+/**
+ * FPX Payment Gateway Simulation
+ * Simulates Malaysian FPX (Financial Process Exchange) online banking
+ */
 
-// Check if renter is logged in
-require_login('renter');
+// Start session but don't check authentication yet (allow public access to payment gateway)
+session_start();
 
-$renterid = get_user_id();
-
-// Get FPX reference from URL
-if (!isset($_GET['ref'])) {
-    header("Location: dashboard.php");
+// Check if payment session exists
+if (!isset($_SESSION['pending_payment'])) {
+    header("Location: dashboard.php?error=invalid_payment_session");
     exit();
 }
 
-$fpx_reference = $_GET['ref'];
+$payment_data = $_SESSION['pending_payment'];
+$booking_id = $payment_data['bookingid'];
+$amount = $payment_data['amount'];
+$bank = $payment_data['bank'];
 
-// Get FPX transaction from session
-if (!isset($_SESSION['fpx_transaction']) || $_SESSION['fpx_transaction']['fpx_reference'] != $fpx_reference) {
-    set_flash_message("Invalid FPX transaction reference.", "error");
-    header("Location: dashboard.php");
-    exit();
-}
+// Generate FPX reference number
+$fpx_reference = 'FPX' . time() . rand(1000, 9999);
 
-$fpx_data = $_SESSION['fpx_transaction'];
+$error = "";
 
-// Handle FPX payment authorization
+// Process FPX payment
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $action = $_POST['action'];
+    $account_number = trim($_POST['account_number']);
+    $password = $_POST['password'];
     
-    if ($action == 'approve') {
-        // Payment approved - redirect to callback
-        header("Location: fpx_callback.php?ref=" . $fpx_reference . "&status=success");
-        exit();
-    } else {
-        // Payment cancelled/failed
-        header("Location: fpx_callback.php?ref=" . $fpx_reference . "&status=failed");
+    // Simple validation (in real system, would verify with bank)
+    if (empty($account_number) || empty($password)) {
+        $error = "Please enter your account number and password.";
+    } 
+    elseif (strlen($account_number) < 10) {
+        $error = "Invalid account number format.";
+    }
+    else {
+        // Simulate payment success
+        // Store payment details for callback
+        $_SESSION['fpx_payment'] = [
+            'bookingid' => $booking_id,
+            'amount' => $amount,
+            'bank' => $bank,
+            'fpx_reference' => $fpx_reference,
+            'account_number' => $account_number,
+            'status' => 'SUCCESS'
+        ];
+        
+        // Clear pending payment
+        unset($_SESSION['pending_payment']);
+        
+        // Redirect to callback
+        header("Location: fpx_callback.php");
         exit();
     }
 }
-
-// Get bank name from code
-$bank_codes = [
-    'ABMB0212' => 'Alliance Bank',
-    'AMBB0209' => 'AmBank',
-    'MB2U0227' => 'Maybank2u',
-    'BCBB0235' => 'CIMB Bank',
-    'PBB0233' => 'Public Bank',
-    'RHB0218' => 'RHB Bank',
-    'HLB0224' => 'Hong Leong Bank'
-    // Add more as needed
-];
-
-$bank_name = isset($bank_codes[$fpx_data['bank']]) ? $bank_codes[$fpx_data['bank']] : 'Your Bank';
 ?>
 
 <!DOCTYPE html>
@@ -59,139 +62,100 @@ $bank_name = isset($bank_codes[$fpx_data['bank']]) ? $bank_codes[$fpx_data['bank
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPX Payment Gateway - <?php echo htmlspecialchars($bank_name); ?></title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f0f0f0;
-            margin: 0;
-            padding: 20px;
-        }
-        .fpx-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .fpx-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px 10px 0 0;
-            text-align: center;
-        }
-        .fpx-body {
-            padding: 30px;
-        }
-        .amount-box {
-            background: #e8f5e9;
-            border: 2px solid #4CAF50;
-            padding: 20px;
-            text-align: center;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-        .amount-box h2 {
-            margin: 0;
-            color: #4CAF50;
-            font-size: 32px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 10px 5px;
-            width: calc(50% - 10px);
-        }
-        .btn-approve {
-            background: #4CAF50;
-            color: white;
-        }
-        .btn-cancel {
-            background: #f44336;
-            color: white;
-        }
-        .btn:hover {
-            opacity: 0.9;
-        }
-        .simulation-notice {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-            text-align: center;
-        }
-    </style>
+    <title>FPX Payment Gateway - <?php echo htmlspecialchars($bank); ?></title>
 </head>
 <body>
-    <div class="fpx-container">
-        <div class="fpx-header">
-            <h1> <?php echo htmlspecialchars($bank_name); ?></h1>
-            <p>Internet Banking - FPX Payment Gateway</p>
+    <header style="background: #003d82; color: white; padding: 20px; text-align: center;">
+        <h1>🏦 FPX Payment Gateway</h1>
+        <p>Financial Process Exchange - Secure Online Banking</p>
+    </header>
+    
+    <main style="max-width: 600px; margin: 30px auto; padding: 20px;">
+        
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+            <h2>Payment Summary</h2>
+            <p><strong>Merchant:</strong> Car Rental Platform System</p>
+            <p><strong>Bank:</strong> <?php echo htmlspecialchars($bank); ?></p>
+            <p><strong>Amount:</strong> <span style="font-size: 24px; color: #d32f2f;">RM <?php echo number_format($amount, 2); ?></span></p>
+            <p><strong>Reference:</strong> <?php echo htmlspecialchars($fpx_reference); ?></p>
         </div>
         
-       
-            
-            <h2>Payment Authorization Required</h2>
-            
-            <div class="amount-box">
-                <p style="margin: 0; color: #666;">Payment Amount</p>
-                <h2>RM <?php echo number_format($fpx_data['amount'], 2); ?></h2>
+        <?php if ($error): ?>
+            <div style="background: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <?php echo htmlspecialchars($error); ?>
             </div>
-            
-            <h3>Transaction Details</h3>
-            <div class="info-row">
-                <span><strong>Merchant:</strong></span>
-                <span>Car Rental Platform System</span>
-            </div>
-            <div class="info-row">
-                <span><strong>Reference:</strong></span>
-                <span><?php echo htmlspecialchars($fpx_reference); ?></span>
-            </div>
-            <div class="info-row">
-                <span><strong>Booking ID:</strong></span>
-                <span>#<?php echo htmlspecialchars($fpx_data['bookingid']); ?></span>
-            </div>
-            <div class="info-row">
-                <span><strong>Date & Time:</strong></span>
-                <span><?php echo date('d M Y, h:i A', $fpx_data['timestamp']); ?></span>
-            </div>
-            
-            <div style="background: #e3f2fd; padding: 15px; margin: 20px 0; border-radius: 5px;">
-                
-                </p>
-                <p style="margin: 10px 0 0 0; font-size: 14px;">
-                    <strong>Escrow Protection:</strong> Your payment will be securely held until booking completion.
-                </p>
-            </div>
+        <?php endif; ?>
+        
+        <div style="background: white; padding: 30px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2><?php echo htmlspecialchars($bank); ?> Login</h2>
+            <p style="color: #666; margin-bottom: 20px;">Please enter your online banking credentials</p>
             
             <form method="POST" action="">
-                <div style="text-align: center;">
-                    <button type="submit" name="action" value="approve" class="btn btn-approve">
-                        ✓ Approve Payment
-                    </button>
-                    <button type="submit" name="action" value="cancel" class="btn btn-cancel">
-                        ✗ Cancel
-                    </button>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="account_number" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        Account Number *
+                    </label>
+                    <input type="text" 
+                           id="account_number" 
+                           name="account_number" 
+                           placeholder="Enter your account number"
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"
+                           required>
+                    <small style="color: #666;">Test Account: 564123456789</small>
                 </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="password" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        Password *
+                    </label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           placeholder="Enter your password"
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"
+                           required>
+                    <small style="color: #666;">Test Password: maybank123</small>
+                </div>
+                
+                <div style="background: #fff3e0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <p style="margin: 0; font-size: 14px;">
+                        🔒 <strong>Secure Transaction</strong><br>
+                        Your information is encrypted and secure. This is a simulation for testing purposes.
+                    </p>
+                </div>
+                
+                <button type="submit" 
+                        style="width: 100%; padding: 15px; background: #4caf50; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                    Pay RM <?php echo number_format($amount, 2); ?>
+                </button>
+                
+                <p style="text-align: center; margin-top: 20px;">
+                    <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>" 
+                       style="color: #666; text-decoration: none;">
+                        ← Cancel Payment
+                    </a>
+                </p>
             </form>
-            
-            <p style="text-align: center; font-size: 12px; color: #666; margin-top: 30px;">
-             This is a secure FPX payment page<br>
-                Your connection is encrypted and protected
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 5px;">
+            <h3>ℹ️ For Testing Purposes</h3>
+            <p><strong>Test Credentials for any bank:</strong></p>
+            <ul>
+                <li>Account Number: 564123456789</li>
+                <li>Password: maybank123</li>
+            </ul>
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                This is a simulation of the FPX payment gateway. In a real system, you would be redirected to your actual bank's secure login page.
             </p>
         </div>
-    </div>
+        
+    </main>
+    
+    <footer style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
+        <p>Powered by FPX (Financial Process Exchange)</p>
+        <p>© <?php echo date('Y'); ?> - Secure Payment Gateway Simulation</p>
+    </footer>
 </body>
 </html>

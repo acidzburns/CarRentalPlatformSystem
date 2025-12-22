@@ -1,108 +1,217 @@
 <?php
+/**
+ * Make Payment Page
+ * UC5: Make Payment
+ * 
+ * Complete payment for booking using available payment methods
+ * SRS Pages 28-30
+ */
+
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../includes/check_auth.php';
 
 // Check if renter is logged in
-require_login('renter');
+check_authentication('renter');
 
-$renterid = get_user_id();
-$errors = [];
+$renter_id = get_user_id();
+$renter_name = get_user_name();
 
-// Get booking ID from URL
+// Get booking ID
 if (!isset($_GET['bookingid'])) {
-    header("Location: dashboard.php");
+    header("Location: booking_history.php");
     exit();
 }
 
-$bookingid = $_GET['bookingid'];
+$booking_id = $_GET['bookingid'];
 
-// Fetch booking details with car and lessor info
-$sql = "SELECT b.*, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE, c.PHOTO1_PATH,
-        TO_CHAR(b.START_DATE, 'DD-MON-YYYY') as START_DATE_FMT,
-        TO_CHAR(b.END_DATE, 'DD-MON-YYYY') as END_DATE_FMT,
-        l.LESSORID, l.NAME as LESSOR_NAME, l.EMAIL as LESSOR_EMAIL,
-        r.NAME as RENTER_NAME, r.EMAIL as RENTER_EMAIL, r.PHONE as RENTER_PHONE
-        FROM BOOKING b
-        JOIN CAR c ON b.CARID = c.CARID
-        JOIN LESSOR l ON c.LESSORID = l.LESSORID
-        JOIN RENTER r ON b.RENTERID = r.RENTERID
-        WHERE b.BOOKINGID = :bookingid 
-        AND b.RENTERID = :renterid
-        AND b.BOOKING_STATUS = 'PENDING'";
+// Precondition: Booking must be in "Pending Payment" status
+$sql_booking = "SELECT b.*, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE, c.PHOTO1_PATH,
+                TO_CHAR(b.START_DATE, 'DD-MON-YYYY') as START_DATE_FMT,
+                TO_CHAR(b.END_DATE, 'DD-MON-YYYY') as END_DATE_FMT,
+                (b.END_DATE - b.START_DATE) as RENTAL_DAYS,
+                l.NAME as LESSOR_NAME
+                FROM BOOKING b
+                JOIN CAR c ON b.CARID = c.CARID
+                JOIN LESSOR l ON c.LESSORID = l.LESSORID
+                WHERE b.BOOKINGID = :bookingid 
+                AND b.RENTERID = :renterid
+                AND b.BOOKING_STATUS = 'PENDING'";
 
-$stmt = oci_parse($conn, $sql);
-oci_bind_by_name($stmt, ':bookingid', $bookingid);
-oci_bind_by_name($stmt, ':renterid', $renterid);
-oci_execute($stmt);
+$booking = db_fetch_one($sql_booking, [
+    'bookingid' => $booking_id,
+    'renterid' => $renter_id
+]);
 
-$booking = oci_fetch_assoc($stmt);
-
-// Exception 1: Booking not found or payment already completed
 if (!$booking) {
-    set_flash_message("Booking not found or payment already completed.", "error");
-    header("Location: dashboard.php");
+    header("Location: booking_history.php?error=invalid_booking");
     exit();
 }
 
-// Handle payment submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $fpx_bank = trim($_POST['fpx_bank']);
-    $amount = $booking['TOTAL_AMOUNT'];
+// Check if payment already exists
+$sql_check_payment = "SELECT PAYMENTID FROM PAYMENT WHERE BOOKINGID = :bookingid";
+$existing_payment = db_fetch_one($sql_check_payment, ['bookingid' => $booking_id]);
+
+if ($existing_payment) {
+    header("Location: payment_success.php?bookingid=" . $booking_id);
+    exit();
+}
+
+$error = "";
+$selected_method = "";
+
+// Step 2: Customer selects payment method
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['select_method'])) {
+    $selected_method = $_POST['payment_method'];
     
-    // Validate FPX bank selection
-    if (empty($fpx_bank)) {
-        $errors[] = "Please select your bank for FPX payment.";
-    }
+    // Validate payment method (SRS: credit card, debit card, online banking, e-wallet)
+    $valid_methods = ['CREDIT_CARD', 'DEBIT_CARD', 'ONLINE_BANKING', 'E_WALLET'];
     
-    // If no errors, process FPX payment
-    if (empty($errors)) {
-        // In real implementation, integrate with FPX gateway
-        // For now, simulate FPX payment flow
-        
-        // Step 1: Generate FPX payment request
-        $fpx_reference = 'FPX' . time() . rand(1000, 9999);
-        
-        // Store FPX transaction details temporarily
-        $_SESSION['fpx_transaction'] = [
-            'bookingid' => $bookingid,
-            'fpx_reference' => $fpx_reference,
-            'bank' => $fpx_bank,
-            'amount' => $amount,
-            'timestamp' => time()
-        ];
-        
-        // In real FPX integration:
-        // 1. POST to FPX gateway with merchant details
-        // 2. Redirect user to bank login page
-        // 3. User authenticates and approves payment
-        // 4. FPX redirects back to callback URL
-        
-        // For simulation, redirect to FPX simulation page
-        header("Location: fpx_simulation.php?ref=" . $fpx_reference);
-        exit();
+    if (!in_array($selected_method, $valid_methods)) {
+        $error = "Please select a valid payment method.";
+        $selected_method = "";
     }
 }
 
-// List of FPX participating banks (as of 2024)
-$fpx_banks = [
-    ['code' => 'ABB0233', 'name' => 'Affin Bank Berhad'],
-    ['code' => 'ABMB0212', 'name' => 'Alliance Bank Malaysia Berhad'],
-    ['code' => 'AMBB0209', 'name' => 'AmBank (M) Berhad'],
-    ['code' => 'BIMB0340', 'name' => 'Bank Islam Malaysia Berhad'],
-    ['code' => 'BMMB0341', 'name' => 'Bank Muamalat Malaysia Berhad'],
-    ['code' => 'BKRM0602', 'name' => 'Bank Rakyat'],
-    ['code' => 'BSN0601', 'name' => 'Bank Simpanan Nasional'],
-    ['code' => 'BCBB0235', 'name' => 'CIMB Bank Berhad'],
-    ['code' => 'HLB0224', 'name' => 'Hong Leong Bank Berhad'],
-    ['code' => 'HSBC0223', 'name' => 'HSBC Bank Malaysia Berhad'],
-    ['code' => 'KFH0346', 'name' => 'Kuwait Finance House'],
-    ['code' => 'MB2U0227', 'name' => 'Maybank2u'],
-    ['code' => 'OCBC0229', 'name' => 'OCBC Bank (Malaysia) Berhad'],
-    ['code' => 'PBB0233', 'name' => 'Public Bank Berhad'],
-    ['code' => 'RHB0218', 'name' => 'RHB Bank Berhad'],
-    ['code' => 'SCB0216', 'name' => 'Standard Chartered Bank Malaysia Berhad'],
-    ['code' => 'UOB0226', 'name' => 'United Overseas Bank (Malaysia) Berhad']
-];
+// Step 4: Process payment
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['process_payment'])) {
+    $payment_method = $_POST['payment_method'];
+    
+    // Step 3: Customer enters payment details
+    if ($payment_method === 'CREDIT_CARD' || $payment_method === 'DEBIT_CARD') {
+        $card_number = trim($_POST['card_number']);
+        $card_name = trim($_POST['card_name']);
+        $expiry_month = trim($_POST['expiry_month']);
+        $expiry_year = trim($_POST['expiry_year']);
+        $cvv = trim($_POST['cvv']);
+        
+        // Exception 1: Invalid payment details
+        if (empty($card_number) || empty($card_name) || empty($expiry_month) || empty($expiry_year) || empty($cvv)) {
+            $error = "Invalid payment information. Please check your details.";
+        }
+        elseif (!preg_match('/^\d{16}$/', $card_number)) {
+            $error = "Invalid payment information. Please check your details.";
+        }
+        elseif (!preg_match('/^\d{3,4}$/', $cvv)) {
+            $error = "Invalid payment information. Please check your details.";
+        }
+        else {
+            // Simulate payment processing
+            // In real system, would integrate with payment gateway
+            
+            // For simulation: Check if card number starts with 4 (Visa) or 5 (Mastercard)
+            if (substr($card_number, 0, 1) === '4' || substr($card_number, 0, 1) === '5') {
+                // Step 5: Payment successful
+                
+                // Step 6: Update booking status to "Confirmed"
+                $sql_update_booking = "UPDATE BOOKING SET BOOKING_STATUS = 'CONFIRMED' 
+                                      WHERE BOOKINGID = :bookingid";
+                db_execute($sql_update_booking, ['bookingid' => $booking_id]);
+                
+                // Step 7: Generate booking confirmation receipt
+                $sql_insert_payment = "INSERT INTO PAYMENT 
+                                      (PAYMENTID, BOOKINGID, RENTERID, PAYMENT_METHOD, AMOUNT, PAYMENT_STATUS, PAYMENT_DATE)
+                                      VALUES (SEQ_PAYMENT.NEXTVAL, :bookingid, :renterid, :method, :amount, 'SUCCESS', SYSDATE)";
+                
+                $payment_result = db_execute($sql_insert_payment, [
+                    'bookingid' => $booking_id,
+                    'renterid' => $renter_id,
+                    'method' => $payment_method,
+                    'amount' => $booking['TOTAL_AMOUNT']
+                ]);
+                
+                if ($payment_result) {
+                    // Get payment ID
+                    $payment_id = db_last_insert_id('SEQ_PAYMENT');
+                    
+                    // Store payment info in session for receipt
+                    $_SESSION['payment_success'] = [
+                        'bookingid' => $booking_id,
+                        'paymentid' => $payment_id,
+                        'method' => $payment_method,
+                        'card_last4' => substr($card_number, -4)
+                    ];
+                    
+                    // Step 8: Send confirmation email (simulated)
+                    // In real system, would send actual email
+                    
+                    // Step 9: Display success message
+                    header("Location: payment_success.php?bookingid=" . $booking_id);
+                    exit();
+                }
+            } else {
+                // Exception 2: Insufficient funds / Payment declined
+                $error = "Payment declined. Please try another payment method.";
+            }
+        }
+        
+    } elseif ($payment_method === 'ONLINE_BANKING') {
+        $bank = $_POST['bank'];
+        
+        if (empty($bank)) {
+            $error = "Please select your bank.";
+        } else {
+            // Redirect to FPX simulation
+            $_SESSION['pending_payment'] = [
+                'bookingid' => $booking_id,
+                'amount' => $booking['TOTAL_AMOUNT'],
+                'bank' => $bank
+            ];
+            header("Location: fpx_simulation.php");
+            exit();
+        }
+        
+    } elseif ($payment_method === 'E_WALLET') {
+        $wallet_type = $_POST['wallet_type'];
+        $wallet_phone = trim($_POST['wallet_phone']);
+        
+        // Exception 1: Invalid payment details
+        if (empty($wallet_type) || empty($wallet_phone)) {
+            $error = "Invalid payment information. Please check your details.";
+        }
+        elseif (!preg_match('/^01\d{8,9}$/', $wallet_phone)) {
+            $error = "Invalid phone number format. Please enter a valid Malaysian phone number.";
+        }
+        else {
+            // Simulate e-wallet payment
+            // In real system, would integrate with wallet provider API
+            
+            // For simulation: Always succeed
+            
+            // Update booking status
+            $sql_update_booking = "UPDATE BOOKING SET BOOKING_STATUS = 'CONFIRMED' 
+                                  WHERE BOOKINGID = :bookingid";
+            db_execute($sql_update_booking, ['bookingid' => $booking_id]);
+            
+            // Insert payment record
+            $sql_insert_payment = "INSERT INTO PAYMENT 
+                                  (PAYMENTID, BOOKINGID, RENTERID, PAYMENT_METHOD, AMOUNT, PAYMENT_STATUS, PAYMENT_DATE)
+                                  VALUES (SEQ_PAYMENT.NEXTVAL, :bookingid, :renterid, :method, :amount, 'SUCCESS', SYSDATE)";
+            
+            $payment_result = db_execute($sql_insert_payment, [
+                'bookingid' => $booking_id,
+                'renterid' => $renter_id,
+                'method' => 'E_WALLET',
+                'amount' => $booking['TOTAL_AMOUNT']
+            ]);
+            
+            if ($payment_result) {
+                $payment_id = db_last_insert_id('SEQ_PAYMENT');
+                
+                $_SESSION['payment_success'] = [
+                    'bookingid' => $booking_id,
+                    'paymentid' => $payment_id,
+                    'method' => 'E_WALLET',
+                    'wallet' => $wallet_type
+                ];
+                
+                header("Location: payment_success.php?bookingid=" . $booking_id);
+                exit();
+            }
+        }
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -110,166 +219,218 @@ $fpx_banks = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPX Payment - Car Rental System</title>
-    <style>
-        .bank-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 20px 0;
+    <title>Make Payment - Car Rental</title>
+    <script>
+        function showPaymentForm(method) {
+            // Hide all forms
+            document.querySelectorAll('.payment-form').forEach(form => {
+                form.style.display = 'none';
+            });
+            
+            // Show selected form
+            if (method) {
+                document.getElementById(method + '_form').style.display = 'block';
+            }
         }
-        .bank-option {
-            border: 2px solid #ddd;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .bank-option:hover {
-            border-color: #4CAF50;
-            background: #f0f0f0;
-        }
-        .bank-option input[type="radio"] {
-            display: none;
-        }
-        .bank-option input[type="radio"]:checked + label {
-            background: #4CAF50;
-            color: white;
-        }
-        .bank-option label {
-            display: block;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-    </style>
+    </script>
 </head>
 <body>
-    <h1>Make Payment - FPX Online Banking</h1>
+    <nav>
+        <h2>Car Rental System</h2>
+        <p>Welcome, <?php echo htmlspecialchars($renter_name); ?>!</p>
+        <a href="dashboard.php">Dashboard</a>
+        <a href="booking_history.php">My Bookings</a>
+        <a href="../auth/logout.php">Logout</a>
+    </nav>
     
-    <?php display_flash_message(); ?>
-    
-    <!-- Display errors -->
-    <?php if (!empty($errors)): ?>
-        <div style="background: #ffebee; padding: 10px; margin: 10px 0; border: 1px solid #f44336;">
-            <strong>Error:</strong>
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?php echo htmlspecialchars($error); ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
-    
-    <!-- Booking Summary -->
-    <div style="border: 1px solid #ccc; padding: 20px; margin: 20px 0; background: #f9f9f9;">
-        <h2>Booking Summary</h2>
+    <main>
+        <h1>Complete Payment</h1>
+        <p>Booking ID: #<?php echo htmlspecialchars($booking_id); ?></p>
         
-        <div style="display: flex; gap: 20px;">
+        <?php if ($error): ?>
+            <div class="error"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+        
+        <!-- Step 1: Display payment summary -->
+        <div class="payment-summary">
+            <h2>Payment Summary</h2>
+            
             <?php if ($booking['PHOTO1_PATH']): ?>
-                <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
-                     alt="Car" style="width: 200px; height: 150px; object-fit: cover;">
+            <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
+                 alt="Car" width="200">
             <?php endif; ?>
             
-            <div>
-                <h3><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h3>
-                <p><strong>License Plate:</strong> <?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></p>
-                <p><strong>Booking ID:</strong> #<?php echo htmlspecialchars($booking['BOOKINGID']); ?></p>
-                <p><strong>Rental Period:</strong> 
-                    <?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' to ' . $booking['END_DATE_FMT']); ?>
-                </p>
-                <p><strong>Owner:</strong> <?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></p>
-            </div>
+            <h3><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h3>
+            <p><strong>License Plate:</strong> <?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></p>
+            <p><strong>Car Owner:</strong> <?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></p>
+            
+            <hr>
+            
+            <p><strong>Rental Period:</strong><br>
+               <?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' to ' . $booking['END_DATE_FMT']); ?></p>
+            <p><strong>Duration:</strong> <?php echo htmlspecialchars($booking['RENTAL_DAYS']); ?> day(s)</p>
+            
+            <hr>
+            
+            <h3>Amount to Pay:</h3>
+            <p style="font-size: 24px;"><strong>RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></strong></p>
         </div>
         
         <hr>
         
-       
+        <!-- Step 2: Customer selects payment method -->
+        <?php if (empty($selected_method)): ?>
         
-        <h3>Payment Details</h3>
-        <table style="width: 100%;">
-            <tr>
-                <td><strong>Total Amount:</strong></td>
-                <td style="text-align: right; font-size: 24px; color: #4CAF50;">
-                    <strong>RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></strong>
-                </td>
-            </tr>
-        </table>
-    </div>
-    
-    <!-- FPX Payment Form -->
-    <div style="border: 1px solid #ccc; padding: 20px; margin: 20px 0;">
-        <h2>Select Your Bank (FPX)</h2>
+        <h2>Select Payment Method</h2>
+        <p>Choose your preferred payment method:</p>
         
-        
-        
-        <form method="POST" action="" id="fpxPaymentForm">
-            <p><strong>Please select your bank to proceed with payment:</strong></p>
+        <form method="POST" action="">
+            <input type="hidden" name="select_method" value="1">
             
-            <div class="bank-grid">
-                <?php foreach ($fpx_banks as $bank): ?>
-                    <div class="bank-option">
-                        <input type="radio" name="fpx_bank" value="<?php echo htmlspecialchars($bank['code']); ?>" 
-                               id="bank_<?php echo htmlspecialchars($bank['code']); ?>" required>
-                        <label for="bank_<?php echo htmlspecialchars($bank['code']); ?>">
-                            <?php echo htmlspecialchars($bank['name']); ?>
-                        </label>
-                    </div>
-                <?php endforeach; ?>
+            <div>
+                <input type="radio" id="credit_card" name="payment_method" value="CREDIT_CARD" required>
+                <label for="credit_card"><strong>Credit Card</strong> (Visa, Mastercard)</label>
             </div>
             
-            
-            
-            <div style="margin: 20px 0;">
-                <button type="submit" style="background: #4CAF50; color: white; padding: 20px 40px; border: none; cursor: pointer; font-size: 18px; font-weight: bold; border-radius: 5px;">
-                     Pay RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?> with FPX
-                </button>
-                
-                <a href="create_booking.php?carid=<?php echo $booking['CARID']; ?>" 
-                   style="display: inline-block; padding: 20px 40px; background: #f44336; color: white; text-decoration: none; margin-left: 10px; border-radius: 5px;">
-                     Cancel Payment
-                </a>
+            <div>
+                <input type="radio" id="debit_card" name="payment_method" value="DEBIT_CARD">
+                <label for="debit_card"><strong>Debit Card</strong> (Visa Debit, Mastercard Debit)</label>
             </div>
             
+            <div>
+                <input type="radio" id="online_banking" name="payment_method" value="ONLINE_BANKING">
+                <label for="online_banking"><strong>Online Banking</strong> (FPX - All Malaysian Banks)</label>
+            </div>
             
+            <div>
+                <input type="radio" id="e_wallet" name="payment_method" value="E_WALLET">
+                <label for="e_wallet"><strong>E-Wallet</strong> (Touch 'n Go, GrabPay, Boost, ShopeePay)</label>
+            </div>
+            
+            <br>
+            <button type="submit">Continue to Payment</button>
+            <a href="booking_history.php">Cancel</a>
         </form>
-    </div>
-    
-    <script>
-    // Highlight selected bank
-    document.querySelectorAll('.bank-option input[type="radio"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            // Remove highlight from all
-            document.querySelectorAll('.bank-option').forEach(function(option) {
-                option.style.borderColor = '#ddd';
-                option.style.background = '#fff';
-            });
-            
-            // Highlight selected
-            if (this.checked) {
-                this.closest('.bank-option').style.borderColor = '#4CAF50';
-                this.closest('.bank-option').style.background = '#e8f5e9';
-            }
-        });
-    });
-    
-    // Confirm before payment
-    document.getElementById('fpxPaymentForm').addEventListener('submit', function(e) {
-        const selectedBank = document.querySelector('input[name="fpx_bank"]:checked');
-        if (!selectedBank) {
-            e.preventDefault();
-            alert('Please select your bank to proceed.');
-            return false;
-        }
         
-        const bankName = selectedBank.closest('.bank-option').querySelector('label').textContent.trim();
-        if (!confirm('You will be redirected to ' + bankName + ' to complete payment of RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?>. Continue?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
-    </script>
-    
-    <p><a href="dashboard.php">← Back to Dashboard</a></p>
+        <?php else: ?>
+        
+        <!-- Step 3: Customer enters payment details -->
+        <h2>Enter Payment Details</h2>
+        <p>Selected Method: <strong><?php echo htmlspecialchars(str_replace('_', ' ', $selected_method)); ?></strong></p>
+        
+        <!-- Credit Card Form -->
+        <?php if ($selected_method === 'CREDIT_CARD' || $selected_method === 'DEBIT_CARD'): ?>
+        <div id="<?php echo $selected_method; ?>_form" class="payment-form">
+            <form method="POST" action="">
+                <input type="hidden" name="payment_method" value="<?php echo htmlspecialchars($selected_method); ?>">
+                <input type="hidden" name="process_payment" value="1">
+                
+                <h3><?php echo $selected_method === 'CREDIT_CARD' ? 'Credit Card' : 'Debit Card'; ?> Details</h3>
+                
+                <label for="card_number">Card Number *</label>
+                <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" 
+                       maxlength="16" pattern="\d{16}" required>
+                <p><em>Test cards: 4111111111111111 (Visa), 5555555555554444 (Mastercard)</em></p>
+                
+                <label for="card_name">Cardholder Name *</label>
+                <input type="text" id="card_name" name="card_name" placeholder="JOHN DOE" required>
+                
+                <label for="expiry">Expiry Date *</label>
+                <select id="expiry_month" name="expiry_month" required>
+                    <option value="">Month</option>
+                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                    <option value="<?php echo sprintf('%02d', $m); ?>"><?php echo sprintf('%02d', $m); ?></option>
+                    <?php endfor; ?>
+                </select>
+                <select id="expiry_year" name="expiry_year" required>
+                    <option value="">Year</option>
+                    <?php for ($y = date('Y'); $y <= date('Y') + 10; $y++): ?>
+                    <option value="<?php echo $y; ?>"><?php echo $y; ?></option>
+                    <?php endfor; ?>
+                </select>
+                
+                <label for="cvv">CVV/CVC *</label>
+                <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" pattern="\d{3,4}" required>
+                <p><em>3 or 4 digit security code on back of card</em></p>
+                
+                <br>
+                <button type="submit">Pay RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></button>
+                <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>">Change Payment Method</a>
+            </form>
+        </div>
+        <?php endif; ?>
+        
+        <!-- Online Banking Form -->
+        <?php if ($selected_method === 'ONLINE_BANKING'): ?>
+        <div id="ONLINE_BANKING_form" class="payment-form">
+            <form method="POST" action="">
+                <input type="hidden" name="payment_method" value="ONLINE_BANKING">
+                <input type="hidden" name="process_payment" value="1">
+                
+                <h3>Select Your Bank</h3>
+                <p>You will be redirected to your bank's secure payment page (FPX)</p>
+                
+                <select name="bank" required>
+                    <option value="">-- Select Bank --</option>
+                    <option value="Maybank">Maybank</option>
+                    <option value="CIMB Bank">CIMB Bank</option>
+                    <option value="Public Bank">Public Bank</option>
+                    <option value="RHB Bank">RHB Bank</option>
+                    <option value="Hong Leong Bank">Hong Leong Bank</option>
+                    <option value="AmBank">AmBank</option>
+                    <option value="Bank Islam">Bank Islam</option>
+                    <option value="Bank Rakyat">Bank Rakyat</option>
+                    <option value="OCBC Bank">OCBC Bank</option>
+                    <option value="HSBC Bank">HSBC Bank</option>
+                    <option value="Standard Chartered">Standard Chartered</option>
+                    <option value="UOB Bank">UOB Bank</option>
+                </select>
+                
+                <br><br>
+                <button type="submit">Continue to Bank</button>
+                <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>">Change Payment Method</a>
+            </form>
+        </div>
+        <?php endif; ?>
+        
+        <!-- E-Wallet Form -->
+        <?php if ($selected_method === 'E_WALLET'): ?>
+        <div id="E_WALLET_form" class="payment-form">
+            <form method="POST" action="">
+                <input type="hidden" name="payment_method" value="E_WALLET">
+                <input type="hidden" name="process_payment" value="1">
+                
+                <h3>E-Wallet Payment</h3>
+                
+                <label for="wallet_type">Select E-Wallet *</label>
+                <select id="wallet_type" name="wallet_type" required>
+                    <option value="">-- Select Wallet --</option>
+                    <option value="Touch 'n Go eWallet">Touch 'n Go eWallet</option>
+                    <option value="GrabPay">GrabPay</option>
+                    <option value="Boost">Boost</option>
+                    <option value="ShopeePay">ShopeePay</option>
+                </select>
+                
+                <label for="wallet_phone">Phone Number (Registered with E-Wallet) *</label>
+                <input type="tel" id="wallet_phone" name="wallet_phone" placeholder="0123456789" 
+                       pattern="01\d{8,9}" required>
+                <p><em>Enter the phone number registered with your e-wallet</em></p>
+                
+                <br>
+                <button type="submit">Pay RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></button>
+                <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>">Change Payment Method</a>
+            </form>
+        </div>
+        <?php endif; ?>
+        
+        <?php endif; ?>
+        
+        <!-- Security Notice -->
+        <div class="security-notice">
+            <h3>🔒 Secure Payment</h3>
+            <p>Your payment information is encrypted and secure. We do not store your card details.</p>
+        </div>
+        
+    </main>
 </body>
 </html>

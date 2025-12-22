@@ -1,91 +1,67 @@
 <?php
 /**
- * Renter Booking History Page
- * UC11: Booking History
- * 
- * Display customer's previous booking history including completed, ongoing, and cancelled bookings
- * SRS Page 42-43
+ * UC11: Booking History (Full Version)
+ * Display all bookings with filters and actions
  */
 
 require_once '../config/database.php';
 require_once '../config/session.php';
-require_once '../includes/check_auth.php';
 
-// Check if user is logged in as renter
-check_authentication('renter');
+// Check if renter is logged in
+require_login('renter');
 
-$renter_id = get_user_id();
-$renter_name = get_user_name();
+$renterid = get_user_id();
 
-// Step 1: Requests booking history using customer ID
-// Step 2: System queries bookings table
-// Step 3: System retrieves all customer bookings
+// Get filter from URL (default: all)
+$status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
 
-// Filter by status (optional)
-$status_filter = isset($_GET['status']) ? $_GET['status'] : 'ALL';
-$valid_statuses = ['ALL', 'PENDING', 'CONFIRMED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'REJECTED'];
+// Build SQL query based on filter
+$sql = "SELECT b.BOOKINGID, b.START_DATE, b.END_DATE, b.BOOKING_STATUS, b.TOTAL_AMOUNT, b.CREATED_AT,
+        c.BRAND, c.MODEL, c.YEAR, c.PHOTO1_PATH, c.LICENSE_PLATE,
+        l.NAME as LESSOR_NAME, l.EMAIL as LESSOR_EMAIL,
+        (SELECT COUNT(*) FROM REVIEW WHERE BOOKINGID = b.BOOKINGID) as HAS_REVIEW,
+        TO_CHAR(b.START_DATE, 'DD-MON-YYYY') as START_DATE_FMT,
+        TO_CHAR(b.END_DATE, 'DD-MON-YYYY') as END_DATE_FMT
+        FROM BOOKING b
+        JOIN CAR c ON b.CARID = c.CARID
+        JOIN LESSOR l ON c.LESSORID = l.LESSORID
+        WHERE b.RENTERID = :renterid";
 
-if (!in_array($status_filter, $valid_statuses)) {
-    $status_filter = 'ALL';
+// Add status filter
+if ($status_filter != 'all') {
+    $sql .= " AND b.BOOKING_STATUS = :status";
 }
 
-// Build query based on filter
-if ($status_filter === 'ALL') {
-    $sql = "SELECT b.*, 
-            c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE, c.PHOTO1_PATH, c.DAILY_RATE,
-            l.NAME as LESSOR_NAME, l.EMAIL as LESSOR_EMAIL, l.PHONE as LESSOR_PHONE,
-            TO_CHAR(b.START_DATE, 'DD-MON-YYYY') as START_DATE_FMT,
-            TO_CHAR(b.END_DATE, 'DD-MON-YYYY') as END_DATE_FMT,
-            TO_CHAR(b.CREATED_AT, 'DD-MON-YYYY HH24:MI') as CREATED_AT_FMT,
-            (b.END_DATE - b.START_DATE) as RENTAL_DAYS,
-            p.PAYMENT_STATUS, p.PAYMENT_METHOD,
-            TO_CHAR(p.PAYMENT_DATE, 'DD-MON-YYYY HH24:MI') as PAYMENT_DATE_FMT
-            FROM BOOKING b
-            JOIN CAR c ON b.CARID = c.CARID
-            JOIN LESSOR l ON c.LESSORID = l.LESSORID
-            LEFT JOIN PAYMENT p ON b.BOOKINGID = p.BOOKINGID
-            WHERE b.RENTERID = :renterid
-            ORDER BY b.CREATED_AT DESC";
-    $params = ['renterid' => $renter_id];
-} else {
-    $sql = "SELECT b.*, 
-            c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE, c.PHOTO1_PATH, c.DAILY_RATE,
-            l.NAME as LESSOR_NAME, l.EMAIL as LESSOR_EMAIL, l.PHONE as LESSOR_PHONE,
-            TO_CHAR(b.START_DATE, 'DD-MON-YYYY') as START_DATE_FMT,
-            TO_CHAR(b.END_DATE, 'DD-MON-YYYY') as END_DATE_FMT,
-            TO_CHAR(b.CREATED_AT, 'DD-MON-YYYY HH24:MI') as CREATED_AT_FMT,
-            (b.END_DATE - b.START_DATE) as RENTAL_DAYS,
-            p.PAYMENT_STATUS, p.PAYMENT_METHOD,
-            TO_CHAR(p.PAYMENT_DATE, 'DD-MON-YYYY HH24:MI') as PAYMENT_DATE_FMT
-            FROM BOOKING b
-            JOIN CAR c ON b.CARID = c.CARID
-            JOIN LESSOR l ON c.LESSORID = l.LESSORID
-            LEFT JOIN PAYMENT p ON b.BOOKINGID = p.BOOKINGID
-            WHERE b.RENTERID = :renterid
-            AND b.BOOKING_STATUS = :status
-            ORDER BY b.CREATED_AT DESC";
-    $params = ['renterid' => $renter_id, 'status' => $status_filter];
+$sql .= " ORDER BY b.CREATED_AT DESC";
+
+$stmt = oci_parse($conn, $sql);
+oci_bind_by_name($stmt, ':renterid', $renterid);
+
+if ($status_filter != 'all') {
+    $status_upper = strtoupper($status_filter);
+    oci_bind_by_name($stmt, ':status', $status_upper);
 }
 
-// Step 3: System returns booking history to calling use case
-$bookings = db_query($sql, $params);
+oci_execute($stmt);
 
-// Exception 1: No history
-$has_no_bookings = empty($bookings);
+$bookings = [];
+while ($row = oci_fetch_assoc($stmt)) {
+    $bookings[] = $row;
+}
 
-// Get booking counts by status
-$sql_counts = "SELECT 
-               SUM(CASE WHEN BOOKING_STATUS = 'PENDING' THEN 1 ELSE 0 END) as PENDING_COUNT,
-               SUM(CASE WHEN BOOKING_STATUS = 'CONFIRMED' THEN 1 ELSE 0 END) as CONFIRMED_COUNT,
-               SUM(CASE WHEN BOOKING_STATUS = 'ONGOING' THEN 1 ELSE 0 END) as ONGOING_COUNT,
-               SUM(CASE WHEN BOOKING_STATUS = 'COMPLETED' THEN 1 ELSE 0 END) as COMPLETED_COUNT,
-               SUM(CASE WHEN BOOKING_STATUS = 'CANCELLED' THEN 1 ELSE 0 END) as CANCELLED_COUNT,
-               SUM(CASE WHEN BOOKING_STATUS = 'REJECTED' THEN 1 ELSE 0 END) as REJECTED_COUNT,
-               COUNT(*) as TOTAL_COUNT
-               FROM BOOKING 
-               WHERE RENTERID = :renterid";
-$counts = db_fetch_one($sql_counts, ['renterid' => $renter_id]);
+// Get booking statistics
+$stats_sql = "SELECT 
+              COUNT(*) as TOTAL,
+              COUNT(CASE WHEN BOOKING_STATUS = 'PENDING' THEN 1 END) as PENDING,
+              COUNT(CASE WHEN BOOKING_STATUS = 'CONFIRMED' THEN 1 END) as CONFIRMED,
+              COUNT(CASE WHEN BOOKING_STATUS = 'COMPLETED' THEN 1 END) as COMPLETED,
+              COUNT(CASE WHEN BOOKING_STATUS = 'CANCELLED' THEN 1 END) as CANCELLED
+              FROM BOOKING WHERE RENTERID = :renterid";
 
+$stmt_stats = oci_parse($conn, $stats_sql);
+oci_bind_by_name($stmt_stats, ':renterid', $renterid);
+oci_execute($stmt_stats);
+$stats = oci_fetch_assoc($stmt_stats);
 ?>
 
 <!DOCTYPE html>
@@ -93,191 +69,395 @@ $counts = db_fetch_one($sql_counts, ['renterid' => $renter_id]);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking History - Car Rental</title>
+    <title>My Bookings - Car Rental System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover {
+            border-color: #2196F3;
+            color: #2196F3;
+        }
+        .filter-btn.active {
+            background: #2196F3;
+            border-color: #2196F3;
+            color: white;
+        }
+        .booking-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .booking-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-confirmed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .booking-content {
+            display: flex;
+            gap: 20px;
+        }
+        .booking-image {
+            width: 250px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .booking-details {
+            flex: 1;
+        }
+        .booking-details h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .detail-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .detail-label {
+            width: 150px;
+            color: #666;
+            font-weight: bold;
+        }
+        .detail-value {
+            color: #333;
+        }
+        .booking-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-review {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-review:hover {
+            background: #45a049;
+        }
+        .btn-details {
+            background: #2196F3;
+            color: white;
+        }
+        .btn-details:hover {
+            background: #0b7dda;
+        }
+        .btn-cancel {
+            background: #f44336;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background: #da190b;
+        }
+        .empty-state {
+            background: white;
+            padding: 60px 20px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .nav-links {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .nav-links a {
+            color: #2196F3;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <nav>
-        <h2>Car Rental System - Customer Panel</h2>
-        <p>Welcome, <?php echo htmlspecialchars($renter_name); ?>!</p>
-        <a href="dashboard.php">Dashboard</a>
-        <a href="search_cars.php">Search Cars</a>
-        <a href="booking_history.php">My Bookings</a>
-        <a href="../auth/logout.php">Logout</a>
-    </nav>
-    
-    <main>
-        <h1>My Booking History</h1>
-        <p>View and manage all your car rental bookings</p>
-        
-        <!-- Booking Statistics -->
-        <div class="stats">
-            <h3>Booking Summary</h3>
-            <p>Total Bookings: <?php echo $counts['TOTAL_COUNT']; ?></p>
-            <p>Pending: <?php echo $counts['PENDING_COUNT']; ?></p>
-            <p>Confirmed: <?php echo $counts['CONFIRMED_COUNT']; ?></p>
-            <p>Ongoing: <?php echo $counts['ONGOING_COUNT']; ?></p>
-            <p>Completed: <?php echo $counts['COMPLETED_COUNT']; ?></p>
-            <p>Cancelled: <?php echo $counts['CANCELLED_COUNT']; ?></p>
-            <p>Rejected: <?php echo $counts['REJECTED_COUNT']; ?></p>
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav-links">
+            <a href="dashboard.php">← Dashboard</a>
+            <a href="search_cars.php">Search Cars</a>
+            <a href="../auth/logout.php">Logout</a>
         </div>
         
-        <hr>
+        <h1>📚 My Bookings</h1>
         
-        <!-- Filter by Status -->
-        <h3>Filter by Status:</h3>
-        <nav>
-            <a href="booking_history.php?status=ALL">All (<?php echo $counts['TOTAL_COUNT']; ?>)</a> |
-            <a href="booking_history.php?status=PENDING">Pending (<?php echo $counts['PENDING_COUNT']; ?>)</a> |
-            <a href="booking_history.php?status=CONFIRMED">Confirmed (<?php echo $counts['CONFIRMED_COUNT']; ?>)</a> |
-            <a href="booking_history.php?status=ONGOING">Ongoing (<?php echo $counts['ONGOING_COUNT']; ?>)</a> |
-            <a href="booking_history.php?status=COMPLETED">Completed (<?php echo $counts['COMPLETED_COUNT']; ?>)</a> |
-            <a href="booking_history.php?status=CANCELLED">Cancelled (<?php echo $counts['CANCELLED_COUNT']; ?>)</a> |
-            <a href="booking_history.php?status=REJECTED">Rejected (<?php echo $counts['REJECTED_COUNT']; ?>)</a>
-        </nav>
+        <?php display_flash_message(); ?>
         
-        <p>Current filter: <strong><?php echo htmlspecialchars($status_filter); ?></strong></p>
-        
-        <hr>
-        
-        <!-- Exception 1: No booking history -->
-        <?php if ($has_no_bookings): ?>
-            <div class="no-bookings">
-                <h2>You have no booking history yet.</h2>
-                <p>Start exploring and book your first car!</p>
-                <a href="search_cars.php">Search Available Cars</a>
+        <!-- Statistics -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-number"><?php echo $stats['TOTAL']; ?></div>
+                <div class="stat-label">Total Bookings</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #FF9800;"><?php echo $stats['PENDING']; ?></div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #2196F3;"><?php echo $stats['CONFIRMED']; ?></div>
+                <div class="stat-label">Confirmed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #4CAF50;"><?php echo $stats['COMPLETED']; ?></div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #f44336;"><?php echo $stats['CANCELLED']; ?></div>
+                <div class="stat-label">Cancelled</div>
+            </div>
+        </div>
         
-        <?php else: ?>
+        <!-- Filters -->
+        <div class="filters">
+            <h3 style="margin-bottom: 15px;">Filter by Status:</h3>
+            <div class="filter-buttons">
+                <a href="?status=all" class="filter-btn <?php echo $status_filter == 'all' ? 'active' : ''; ?>">
+                    All Bookings
+                </a>
+                <a href="?status=pending" class="filter-btn <?php echo $status_filter == 'pending' ? 'active' : ''; ?>">
+                    Pending
+                </a>
+                <a href="?status=confirmed" class="filter-btn <?php echo $status_filter == 'confirmed' ? 'active' : ''; ?>">
+                    Confirmed
+                </a>
+                <a href="?status=completed" class="filter-btn <?php echo $status_filter == 'completed' ? 'active' : ''; ?>">
+                    Completed
+                </a>
+                <a href="?status=cancelled" class="filter-btn <?php echo $status_filter == 'cancelled' ? 'active' : ''; ?>">
+                    Cancelled
+                </a>
+            </div>
+        </div>
         
-        <!-- Display Bookings -->
-        <h2>Your Bookings (<?php echo count($bookings); ?> found)</h2>
-        
-        <?php foreach ($bookings as $booking): ?>
-        
-        <div class="booking-card">
-            <h3>Booking #<?php echo htmlspecialchars($booking['BOOKINGID']); ?></h3>
-            
-            <!-- Car Photo -->
-            <?php if ($booking['PHOTO1_PATH']): ?>
-            <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
-                 alt="Car" width="200">
-            <?php endif; ?>
-            
-            <!-- Car Details -->
-            <h4><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h4>
-            <p><strong>License Plate:</strong> <?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></p>
-            
-            <!-- Booking Details -->
-            <p><strong>Rental Period:</strong> <?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' to ' . $booking['END_DATE_FMT']); ?></p>
-            <p><strong>Duration:</strong> <?php echo htmlspecialchars($booking['RENTAL_DAYS']); ?> day(s)</p>
-            <p><strong>Daily Rate:</strong> RM<?php echo number_format($booking['DAILY_RATE'], 2); ?></p>
-            <p><strong>Total Amount:</strong> RM<?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></p>
-            
-            <!-- Booking Status -->
-            <p><strong>Booking Status:</strong> 
-                <span class="status-<?php echo strtolower($booking['BOOKING_STATUS']); ?>">
-                    <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?>
-                </span>
-            </p>
-            
-            <!-- Payment Status -->
-            <?php if ($booking['PAYMENT_STATUS']): ?>
-            <p><strong>Payment Status:</strong> 
-                <span class="payment-<?php echo strtolower($booking['PAYMENT_STATUS']); ?>">
-                    <?php echo htmlspecialchars($booking['PAYMENT_STATUS']); ?>
-                </span>
-            </p>
-            <?php if ($booking['PAYMENT_METHOD']): ?>
-            <p><strong>Payment Method:</strong> <?php echo htmlspecialchars($booking['PAYMENT_METHOD']); ?></p>
-            <?php endif; ?>
-            <?php if ($booking['PAYMENT_DATE_FMT']): ?>
-            <p><strong>Payment Date:</strong> <?php echo htmlspecialchars($booking['PAYMENT_DATE_FMT']); ?></p>
-            <?php endif; ?>
-            <?php endif; ?>
-            
-            <!-- Owner Details -->
-            <p><strong>Car Owner:</strong> <?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></p>
-            <p><strong>Owner Email:</strong> <?php echo htmlspecialchars($booking['LESSOR_EMAIL']); ?></p>
-            <?php if ($booking['LESSOR_PHONE']): ?>
-            <p><strong>Owner Phone:</strong> <?php echo htmlspecialchars($booking['LESSOR_PHONE']); ?></p>
-            <?php endif; ?>
-            
-            <!-- Booking Created -->
-            <p><strong>Booked On:</strong> <?php echo htmlspecialchars($booking['CREATED_AT_FMT']); ?></p>
-            
-            <!-- Action Buttons based on status -->
-            <div class="actions">
-                
-                <?php if ($booking['BOOKING_STATUS'] === 'PENDING' && !$booking['PAYMENT_STATUS']): ?>
-                    <!-- Pending payment -->
-                    <a href="make_payment.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">Complete Payment</a>
-                    <a href="cancel_booking.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" 
-                       onclick="return confirm('Are you sure you want to cancel this booking?');">Cancel Booking</a>
-                
-                <?php elseif ($booking['BOOKING_STATUS'] === 'PENDING' && $booking['PAYMENT_STATUS'] === 'SUCCESS'): ?>
-                    <!-- Waiting for lessor approval -->
-                    <p><em>Waiting for car owner to confirm your booking...</em></p>
-                    <a href="payment_success.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">View Payment Receipt</a>
-                
-                <?php elseif ($booking['BOOKING_STATUS'] === 'CONFIRMED'): ?>
-                    <!-- Confirmed, waiting for pickup -->
-                    <p><em>Confirmed! Car owner will contact you for pickup details.</em></p>
-                    <a href="payment_success.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">View Booking Details</a>
-                    <a href="contact_owner.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">Contact Owner</a>
-                
-                <?php elseif ($booking['BOOKING_STATUS'] === 'ONGOING'): ?>
-                    <!-- Currently renting -->
-                    <p><em>Enjoy your rental! Please return the car on time.</em></p>
-                    <p><strong>Return by:</strong> <?php echo htmlspecialchars($booking['END_DATE_FMT']); ?></p>
-                    <a href="payment_success.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">View Booking Details</a>
-                
-                <?php elseif ($booking['BOOKING_STATUS'] === 'COMPLETED'): ?>
-                    <!-- Completed, can review -->
-                    <p><em>Rental completed. Thank you!</em></p>
-                    <a href="payment_success.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">View Receipt</a>
-                    
-                    <?php
-                    // Check if already reviewed
-                    $sql_check_review = "SELECT REVIEWID FROM REVIEW WHERE BOOKINGID = :bookingid";
-                    $existing_review = db_fetch_one($sql_check_review, ['bookingid' => $booking['BOOKINGID']]);
+        <!-- Bookings List -->
+        <?php if (empty($bookings)): ?>
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <h2>No bookings found</h2>
+                <p style="color: #666; margin: 15px 0;">
+                    <?php 
+                    if ($status_filter == 'all') {
+                        echo "You haven't made any bookings yet.";
+                    } else {
+                        echo "No bookings with status: " . htmlspecialchars($status_filter);
+                    }
                     ?>
-                    
-                    <?php if (!$existing_review): ?>
-                        <a href="submit_review.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">Write a Review</a>
-                    <?php else: ?>
-                        <p><em>You have already reviewed this booking.</em></p>
-                        <a href="view_review.php?bookingid=<?php echo $booking['BOOKINGID']; ?>">View Your Review</a>
-                    <?php endif; ?>
-                
-                <?php elseif ($booking['BOOKING_STATUS'] === 'CANCELLED'): ?>
-                    <!-- Cancelled -->
-                    <p><em>This booking was cancelled.</em></p>
-                    <?php if ($booking['PAYMENT_STATUS'] === 'SUCCESS'): ?>
-                        <p><em>Refund will be processed within 3-5 business days.</em></p>
-                    <?php endif; ?>
-                
-                <?php elseif ($booking['BOOKING_STATUS'] === 'REJECTED'): ?>
-                    <!-- Rejected by lessor -->
-                    <p><em>This booking was rejected by the car owner.</em></p>
-                    <?php if ($booking['PAYMENT_STATUS'] === 'SUCCESS'): ?>
-                        <p><em>Full refund will be processed within 3-5 business days.</em></p>
-                    <?php endif; ?>
-                    <a href="search_cars.php">Search for Another Car</a>
-                
-                <?php endif; ?>
-                
+                </p>
+                <a href="search_cars.php" class="btn btn-details" style="margin-top: 20px;">
+                    Search Cars
+                </a>
             </div>
-            
-            <hr>
-        </div>
-        
-        <?php endforeach; ?>
-        
+        <?php else: ?>
+            <?php foreach ($bookings as $booking): ?>
+                <div class="booking-card">
+                    <div class="booking-header">
+                        <div class="booking-id">
+                            Booking #<?php echo htmlspecialchars($booking['BOOKINGID']); ?>
+                        </div>
+                        <div class="status-badge status-<?php echo strtolower($booking['BOOKING_STATUS']); ?>">
+                            <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?>
+                        </div>
+                    </div>
+                    
+                    <div class="booking-content">
+                        <?php if ($booking['PHOTO1_PATH']): ?>
+                            <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
+                                 alt="Car" class="booking-image">
+                        <?php endif; ?>
+                        
+                        <div class="booking-details">
+                            <h3><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h3>
+                            
+                            <div class="detail-row">
+                                <div class="detail-label">License Plate:</div>
+                                <div class="detail-value"><?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></div>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <div class="detail-label">Rental Period:</div>
+                                <div class="detail-value">
+                                    <?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' to ' . $booking['END_DATE_FMT']); ?>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <div class="detail-label">Owner:</div>
+                                <div class="detail-value"><?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></div>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <div class="detail-label">Total Amount:</div>
+                                <div class="detail-value" style="font-weight: bold; color: #4CAF50;">
+                                    RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <div class="detail-label">Booked On:</div>
+                                <div class="detail-value">
+                                    <?php echo date('d M Y, h:i A', strtotime($booking['CREATED_AT'])); ?>
+                                </div>
+                            </div>
+                            
+                            <!-- Actions based on booking status -->
+                            <div class="booking-actions">
+                                <?php if ($booking['BOOKING_STATUS'] == 'PENDING'): ?>
+                                    <a href="make_payment.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" 
+                                       class="btn btn-review">
+                                        💳 Complete Payment
+                                    </a>
+                                    <a href="#" onclick="cancelBooking(<?php echo $booking['BOOKINGID']; ?>)" 
+                                       class="btn btn-cancel">
+                                        ❌ Cancel Booking
+                                    </a>
+                                
+                                <?php elseif ($booking['BOOKING_STATUS'] == 'CONFIRMED'): ?>
+                                    <span style="color: #4CAF50; font-weight: bold;">
+                                        ✓ Payment Confirmed - Owner will contact you soon
+                                    </span>
+                                
+                                <?php elseif ($booking['BOOKING_STATUS'] == 'COMPLETED'): ?>
+                                    <?php if ($booking['HAS_REVIEW'] == 0): ?>
+                                        <!-- UC6: Leave Review Button -->
+                                        <a href="submit_review.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" 
+                                           class="btn btn-review">
+                                            ⭐ Leave a Review
+                                        </a>
+                                    <?php else: ?>
+                                        <span style="color: #4CAF50; font-weight: bold;">
+                                            ✓ Review Submitted
+                                        </span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                
+                                <a href="booking_details.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" 
+                                   class="btn btn-details">
+                                    👁️ View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         <?php endif; ?>
-        
-        <!-- Back to Dashboard -->
-        <p><a href="dashboard.php">← Back to Dashboard</a></p>
-        
-    </main>
+    </div>
+    
+    <script>
+    function cancelBooking(bookingId) {
+        if (confirm('Are you sure you want to cancel this booking?')) {
+            // In production: send AJAX request to cancel_booking.php
+            alert('Cancellation feature coming soon!');
+            // window.location.href = 'cancel_booking.php?bookingid=' + bookingId;
+        }
+    }
+    </script>
 </body>
 </html>

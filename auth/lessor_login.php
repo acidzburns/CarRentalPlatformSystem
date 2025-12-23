@@ -44,6 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     header('Location: ../lessor/resubmit_verification.php');
                     exit();
                 }
+                // ✅ NEW: Check for SUSPENDED status
+                elseif ($user['VERIFICATION_STATUS'] === 'SUSPENDED') {
+                    // Redirect to suspension notice page with email
+                    header("Location: account_suspended.php?email=" . urlencode($email));
+                    exit();
+                }
                 elseif ($user['VERIFICATION_STATUS'] === 'VERIFIED') {
                     // Set session
                     set_session($user['LESSORID'], $user['NAME'], $user['EMAIL'], 'lessor');

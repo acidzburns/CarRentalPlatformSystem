@@ -1,7 +1,7 @@
 <?php
 /**
- * UC23: Suspend/Reactivate User Account (SRS Pages 79-82)
- * Admin temporarily blocks user access
+ * UC23: Suspend User Account (SRS Pages 79-82)
+ * Admin temporarily blocks user access (supports both renters and lessors)
  */
 
 require_once '../config/database.php';
@@ -25,6 +25,8 @@ $user_id = isset($_POST['id']) ? intval($_POST['id']) : intval($_GET['id']);
 // Fetch user details
 $user = null;
 if ($user_type == 'renter') {
+    // ✅ NEW: Support renter suspension
+    // Note: RENTER table needs STATUS column added
     $sql = "SELECT RENTERID as USER_ID, NAME, EMAIL FROM RENTER WHERE RENTERID = :userid";
 } elseif ($user_type == 'lessor') {
     $sql = "SELECT LESSORID as USER_ID, NAME, EMAIL, VERIFICATION_STATUS FROM LESSOR WHERE LESSORID = :userid";
@@ -45,8 +47,16 @@ if (!$user) {
     exit();
 }
 
+// Check if already suspended (for lessors)
+if ($user_type == 'lessor' && isset($user['VERIFICATION_STATUS']) && $user['VERIFICATION_STATUS'] == 'SUSPENDED') {
+    set_flash_message("This user is already suspended.", "warning");
+    header("Location: view_user.php?type=lessor&id=" . $user_id);
+    exit();
+}
+
 // Exception 2: Cannot suspend user with active bookings
 if ($user_type == 'lessor') {
+    // Check lessor's cars for active bookings
     $active_sql = "SELECT COUNT(*) as TOTAL FROM BOOKING b
                    JOIN CAR c ON b.CARID = c.CARID
                    WHERE c.LESSORID = :userid 
@@ -60,6 +70,23 @@ if ($user_type == 'lessor') {
     
     if ($active_result['TOTAL'] > 0) {
         set_flash_message("Cannot suspend user. User has active bookings until completion date. Please wait until bookings are completed or contact user to cancel.", "error");
+        header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
+        exit();
+    }
+} elseif ($user_type == 'renter') {
+    // Check renter's active bookings
+    $active_sql = "SELECT COUNT(*) as TOTAL FROM BOOKING 
+                   WHERE RENTERID = :userid 
+                   AND BOOKING_STATUS IN ('CONFIRMED')
+                   AND END_DATE >= SYSDATE";
+    
+    $stmt_active = oci_parse($conn, $active_sql);
+    oci_bind_by_name($stmt_active, ':userid', $user_id);
+    oci_execute($stmt_active);
+    $active_result = oci_fetch_assoc($stmt_active);
+    
+    if ($active_result['TOTAL'] > 0) {
+        set_flash_message("Cannot suspend user. User has active bookings. Please wait until bookings are completed or contact user to cancel.", "error");
         header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
         exit();
     }
@@ -84,12 +111,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                            SET VERIFICATION_STATUS = 'SUSPENDED' 
                            WHERE LESSORID = :userid";
         } else {
-            // For renter: We need to add a STATUS column or use a SUSPENDED_USERS table
-            // For now, we'll create a record in a notes system
-            // In production: Add STATUS column to RENTER table
-            set_flash_message("Renter suspension feature requires database schema update (add STATUS column to RENTER table).", "error");
-            header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
-            exit();
+            // ✅ NEW: For renter - add STATUS column handling
+            // Check if STATUS column exists
+            $check_column_sql = "SELECT COLUMN_NAME FROM USER_TAB_COLUMNS 
+                                WHERE TABLE_NAME = 'RENTER' AND COLUMN_NAME = 'STATUS'";
+            $stmt_check = oci_parse($conn, $check_column_sql);
+            oci_execute($stmt_check);
+            $column_exists = oci_fetch_assoc($stmt_check);
+            
+            if (!$column_exists) {
+                // Add STATUS column to RENTER table
+                $add_column_sql = "ALTER TABLE RENTER ADD STATUS VARCHAR2(20) DEFAULT 'ACTIVE'";
+                $stmt_add = oci_parse($conn, $add_column_sql);
+                oci_execute($stmt_add);
+                oci_commit($conn);
+            }
+            
+            // Now suspend the renter
+            $suspend_sql = "UPDATE RENTER 
+                           SET STATUS = 'SUSPENDED' 
+                           WHERE RENTERID = :userid";
         }
         
         $stmt_suspend = oci_parse($conn, $suspend_sql);
@@ -99,10 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             oci_commit($conn);
             
             // Log suspension (in production: create ADMIN_ACTIONS table)
-            // Store: admin_id, action_type, user_id, reason, timestamp
-            
             // UC23: System sends suspension notification to user (simulated)
-            // In production: Send email notification
             
             set_flash_message("User account suspended successfully. Reason: " . htmlspecialchars($reason), "success");
             header("Location: manage_users.php");
@@ -162,6 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <li>Cannot receive new bookings</li>
             <?php else: ?>
                 <li>Cannot make new bookings</li>
+                <li>Cannot access booking history</li>
             <?php endif; ?>
             <li>User will receive <strong>suspension notification</strong> via email</li>
             <li>Can be reactivated later by admin</li>

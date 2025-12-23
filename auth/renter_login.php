@@ -34,8 +34,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($user) {
             // Verify password
             if (password_verify($password, $user['PASSWORD'])) {
-                // Exception 5: Check if account is active (can be extended for suspended accounts)
-                // For now, all registered accounts are active
+                // FIX 5: Add Suspension Check here after password verification
+                // Check if renter is suspended
+                $status_check_sql = "SELECT STATUS FROM RENTER WHERE RENTERID = :userid";
+                $stmt_status = oci_parse($conn, $status_check_sql);
+                oci_bind_by_name($stmt_status, ':userid', $user['RENTERID']);
+                oci_execute($stmt_status);
+                $status_result = oci_fetch_assoc($stmt_status);
+
+                if ($status_result && $status_result['STATUS'] == 'SUSPENDED') {
+                    header("Location: account_suspended.php?email=" . urlencode($email));
+                    exit();
+                }
                 
                 // Set session
                 set_session($user['RENTERID'], $user['NAME'], $user['EMAIL'], 'renter');

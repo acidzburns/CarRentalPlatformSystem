@@ -23,17 +23,20 @@ if (!isset($_GET['type']) || !isset($_GET['id'])) {
 $user_type = $_GET['type'];
 $user_id = intval($_GET['id']);
 
-// Only lessors can be unsuspended (for now)
-if ($user_type != 'lessor') {
+// ✅ Support both renters and lessors
+if ($user_type == 'renter') {
+    $sql = "SELECT RENTERID as USER_ID, NAME, EMAIL, STATUS 
+            FROM RENTER 
+            WHERE RENTERID = :userid";
+} elseif ($user_type == 'lessor') {
+    $sql = "SELECT LESSORID as USER_ID, NAME, EMAIL, VERIFICATION_STATUS as STATUS 
+            FROM LESSOR 
+            WHERE LESSORID = :userid";
+} else {
     set_flash_message("Invalid user type.", "error");
     header("Location: manage_users.php");
     exit();
 }
-
-// Fetch lessor details
-$sql = "SELECT LESSORID, NAME, EMAIL, VERIFICATION_STATUS 
-        FROM LESSOR 
-        WHERE LESSORID = :userid";
 
 $stmt = oci_parse($conn, $sql);
 oci_bind_by_name($stmt, ':userid', $user_id);
@@ -47,9 +50,9 @@ if (!$user) {
 }
 
 // Check if currently suspended
-if ($user['VERIFICATION_STATUS'] != 'SUSPENDED') {
+if ($user['STATUS'] != 'SUSPENDED') {
     set_flash_message("This user is not suspended.", "warning");
-    header("Location: view_user.php?type=lessor&id=" . $user_id);
+    header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
     exit();
 }
 
@@ -63,10 +66,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (empty($errors)) {
         try {
-            // Reactivate account - set status back to VERIFIED
-            $unsuspend_sql = "UPDATE LESSOR 
-                             SET VERIFICATION_STATUS = 'VERIFIED' 
-                             WHERE LESSORID = :userid";
+            // Reactivate account
+            if ($user_type == 'lessor') {
+                $unsuspend_sql = "UPDATE LESSOR 
+                                 SET VERIFICATION_STATUS = 'VERIFIED' 
+                                 WHERE LESSORID = :userid";
+            } else {
+                // ✅ NEW: Support renter unsuspension
+                $unsuspend_sql = "UPDATE RENTER 
+                                 SET STATUS = 'ACTIVE' 
+                                 WHERE RENTERID = :userid";
+            }
             
             $stmt_unsuspend = oci_parse($conn, $unsuspend_sql);
             oci_bind_by_name($stmt_unsuspend, ':userid', $user_id);
@@ -78,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // In production: Send email notification to user
                 
                 set_flash_message("User account reactivated successfully. User can now login and access their account.", "success");
-                header("Location: view_user.php?type=lessor&id=" . $user_id);
+                header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
                 exit();
             } else {
                 $e = oci_error($stmt_unsuspend);
@@ -129,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <h2 style="color: #2e7d32; margin-top: 0;">👤 User Account Details</h2>
         <ul>
             <li><strong>Type:</strong> <?php echo strtoupper($user_type); ?></li>
-            <li><strong>ID:</strong> <?php echo $user['LESSORID']; ?></li>
+            <li><strong>ID:</strong> <?php echo $user['USER_ID']; ?></li>
             <li><strong>Name:</strong> <?php echo htmlspecialchars($user['NAME']); ?></li>
             <li><strong>Email:</strong> <?php echo htmlspecialchars($user['EMAIL']); ?></li>
             <li><strong>Current Status:</strong> <span style="color: #d32f2f; font-weight: bold;">SUSPENDED</span></li>
@@ -137,12 +147,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <h3>What happens when you reactivate this account?</h3>
         <ul>
-            <li>✅ Account status will be changed to <strong>VERIFIED</strong></li>
+            <li>✅ Account status will be changed to <strong><?php echo $user_type == 'lessor' ? 'VERIFIED' : 'ACTIVE'; ?></strong></li>
             <li>✅ User can <strong>login immediately</strong></li>
             <li>✅ All features will be <strong>restored</strong></li>
             <?php if ($user_type == 'lessor'): ?>
                 <li>✅ Car listings will be <strong>reactivated</strong></li>
                 <li>✅ Can receive new bookings</li>
+            <?php else: ?>
+                <li>✅ Can make new bookings</li>
+                <li>✅ Can access booking history</li>
             <?php endif; ?>
             <li>✅ User will receive <strong>reactivation notification</strong> via email</li>
         </ul>

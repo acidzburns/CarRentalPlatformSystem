@@ -22,15 +22,32 @@ $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 // UC23 Step 2: Retrieve and display list of all users
 $users = [];
 
+// ✅ IMPROVED FILTER LOGIC
+// Determine which users to fetch based on filters
+$fetch_renters = false;
+$fetch_lessors = false;
+
+if ($user_type_filter == 'all') {
+    if ($status_filter == 'all') {
+        $fetch_renters = true;
+        $fetch_lessors = true;
+    } else {
+        $fetch_lessors = true;
+    }
+} elseif ($user_type_filter == 'renter') {
+    $fetch_renters = true;
+} elseif ($user_type_filter == 'lessor') {
+    $fetch_lessors = true;
+}
+
 // Fetch Renters
-if ($user_type_filter == 'all' || $user_type_filter == 'renter') {
+if ($fetch_renters) {
     $renter_sql = "SELECT RENTERID as USER_ID, NAME, EMAIL, PHONE, CREATED_AT, 
-                   'RENTER' as USER_TYPE, 'ACTIVE' as STATUS,
+                   'RENTER' as USER_TYPE, STATUS,
                    TO_CHAR(CREATED_AT, 'DD-MON-YYYY') as CREATED_FMT
                    FROM RENTER
                    WHERE 1=1";
     
-    // UC23 Step 4: Search functionality
     if (!empty($search_query)) {
         $renter_sql .= " AND (LOWER(NAME) LIKE LOWER(:search) 
                         OR LOWER(EMAIL) LIKE LOWER(:search2) 
@@ -56,19 +73,17 @@ if ($user_type_filter == 'all' || $user_type_filter == 'renter') {
 }
 
 // Fetch Lessors
-if ($user_type_filter == 'all' || $user_type_filter == 'lessor') {
+if ($fetch_lessors) {
     $lessor_sql = "SELECT LESSORID as USER_ID, NAME, EMAIL, PHONE, CREATED_AT,
                    'LESSOR' as USER_TYPE, VERIFICATION_STATUS as STATUS,
                    TO_CHAR(CREATED_AT, 'DD-MON-YYYY') as CREATED_FMT
                    FROM LESSOR
                    WHERE 1=1";
     
-    // UC23 Step 3: Filter by status
     if ($status_filter != 'all') {
         $lessor_sql .= " AND VERIFICATION_STATUS = :status";
     }
     
-    // UC23 Step 4: Search functionality
     if (!empty($search_query)) {
         $lessor_sql .= " AND (LOWER(NAME) LIKE LOWER(:search) 
                         OR LOWER(EMAIL) LIKE LOWER(:search2) 
@@ -156,7 +171,6 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
     
     <?php display_flash_message(); ?>
     
-    <!-- Display errors -->
     <?php if (!empty($errors)): ?>
         <div style="background: #ffebee; padding: 10px; margin: 10px 0; border: 1px solid #f44336;">
             <strong>Error:</strong>
@@ -168,7 +182,6 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
         </div>
     <?php endif; ?>
     
-    <!-- UC23 Step 6: Display user statistics -->
     <h2>📊 User Statistics</h2>
     <table border="1" style="width: 100%;">
         <tr>
@@ -193,9 +206,7 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
     
     <hr>
     
-    <!-- UC23 Step 3 & 4: Filter and search -->
     <h2>🔍 Filter & Search Users</h2>
-    
     <form method="GET" action="">
         <div style="margin: 15px 0;">
             <label><strong>User Type:</strong></label><br>
@@ -215,6 +226,7 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
                 <option value="rejected" <?php echo $status_filter == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
                 <option value="suspended" <?php echo $status_filter == 'suspended' ? 'selected' : ''; ?>>Suspended</option>
             </select>
+            <p style="font-size: 12px; color: #666; margin: 5px 0;">Note: Status filter only applies to lessors</p>
         </div>
         
         <div style="margin: 15px 0;">
@@ -233,7 +245,6 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
     
     <hr>
     
-    <!-- UC23 Step 2: Display list of users -->
     <h2>👥 All Users (<?php echo count($users); ?>)</h2>
     
     <?php if (empty($users)): ?>
@@ -267,12 +278,17 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
                         <td><?php echo htmlspecialchars($user['PHONE'] ?? 'N/A'); ?></td>
                         <td>
                             <?php if ($user['USER_TYPE'] == 'RENTER'): ?>
-                                <span style="color: green;">✓ ACTIVE</span>
+                                <?php 
+                                    $color = $user['STATUS'] == 'SUSPENDED' ? 'red' : 'green';
+                                    $label = $user['STATUS'] == 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE';
+                                ?>
+                                <span style="color: <?php echo $color; ?>;"><?php echo $label; ?></span>
                             <?php else: ?>
                                 <span style="color: 
                                     <?php 
                                     echo $user['STATUS'] == 'VERIFIED' ? 'green' : 
-                                         ($user['STATUS'] == 'PENDING' ? 'orange' : 'red'); 
+                                         ($user['STATUS'] == 'PENDING' ? 'orange' : 
+                                         ($user['STATUS'] == 'SUSPENDED' ? 'purple' : 'red')); 
                                     ?>">
                                     <?php echo $user['STATUS']; ?>
                                 </span>
@@ -280,22 +296,26 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
                         </td>
                         <td><?php echo htmlspecialchars($user['CREATED_FMT']); ?></td>
                         <td>
-                            <!-- UC23 Step 5: Select user to view details -->
                             <a href="view_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>">
                                 View Details
                             </a>
                             |
-                            <!-- UC23 Step 7: Edit user option -->
                             <a href="edit_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>">
                                 Edit
                             </a>
                             <?php if ($user['USER_TYPE'] == 'LESSOR' && $user['STATUS'] == 'VERIFIED'): ?>
                             |
-                            <!-- UC23 Step 11: Suspend/reactivate -->
                             <a href="suspend_user.php?type=lessor&id=<?php echo $user['USER_ID']; ?>" 
                                onclick="return confirm('Suspend this lessor account?')" 
                                style="color: red;">
                                 Suspend
+                            </a>
+                            <?php elseif ($user['USER_TYPE'] == 'LESSOR' && $user['STATUS'] == 'SUSPENDED'): ?>
+                            |
+                            <a href="unsuspend_user.php?type=lessor&id=<?php echo $user['USER_ID']; ?>" 
+                               onclick="return confirm('Reactivate this account?')" 
+                               style="color: green;">
+                                Reactivate
                             </a>
                             <?php endif; ?>
                         </td>
@@ -313,7 +333,8 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
             <li><strong>View Details:</strong> See complete user information and activity history</li>
             <li><strong>Edit:</strong> Update user contact information (name, email, phone)</li>
             <li><strong>Suspend:</strong> Temporarily block user access (for violations or disputes)</li>
-            <li><strong>Renters:</strong> Always active unless manually suspended</li>
+            <li><strong>Reactivate:</strong> Restore access to suspended accounts</li>
+            <li><strong>Renters:</strong> Shows actual status from DB</li>
             <li><strong>Lessors:</strong> Must be verified before listing cars</li>
         </ul>
     </div>

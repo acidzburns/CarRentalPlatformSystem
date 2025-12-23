@@ -356,6 +356,13 @@ if (!$user) {
                     ✅ Reactivate Account
                 </a>
             <?php endif; ?>
+        <?php elseif ($user_type == 'renter'): ?>
+            <!-- ✅ NEW: Renter suspension -->
+            <a href="suspend_user.php?type=renter&id=<?php echo $user_id; ?>" 
+               onclick="return confirm('Are you sure you want to suspend this renter account?')" 
+               class="btn" style="background: #f44336; color: white;">
+                🚫 Suspend Account
+            </a>
         <?php endif; ?>
     </div>
     

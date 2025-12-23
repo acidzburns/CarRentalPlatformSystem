@@ -2,12 +2,12 @@
 // admin/reports.php - UC24: Generate Report
 session_start();
 require_once '../config/database.php';
-require_once '../includes/check_auth.php';
+require_once '../config/session.php';
 
 // Check if user is admin
-checkAuth('admin');
+require_login('admin');
+$adminid = get_user_id();
 
-$conn = Database::getInstance()->getConnection();
 
 // Initialize variables
 $reportType = '';

@@ -30,8 +30,9 @@ $user_stats = [];
 
 // UC23 Step 5: Display comprehensive user information
 if ($user_type == 'renter') {
-    // Fetch renter details
+    // ✅ FIXED: Fetch renter details WITH STATUS
     $sql = "SELECT r.RENTERID, r.NAME, r.EMAIL, r.PHONE, r.CREATED_AT,
+            NVL(r.STATUS, 'ACTIVE') as STATUS,
             TO_CHAR(r.CREATED_AT, 'DD-MON-YYYY HH24:MI') as CREATED_FMT
             FROM RENTER r
             WHERE r.RENTERID = :userid";
@@ -222,9 +223,24 @@ if (!$user) {
                     <?php 
                     echo $user['VERIFICATION_STATUS'] == 'VERIFIED' ? 'background: #d4edda; color: #155724;' : 
                          ($user['VERIFICATION_STATUS'] == 'PENDING' ? 'background: #fff3cd; color: #856404;' : 
-                         'background: #f8d7da; color: #721c24;'); 
+                         ($user['VERIFICATION_STATUS'] == 'SUSPENDED' ? 'background: #e8daef; color: #6c3483;' :
+                         'background: #f8d7da; color: #721c24;')); 
                     ?>">
                     <?php echo htmlspecialchars($user['VERIFICATION_STATUS']); ?>
+                </span>
+            </td>
+        </tr>
+        <?php else: ?>
+        <!-- ✅ NEW: Show renter status -->
+        <tr>
+            <th>Account Status:</th>
+            <td>
+                <span style="padding: 5px 10px; border-radius: 3px; font-weight: bold;
+                    <?php 
+                    echo $user['STATUS'] == 'ACTIVE' ? 'background: #d4edda; color: #155724;' : 
+                         'background: #e8daef; color: #6c3483;'; 
+                    ?>">
+                    <?php echo htmlspecialchars($user['STATUS']); ?>
                 </span>
             </td>
         </tr>
@@ -357,12 +373,20 @@ if (!$user) {
                 </a>
             <?php endif; ?>
         <?php elseif ($user_type == 'renter'): ?>
-            <!-- ✅ NEW: Renter suspension -->
-            <a href="suspend_user.php?type=renter&id=<?php echo $user_id; ?>" 
-               onclick="return confirm('Are you sure you want to suspend this renter account?')" 
-               class="btn" style="background: #f44336; color: white;">
-                🚫 Suspend Account
-            </a>
+            <!-- ✅ FIXED: Check renter status for suspend/reactivate buttons -->
+            <?php if ($user['STATUS'] == 'ACTIVE'): ?>
+                <a href="suspend_user.php?type=renter&id=<?php echo $user_id; ?>" 
+                   onclick="return confirm('Are you sure you want to suspend this renter account?')" 
+                   class="btn" style="background: #f44336; color: white;">
+                    🚫 Suspend Account
+                </a>
+            <?php elseif ($user['STATUS'] == 'SUSPENDED'): ?>
+                <a href="unsuspend_user.php?type=renter&id=<?php echo $user_id; ?>" 
+                   onclick="return confirm('Reactivate this suspended renter account?')" 
+                   class="btn" style="background: #4CAF50; color: white;">
+                    ✅ Reactivate Account
+                </a>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
     

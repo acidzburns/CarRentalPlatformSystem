@@ -104,7 +104,8 @@ $stats = [
     'total_lessors' => 0,
     'verified_lessors' => 0,
     'pending_lessors' => 0,
-    'rejected_lessors' => 0
+    'rejected_lessors' => 0,
+    'suspended_lessors' => 0
 ];
 
 // Count renters
@@ -119,7 +120,8 @@ $lessor_count_sql = "SELECT
                      COUNT(*) as TOTAL,
                      COUNT(CASE WHEN VERIFICATION_STATUS = 'VERIFIED' THEN 1 END) as VERIFIED,
                      COUNT(CASE WHEN VERIFICATION_STATUS = 'PENDING' THEN 1 END) as PENDING,
-                     COUNT(CASE WHEN VERIFICATION_STATUS = 'REJECTED' THEN 1 END) as REJECTED
+                     COUNT(CASE WHEN VERIFICATION_STATUS = 'REJECTED' THEN 1 END) as REJECTED,
+                     COUNT(CASE WHEN VERIFICATION_STATUS = 'SUSPENDED' THEN 1 END) as SUSPENDED
                      FROM LESSOR";
 $stmt_lcount = oci_parse($conn, $lessor_count_sql);
 oci_execute($stmt_lcount);
@@ -128,6 +130,7 @@ $stats['total_lessors'] = $lcount['TOTAL'];
 $stats['verified_lessors'] = $lcount['VERIFIED'];
 $stats['pending_lessors'] = $lcount['PENDING'];
 $stats['rejected_lessors'] = $lcount['REJECTED'];
+$stats['suspended_lessors'] = $lcount['SUSPENDED'];
 ?>
 
 <!DOCTYPE html>
@@ -174,6 +177,7 @@ $stats['rejected_lessors'] = $lcount['REJECTED'];
             <th>Verified Lessors</th>
             <th>Pending Lessors</th>
             <th>Rejected Lessors</th>
+            <th>Suspended Lessors</th>
             <th>Total Users</th>
         </tr>
         <tr>
@@ -182,6 +186,7 @@ $stats['rejected_lessors'] = $lcount['REJECTED'];
             <td style="color: green;"><?php echo $stats['verified_lessors']; ?></td>
             <td style="color: orange;"><?php echo $stats['pending_lessors']; ?></td>
             <td style="color: red;"><?php echo $stats['rejected_lessors']; ?></td>
+            <td style="color: purple;"><?php echo $stats['suspended_lessors']; ?></td>
             <td><strong><?php echo $stats['total_renters'] + $stats['total_lessors']; ?></strong></td>
         </tr>
     </table>

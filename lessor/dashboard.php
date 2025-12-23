@@ -50,12 +50,18 @@ $sql_pending = "SELECT COUNT(*) as total FROM BOOKING
 $pending_count = db_fetch_one($sql_pending, ['lessorid' => $lessor_id]);
 $total_pending = $pending_count ? $pending_count['TOTAL'] : 0;
 
-// Total earnings (from completed bookings)
-$sql_earnings = "SELECT SUM(TOTAL_AMOUNT) as total FROM BOOKING 
+// Total earnings (from completed bookings) - 90% after commission
+$sql_earnings = "SELECT SUM(TOTAL_AMOUNT * 0.90) as total FROM BOOKING 
                  WHERE CARID IN (SELECT CARID FROM CAR WHERE LESSORID = :lessorid) 
-                 AND BOOKING_STATUS IN ('COMPLETED', 'CONFIRMED')";
+                 AND BOOKING_STATUS = 'COMPLETED'";
 $earnings_result = db_fetch_one($sql_earnings, ['lessorid' => $lessor_id]);
 $total_earnings = $earnings_result && $earnings_result['TOTAL'] ? $earnings_result['TOTAL'] : 0;
+
+// Get open support tickets count
+$sql_tickets = "SELECT COUNT(*) as total FROM TICKET 
+                WHERE LESSORID = :lessorid AND STATUS = 'OPEN'";
+$tickets_count = db_fetch_one($sql_tickets, ['lessorid' => $lessor_id]);
+$open_tickets = $tickets_count ? $tickets_count['TOTAL'] : 0;
 
 ?>
 
@@ -73,6 +79,10 @@ $total_earnings = $earnings_result && $earnings_result['TOTAL'] ? $earnings_resu
         <div>
             <span>Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</span>
             <a href="dashboard.php">Dashboard</a>
+            <a href="my_cars.php">My Cars</a>
+            <a href="bookings.php">Bookings</a>
+            <a href="earnings.php">Earnings</a>
+            <a href="submit_ticket.php">Support</a>
             <a href="../auth/logout.php">Logout</a>
         </div>
     </nav>
@@ -119,7 +129,16 @@ $total_earnings = $earnings_result && $earnings_result['TOTAL'] ? $earnings_resu
                 <div>
                     <h3>Total Earnings</h3>
                     <div>RM <?php echo number_format($total_earnings, 2); ?></div>
-                    <p>From completed bookings</p>
+                    <p>After 10% platform fee</p>
+                </div>
+                
+                <div>
+                    <h3>Support Tickets</h3>
+                    <div><?php echo $open_tickets; ?></div>
+                    <p>Open tickets</p>
+                    <?php if ($open_tickets > 0): ?>
+                        <a href="submit_ticket.php">View Tickets</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -154,21 +173,42 @@ $total_earnings = $earnings_result && $earnings_result['TOTAL'] ? $earnings_resu
                     <h3>Track Earnings</h3>
                     <p>View your revenue and payouts</p>
                 </a>
+                
+                <a href="submit_ticket.php">
+                    <h3>Support Tickets</h3>
+                    <p>Get help from our support team</p>
+                    <?php if ($open_tickets > 0): ?>
+                        <span><?php echo $open_tickets; ?> open</span>
+                    <?php endif; ?>
+                </a>
             </div>
         </div>
         
         <!-- Getting Started Guide (if no cars) -->
         <?php if ($total_cars == 0): ?>
         <div style="background: #e7f3ff; padding: 20px; border-left: 4px solid #007bff; margin-top: 30px;">
-            <h2 style="margin-top: 0; color: #004085;"> Get Started</h2>
+            <h2 style="margin-top: 0; color: #004085;">🚗 Get Started</h2>
             <p>You haven't listed any cars yet. Here's how to get started:</p>
-            
+            <ol>
+                <li>Click "Add New Car" to list your first vehicle</li>
+                <li>Upload photos and set your rental rates</li>
+                <li>Wait for booking requests from renters</li>
+                <li>Manage bookings and track your earnings</li>
+            </ol>
             <a href="add_car.php" style="display: inline-block; padding: 12px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">
-                List Your First Car Now
+                📝 List Your First Car Now
             </a>
         </div>
         <?php endif; ?>
         
+        <!-- Need Help Section -->
+        <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #ffc107; margin-top: 30px;">
+            <h3 style="margin-top: 0;">💬 Need Help?</h3>
+            <p>Have questions or facing issues? Our support team is here to help!</p>
+            <a href="submit_ticket.php" style="display: inline-block; padding: 10px 20px; background: #ffc107; color: #000; text-decoration: none; border-radius: 5px; margin-top: 10px;">
+                🎫 Submit a Support Ticket
+            </a>
+        </div>
         
     </main>
 </body>

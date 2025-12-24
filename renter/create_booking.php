@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../config/email_test.php'; // PHPMailer setup
 
 // Check if renter is logged in
 require_login('renter');
@@ -70,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $errors[] = "Please select pickup and return dates.";
     }
     
-    // Exception 2: Invalid dates (past dates or return before pickup)
+    // Exception 2: Invalid dates
     if (strtotime($start_date) < strtotime(date('Y-m-d'))) {
         $errors[] = "Please enter valid dates. Pickup date cannot be in the past.";
     }
@@ -85,8 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $errors[] = "Minimum rental period is 1 day.";
     }
     
-    // Exception 1: Check if car is available for selected dates
-    // Exception 3: Date conflict with existing bookings
+    // Exception 1: Check availability
     $availability_sql = "SELECT COUNT(*) as CONFLICT_COUNT
                         FROM BOOKING
                         WHERE CARID = :carid
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $delivery_cost = $add_delivery ? $car['DELIVERY_FEE'] : 0;
         $total_amount = $rental_cost + $insurance_cost + $delivery_cost;
         
-        // UC12: Make New Booking - Create booking record
+        // UC12: Make New Booking
         try {
             $booking_sql = "INSERT INTO BOOKING 
                            (BOOKINGID, RENTERID, CARID, START_DATE, END_DATE, 
@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (oci_execute($stmt_booking)) {
                 oci_commit($conn);
                 
-                // Store booking details in session for payment page
+                // Store booking details in session
                 $_SESSION['pending_booking'] = [
                     'bookingid' => $new_bookingid,
                     'carid' => $carid,
@@ -150,8 +150,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     'add_insurance' => $add_insurance,
                     'add_delivery' => $add_delivery
                 ];
-                
-                // Redirect to payment page (NOT dashboard!)
+
+                // =====================
+                // SEND EMAIL NOTIFICATIONS
+                // =====================
+
+                // Fetch renter info
+                $renter_sql = "SELECT NAME, EMAIL FROM RENTER WHERE RENTERID = :renterid";
+                $stmt_renter = oci_parse($conn, $renter_sql);
+                oci_bind_by_name($stmt_renter, ':renterid', $renterid);
+                oci_execute($stmt_renter);
+                $renter_info = oci_fetch_assoc($stmt_renter);
+
+                $renter_email = $renter_info['EMAIL'];
+                $renter_name = $renter_info['NAME'];
+                $lessor_email = $car['LESSOR_EMAIL'];
+                $lessor_name = $car['LESSOR_NAME'];
+
+                // Email to Renter
+                $renter_subject = "Booking Created: #" . $new_bookingid;
+                $renter_body = "
+                <p>Dear {$renter_name},</p>
+                <p>Your booking for {$car['BRAND']} {$car['MODEL']} ({$car['YEAR']}) has been created.</p>
+                <p>Booking ID: <b>{$new_bookingid}</b><br>
+                Pickup Date: {$start_date}<br>
+                Return Date: {$end_date}<br>
+                Total Amount: RM " . number_format($total_amount, 2) . "</p>
+                <p>Please proceed to payment to confirm your booking.</p>
+                <p>Thank you,<br>Car Rental Platform Team</p>
+                ";
+                send_email($renter_email, $renter_subject, $renter_body);
+
+                // Email to Lessor
+                $lessor_subject = "New Booking Request: #" . $new_bookingid;
+                $lessor_body = "
+                <p>Dear {$lessor_name},</p>
+                <p>A new booking has been made for your car {$car['BRAND']} {$car['MODEL']} ({$car['YEAR']}).</p>
+                <p>Booking ID: <b>{$new_bookingid}</b><br>
+                Pickup Date: {$start_date}<br>
+                Return Date: {$end_date}<br>
+                Customer: {$renter_name}</p>
+                <p>Please review and confirm the booking.</p>
+                <p>Thank you,<br>Car Rental Platform Team</p>
+                ";
+                send_email($lessor_email, $lessor_subject, $lessor_body);
+
+                // Redirect to payment page
                 header("Location: make_payment.php?bookingid=" . $new_bookingid);
                 exit();
             } else {
@@ -164,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Get renter info
+// Get renter info for display
 $renter_sql = "SELECT NAME, EMAIL, PHONE FROM RENTER WHERE RENTERID = :renterid";
 $stmt_renter = oci_parse($conn, $renter_sql);
 oci_bind_by_name($stmt_renter, ':renterid', $renterid);

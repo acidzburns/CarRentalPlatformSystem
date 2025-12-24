@@ -151,49 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     'add_delivery' => $add_delivery
                 ];
 
-                // =====================
-                // SEND EMAIL NOTIFICATIONS
-                // =====================
-
-                // Fetch renter info
-                $renter_sql = "SELECT NAME, EMAIL FROM RENTER WHERE RENTERID = :renterid";
-                $stmt_renter = oci_parse($conn, $renter_sql);
-                oci_bind_by_name($stmt_renter, ':renterid', $renterid);
-                oci_execute($stmt_renter);
-                $renter_info = oci_fetch_assoc($stmt_renter);
-
-                $renter_email = $renter_info['EMAIL'];
-                $renter_name = $renter_info['NAME'];
-                $lessor_email = $car['LESSOR_EMAIL'];
-                $lessor_name = $car['LESSOR_NAME'];
-
-                // Email to Renter
-                $renter_subject = "Booking Created: #" . $new_bookingid;
-                $renter_body = "
-                <p>Dear {$renter_name},</p>
-                <p>Your booking for {$car['BRAND']} {$car['MODEL']} ({$car['YEAR']}) has been created.</p>
-                <p>Booking ID: <b>{$new_bookingid}</b><br>
-                Pickup Date: {$start_date}<br>
-                Return Date: {$end_date}<br>
-                Total Amount: RM " . number_format($total_amount, 2) . "</p>
-                <p>Please proceed to payment to confirm your booking.</p>
-                <p>Thank you,<br>Car Rental Platform Team</p>
-                ";
-                send_email($renter_email, $renter_subject, $renter_body);
-
-                // Email to Lessor
-                $lessor_subject = "New Booking Request: #" . $new_bookingid;
-                $lessor_body = "
-                <p>Dear {$lessor_name},</p>
-                <p>A new booking has been made for your car {$car['BRAND']} {$car['MODEL']} ({$car['YEAR']}).</p>
-                <p>Booking ID: <b>{$new_bookingid}</b><br>
-                Pickup Date: {$start_date}<br>
-                Return Date: {$end_date}<br>
-                Customer: {$renter_name}</p>
-                <p>Please review and confirm the booking.</p>
-                <p>Thank you,<br>Car Rental Platform Team</p>
-                ";
-                send_email($lessor_email, $lessor_subject, $lessor_body);
+                
 
                 // Redirect to payment page
                 header("Location: make_payment.php?bookingid=" . $new_bookingid);

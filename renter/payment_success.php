@@ -1,6 +1,8 @@
 <?php
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../config/email_test.php';
+
 
 // Check if renter is logged in
 require_login('renter');
@@ -43,6 +45,46 @@ if (!$payment) {
     set_flash_message("Payment confirmation not found.", "error");
     header("Location: dashboard.php");
     exit();
+}
+
+// Send email notifications only if booking is CONFIRMED
+if ($payment['BOOKING_STATUS'] === 'CONFIRMED') {
+
+    // Email to renter
+    $renter_subject = "Your Car Rental Booking is Confirmed!";
+    $renter_body = "
+    <p>Dear {$payment['RENTER_NAME']},</p>
+    <p>Thank you for your payment. Your booking has been <b>confirmed</b>.</p>
+    <p><strong>Booking ID:</strong> {$payment['BOOKINGID']}<br>
+       <strong>Car:</strong> {$payment['BRAND']} {$payment['MODEL']} {$payment['YEAR']}<br>
+       <strong>Rental Period:</strong> {$payment['START_DATE_FMT']} to {$payment['END_DATE_FMT']}<br>
+       <strong>Total Paid:</strong> RM ".number_format($payment['TOTAL_AMOUNT'], 2)."</p>
+    <p>The car owner ({$payment['LESSOR_NAME']}) will contact you to arrange pickup.</p>
+    <p>Thank you for using our Car Rental Platform!</p>
+    ";
+
+    // Use PHPMailer function and log errors
+    if (!send_email($payment['RENTER_EMAIL'], $renter_subject, $renter_body)) {
+        error_log("Email to renter ({$payment['RENTER_EMAIL']}) failed to send.");
+    }
+
+    // Email to lessor
+    $lessor_subject = "New Booking Confirmed for Your Car!";
+    $lessor_body = "
+    <p>Dear {$payment['LESSOR_NAME']},</p>
+    <p>A new booking has been confirmed for your car:</p>
+    <p><strong>Booking ID:</strong> {$payment['BOOKINGID']}<br>
+       <strong>Renter:</strong> {$payment['RENTER_NAME']} ({$payment['RENTER_EMAIL']})<br>
+       <strong>Car:</strong> {$payment['BRAND']} {$payment['MODEL']} {$payment['YEAR']}<br>
+       <strong>Rental Period:</strong> {$payment['START_DATE_FMT']} to {$payment['END_DATE_FMT']}<br>
+       <strong>Total Paid:</strong> RM ".number_format($payment['TOTAL_AMOUNT'], 2)."</p>
+    <p>Please contact the renter to arrange pickup details.</p>
+    <p>Thank you for using our Car Rental Platform!</p>
+    ";
+
+    if (!send_email($payment['LESSOR_EMAIL'], $lessor_subject, $lessor_body)) {
+        error_log("Email to lessor ({$payment['LESSOR_EMAIL']}) failed to send.");
+    }
 }
 
 // ✅ Get additional payment details from session (if available)

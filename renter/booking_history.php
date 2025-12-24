@@ -453,9 +453,8 @@ $stats = oci_fetch_assoc($stmt_stats);
     <script>
     function cancelBooking(bookingId) {
         if (confirm('Are you sure you want to cancel this booking?')) {
-            // In production: send AJAX request to cancel_booking.php
-            alert('Cancellation feature coming soon!');
-            // window.location.href = 'cancel_booking.php?bookingid=' + bookingId;
+            
+             window.location.href = 'cancel_booking.php?id=' + bookingId;
         }
     }
     </script>

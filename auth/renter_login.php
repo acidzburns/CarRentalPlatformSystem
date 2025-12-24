@@ -209,7 +209,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="register-link">
             Don't have an account? <a href="renter_register.php">Register here</a>
         </div>
-        
+        <p><a href="forgot_password.php">Forgot Password?</a></p>
+
         <div class="other-login">
             <a href="lessor_login.php">Login as Car Owner</a> | 
             <a href="admin_login.php">Admin Login</a>

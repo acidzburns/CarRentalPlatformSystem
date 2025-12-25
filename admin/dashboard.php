@@ -151,6 +151,11 @@ $total_tickets = $tickets ? $tickets['TOTAL'] : 0;
                     <h3>Generate Reports</h3>
                     <p>View booking, financial, and performance reports</p>
                 </a>
+
+                <a href="manage_bookings.php">
+                    <h3>Manage Bookings</h3>
+                    <p>View booking details</p>
+                </a>
             </div>
         </div>
         

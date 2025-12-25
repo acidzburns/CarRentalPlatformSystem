@@ -7,6 +7,7 @@ session_start();
 require_once '../config/database.php';
 require_once '../config/session.php';
 require_once '../includes/check_auth.php';
+require_once '../config/email_test.php';
 
 check_authentication('renter');
 
@@ -19,10 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $description = trim($_POST['description']);
     $category = $_POST['category'] ?? 'General';
     
-    // Validation (Exception 2 from SRS)
-    if (empty($subject)) {
-        $_SESSION['error'] = 'Please fill in all required fields.';
-    } elseif (empty($description)) {
+    // Validation
+    if (empty($subject) || empty($description)) {
         $_SESSION['error'] = 'Please fill in all required fields.';
     } else {
         // Get admin ID (assign to first admin for now)
@@ -50,7 +49,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         ];
         
         if (db_execute($insert_query, $params)) {
+
+            // Set success message
             $_SESSION['success'] = 'Support ticket submitted successfully! Reference: TICKET-' . $ticket_id;
+
+            // =========================
+            // Send email notification to admin
+            // =========================
+            $admin_email_query = "SELECT EMAIL FROM ADMIN WHERE ADMINID = :adminid";
+            $admin_email_result = db_fetch_one($admin_email_query, ['adminid' => $admin_id]);
+            $admin_email = $admin_email_result['EMAIL'] ?? null;
+
+            if ($admin_email) {
+                $email_subject = "New Support Ticket Submitted: TICKET-" . $ticket_id;
+                $email_body = "
+                    <p>Hello Admin,</p>
+                    <p>A new support ticket has been submitted by <strong>{$renter_name}</strong> (Renter ID: {$renter_id}).</p>
+                    <p><strong>Subject:</strong> {$subject}</p>
+                    <p><strong>Description:</strong><br>" . nl2br($description) . "</p>
+                    <p>Reference Ticket ID: <strong>TICKET-{$ticket_id}</strong></p>
+                    <p>Please log in to the admin panel to respond to this ticket.</p>
+                    <br>
+                    <p>-- Car Rental Platform System</p>
+                ";
+                send_email($admin_email, $email_subject, $email_body);
+            }
+
+            // Redirect back
             header('Location: submit_ticket.php');
             exit;
         } else {

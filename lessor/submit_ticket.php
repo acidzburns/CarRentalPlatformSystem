@@ -6,6 +6,7 @@
 
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../config/email_test.php';
 
 // Check if lessor is logged in
 require_login('lessor');
@@ -66,15 +67,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_ticket'])) {
                 oci_bind_by_name($stmt_ticket, ':description', $description);
                 
                 if (oci_execute($stmt_ticket)) {
-                    oci_commit($conn);
-                    
-                    // UC13 Step 5: System sends confirmation and notifies admin
-                    set_flash_message("Support ticket submitted successfully. Admin will respond soon.", "success");
-                    
-                    // Redirect to same page to prevent resubmission
-                    header("Location: submit_ticket.php");
-                    exit();
-                } else {
+    oci_commit($conn);
+    
+    // UC13 Step 5: Send email notification to admin
+    // 1. Fetch admin email (first admin in DB)
+    $admin_email_sql = "SELECT EMAIL, NAME FROM ADMIN WHERE ROWNUM = 1";
+    $stmt_admin_email = oci_parse($conn, $admin_email_sql);
+    oci_execute($stmt_admin_email);
+    $admin_info = oci_fetch_assoc($stmt_admin_email);
+    
+    if ($admin_info) {
+        $admin_email = $admin_info['EMAIL'];
+        $admin_name = $admin_info['NAME'];
+
+        // 2. Prepare email content
+        $email_subject = "New Support Ticket Submitted by Lessor";
+        $email_body = "
+            <p>Hello {$admin_name},</p>
+            <p>A new support ticket has been submitted by Lessor <strong>{$lessor_name}</strong>.</p>
+            <p><strong>Category:</strong> {$category}</p>
+            <p><strong>Subject:</strong> {$subject}</p>
+            <p><strong>Description:</strong><br>" . nl2br(htmlspecialchars($description)) . "</p>
+            <p>Please login to the admin panel to review and respond.</p>
+            <p>Reference: Ticket submitted by Lessor ID {$lessorid}</p>
+        ";
+
+        // 3. Send email
+        send_email($admin_email, $email_subject, $email_body);
+    }
+
+    set_flash_message("Support ticket submitted successfully. Admin will respond soon.", "success");
+
+    // Redirect to same page to prevent resubmission
+    header("Location: submit_ticket.php");
+    exit();
+}
+
+                 else {
                     $e = oci_error($stmt_ticket);
                     $errors[] = "Failed to submit ticket: " . $e['message'];
                 }

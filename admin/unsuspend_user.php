@@ -84,6 +84,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (oci_execute($stmt_unsuspend)) {
                 oci_commit($conn);
                 
+                require_once "../config/email_test.php";
+
+$admin_email = "carrentalplatformsystem@gmail.com"; // Use real admin email
+$subject = "Your Account Has Been Reactivated";
+
+$message  = "Dear {$user['NAME']},<br><br>";
+$message .= "Your account on Car Rental Platform has been reactivated by the administrator.<br><br>";
+$message .= "<strong>Note from admin:</strong> {$note}<br><br>";
+$message .= "You can now login and resume all normal activities.<br><br>";
+$message .= "If you have questions, please contact the admin only via email: {$admin_email}<br><br>";
+$message .= "Welcome back!<br><br>";
+$message .= "Best regards,<br>Car Rental Platform Team";
+
+send_email($user['EMAIL'], $subject, $message);
+
                 // Log reactivation (in production: create ADMIN_ACTIONS table)
                 // In production: Send email notification to user
                 

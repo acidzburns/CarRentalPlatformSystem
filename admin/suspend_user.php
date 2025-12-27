@@ -139,6 +139,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (oci_execute($stmt_suspend)) {
             oci_commit($conn);
             
+            require_once "../config/email_test.php";
+
+$admin_email = "carrentalplatformsystem@gmail.com"; // Use real admin email
+$subject = "Your Account Has Been Suspended";
+
+$message  = "Dear {$user['NAME']},<br><br>";
+$message .= "Your account on Car Rental Platform has been temporarily suspended by the administrator.<br><br>";
+$message .= "<strong>Reason for suspension:</strong> {$reason}<br><br>";
+$message .= "During this period, you will be unable to login or access any features of the platform.<br><br>";
+$message .= "If you have questions or would like to appeal, please contact the admin only via email: {$admin_email}<br><br>";
+$message .= "Thank you for your understanding.<br><br>";
+$message .= "Best regards,<br>Car Rental Platform Team";
+
+send_email($user['EMAIL'], $subject, $message);
+
             // Log suspension (in production: create ADMIN_ACTIONS table)
             // UC23: System sends suspension notification to user (simulated)
             

@@ -94,8 +94,8 @@ $user_email = isset($_GET['email']) ? $_GET['email'] : 'your email';
             <h3 style="margin-top: 0;">📞 How to Resolve This</h3>
             <p><strong>To reactivate your account, please contact our support team:</strong></p>
             <ul style="text-align: left;">
-                <li><strong>Email:</strong> <a href="mailto:support@carrental.com">support@carrental.com</a></li>
-                <li><strong>Phone:</strong> 1-800-RENTAL (738-8259)</li>
+                <li><strong>Email:</strong> <a href="mailto:support@carrental.com">carrentalplatformsystem@gmail.com</a></li>
+                <li><strong>Phone:</strong> 1-800-800-999</li>
                 <li><strong>Hours:</strong> Monday - Friday, 9:00 AM - 6:00 PM</li>
             </ul>
             <p><strong>Include in your message:</strong></p>

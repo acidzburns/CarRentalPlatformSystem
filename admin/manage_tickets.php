@@ -7,6 +7,7 @@ session_start();
 require_once '../config/database.php';
 require_once '../config/session.php';
 require_once '../includes/check_auth.php';
+require_once '../config/email_test.php';
 
 check_authentication('admin');
 
@@ -34,6 +35,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Log resolution (you could add RESOLUTION field to TICKET table)
                 // For now, admin can add notes manually
+                // --- EMAIL NOTIFICATION TO USER ---
+    // 1. Fetch ticket info (user type and email)
+    $ticket_info = db_fetch_one("SELECT RENTERID, LESSORID, SUBJECT, DESCRIPTION 
+                                 FROM TICKET WHERE TICKETID = :ticketid", 
+                                 ['ticketid' => $ticket_id]);
+
+    if ($ticket_info) {
+        if (!empty($ticket_info['RENTERID'])) {
+            $user_email = db_fetch_one("SELECT EMAIL, NAME FROM RENTER WHERE RENTERID = :id", ['id' => $ticket_info['RENTERID']]);
+            $user_name = $user_email['NAME'] ?? 'Renter';
+            $to_email = $user_email['EMAIL'];
+        } elseif (!empty($ticket_info['LESSORID'])) {
+            $user_email = db_fetch_one("SELECT EMAIL, NAME FROM LESSOR WHERE LESSORID = :id", ['id' => $ticket_info['LESSORID']]);
+            $user_name = $user_email['NAME'] ?? 'Lessor';
+            $to_email = $user_email['EMAIL'];
+        }
+        
+        if (!empty($to_email)) {
+            $subject_email = "Your Support Ticket #$ticket_id has been resolved";
+            $body_email = "
+                <p>Hello {$user_name},</p>
+                <p>Your support ticket <strong>#{$ticket_id}</strong> has been resolved by the admin.</p>
+                <p><strong>Subject:</strong> {$ticket_info['SUBJECT']}</p>
+                <p><strong>Description:</strong><br>" . nl2br(htmlspecialchars($ticket_info['DESCRIPTION'])) . "</p>
+                <p>If you have further issues, please reply or submit a new ticket.</p>
+                <p>Thank you,<br>Car Rental Platform Team</p>
+            ";
+
+            send_email($to_email, $subject_email, $body_email);
+        }
+    }
             } else {
                 $_SESSION['error'] = 'Failed to resolve ticket.';
             }

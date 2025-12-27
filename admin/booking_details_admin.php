@@ -383,20 +383,12 @@ if (!$booking) {
                 </div>
             </div>
             <?php endif; ?>
+            
+            
 
-            <!-- Actions -->
-            <?php if ($booking['BOOKING_STATUS'] != 'Cancelled' && $booking['BOOKING_STATUS'] != 'Completed'): ?>
-            <div class="card full-width">
-                <h2>Actions</h2>
-                <div class="actions">
-                    <a href="cancel_booking_admin.php?id=<?php echo $booking['BOOKINGID']; ?>" 
-                       class="btn btn-danger"
-                       onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone and may require refund processing.');">
-                        Cancel Booking (Admin Override)
-                    </a>
-                </div>
-            </div>
-            <?php endif; ?>
+            
+
+
         </div>
     </div>
 </body>

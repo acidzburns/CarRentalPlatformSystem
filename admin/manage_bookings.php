@@ -7,7 +7,7 @@
 require_once '../config/database.php';
 require_once '../config/session.php';
 require_once '../includes/check_auth.php';
-
+require_once '../config/email_test.php';
 // Check if user is admin
 check_authentication('admin');
 
@@ -17,6 +17,98 @@ global $conn;
 // Verify connection exists
 if (!$conn) {
     die("Database connection not available");
+}
+
+// Handle refund completion
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mark_refund_done'])) {
+    $booking_id = intval($_POST['booking_id']);
+    
+    // Get booking details for email notification
+    $booking_query = "SELECT B.*, 
+                      C.BRAND, C.MODEL,
+                      R.NAME as RENTER_NAME, R.EMAIL as RENTER_EMAIL,
+                      L.NAME as LESSOR_NAME, L.EMAIL as LESSOR_EMAIL
+                      FROM BOOKING B
+                      JOIN CAR C ON B.CARID = C.CARID
+                      JOIN RENTER R ON B.RENTERID = R.RENTERID
+                      JOIN LESSOR L ON C.LESSORID = L.LESSORID
+                      WHERE B.BOOKINGID = :booking_id";
+    
+    $booking_stmt = oci_parse($conn, $booking_query);
+    oci_bind_by_name($booking_stmt, ':booking_id', $booking_id);
+    oci_execute($booking_stmt);
+    $booking_data = oci_fetch_assoc($booking_stmt);
+    oci_free_statement($booking_stmt);
+    
+    // Update payment status to indicate refund is completed
+    $update_query = "UPDATE PAYMENT 
+                     SET PAYMENT_STATUS = 'REFUNDED'
+                     WHERE BOOKINGID = :booking_id";
+    
+    $update_stmt = oci_parse($conn, $update_query);
+    oci_bind_by_name($update_stmt, ':booking_id', $booking_id);
+    
+    if (oci_execute($update_stmt)) {
+        oci_commit($conn);
+        
+        // Send email notifications if booking data was found
+        if ($booking_data) {
+            $carName = $booking_data['BRAND'] . ' ' . $booking_data['MODEL'];
+            $period = date('M d, Y', strtotime($booking_data['START_DATE'])) . 
+                      ' - ' . 
+                      date('M d, Y', strtotime($booking_data['END_DATE']));
+            $refundAmount = number_format($booking_data['TOTAL_AMOUNT'], 2);
+            
+            // Email to RENTER
+            $renter_subject = "Refund Completed for Booking #$booking_id";
+            $renter_body = "
+                <p>Hello {$booking_data['RENTER_NAME']},</p>
+                <p>We are pleased to inform you that your <strong>refund has been completed</strong> for your cancelled booking.</p>
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                    <li>Booking ID: <strong>$booking_id</strong></li>
+                    <li>Car: <strong>$carName</strong></li>
+                    <li>Rental Period: <strong>$period</strong></li>
+                    <li>Refund Amount: <strong>RM $refundAmount</strong></li>
+                </ul>
+                <p>The refund has been processed and should appear in your account within 3-5 business days depending on your bank.</p>
+                <p>If you have any questions, please don't hesitate to contact our support team.</p>
+                <p>Thank you for your patience,<br>Car Rental Platform Team</p>
+            ";
+            
+            send_email($booking_data['RENTER_EMAIL'], $renter_subject, $renter_body);
+            
+            // Email to LESSOR
+            $lessor_subject = "Refund Completed for Booking #$booking_id";
+            $lessor_body = "
+                <p>Hello {$booking_data['LESSOR_NAME']},</p>
+                <p>This is to notify you that the <strong>refund has been completed</strong> for the cancelled booking of your vehicle.</p>
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                    <li>Booking ID: <strong>$booking_id</strong></li>
+                    <li>Car: <strong>$carName</strong></li>
+                    <li>Rental Period: <strong>$period</strong></li>
+                    <li>Refund Amount: <strong>RM $refundAmount</strong></li>
+                    <li>Renter: <strong>{$booking_data['RENTER_NAME']}</strong></li>
+                </ul>
+                <p>The refund has been processed to the renter.</p>
+                <p>Thank you,<br>Car Rental Platform Team</p>
+            ";
+            
+            send_email($booking_data['LESSOR_EMAIL'], $lessor_subject, $lessor_body);
+        }
+        
+        set_flash_message("Refund marked as completed for Booking #" . $booking_id . ". Notification emails sent.", "success");
+    } else {
+        $e = oci_error($update_stmt);
+        set_flash_message("Failed to update refund status: " . $e['message'], "error");
+    }
+    
+    oci_free_statement($update_stmt);
+    
+    // Redirect to avoid form resubmission
+    header("Location: manage_bookings.php" . ($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : ''));
+    exit();
 }
 
 // Handle search and filters
@@ -85,8 +177,10 @@ $cancelled_with_payment = []; // Track cancelled bookings that need refund
 while ($row = oci_fetch_assoc($stmt)) {
     $bookings[] = $row;
     
-    // Check if this is a cancelled booking with payment (needs refund)
-    if (strtoupper($row['BOOKING_STATUS']) == 'CANCELLED' && !empty($row['PAYMENTID']) && strtoupper($row['PAYMENT_STATUS']) == 'SUCCESS') {
+    // Check if this is a cancelled booking with payment that needs refund (not yet refunded)
+    if (strtoupper($row['BOOKING_STATUS']) == 'CANCELLED' && 
+        !empty($row['PAYMENTID']) && 
+        strtoupper($row['PAYMENT_STATUS']) == 'SUCCESS') {
         $cancelled_with_payment[] = $row;
     }
 }
@@ -168,6 +262,18 @@ oci_free_statement($stmt);
 
         .btn-primary:hover {
             background-color: #1d4ed8;
+        }
+
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
         }
 
         .table-container {
@@ -279,6 +385,13 @@ oci_free_statement($stmt);
             padding: 40px;
             color: #6b7280;
         }
+
+        .refund-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -287,19 +400,28 @@ oci_free_statement($stmt);
         
         <h1>Manage All Bookings</h1>
 
+        <?php display_flash_message(); ?>
+
         <!-- Refund Alert -->
         <?php if (!empty($cancelled_with_payment)): ?>
         <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
             <h3 style="color: #92400e; margin-bottom: 10px;">⚠️ Refund Required Alert</h3>
             <p style="color: #78350f; margin-bottom: 10px;"><strong><?php echo count($cancelled_with_payment); ?> cancelled booking(s) require refund processing:</strong></p>
-            <ul style="color: #78350f; margin-left: 20px;">
+            <ul style="color: #78350f; margin-left: 0; list-style: none;">
                 <?php foreach ($cancelled_with_payment as $refund_booking): ?>
-                <li>
-                    <strong>Booking #<?php echo htmlspecialchars($refund_booking['BOOKINGID']); ?></strong> - 
-                    <?php echo htmlspecialchars($refund_booking['BRAND'] . ' ' . $refund_booking['MODEL']); ?> - 
-                    <?php echo htmlspecialchars($refund_booking['RENTER_NAME']); ?> - 
-                    <strong>RM <?php echo number_format($refund_booking['TOTAL_AMOUNT'], 2); ?></strong>
-                    <a href="booking_details_admin.php?id=<?php echo $refund_booking['BOOKINGID']; ?>" style="color: #1d4ed8; margin-left: 10px;">View Details</a>
+                <li class="refund-item">
+                    <span>
+                        <strong>Booking #<?php echo htmlspecialchars($refund_booking['BOOKINGID']); ?></strong> - 
+                        <?php echo htmlspecialchars($refund_booking['BRAND'] . ' ' . $refund_booking['MODEL']); ?> - 
+                        <?php echo htmlspecialchars($refund_booking['RENTER_NAME']); ?> - 
+                        <strong>RM <?php echo number_format($refund_booking['TOTAL_AMOUNT'], 2); ?></strong>
+                        <a href="booking_details_admin.php?id=<?php echo $refund_booking['BOOKINGID']; ?>" style="color: #1d4ed8; margin-left: 10px;">View Details</a>
+                    </span>
+                    <form method="POST" style="display: inline;" onsubmit="return confirm('Have you completed the refund for this booking?');">
+                        <input type="hidden" name="mark_refund_done" value="1">
+                        <input type="hidden" name="booking_id" value="<?php echo $refund_booking['BOOKINGID']; ?>">
+                        <button type="submit" class="btn-success">✓ Done</button>
+                    </form>
                 </li>
                 <?php endforeach; ?>
             </ul>
@@ -370,13 +492,19 @@ oci_free_statement($stmt);
                                     <span class="status <?php echo strtolower($booking['BOOKING_STATUS']); ?>">
                                         <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?>
                                         <?php 
-                                        // Add refund indicator for cancelled bookings with successful payment
-                                        if (strtoupper($booking['BOOKING_STATUS']) == 'CANCELLED' && 
-                                            !empty($booking['PAYMENTID']) && 
-                                            strtoupper($booking['PAYMENT_STATUS']) == 'SUCCESS'): 
+                                        // Show refund status
+                                        if (strtoupper($booking['BOOKING_STATUS']) == 'CANCELLED' && !empty($booking['PAYMENTID'])): 
+                                            if (strtoupper($booking['PAYMENT_STATUS']) == 'SUCCESS'):
                                         ?>
                                             <span style="display: block; font-size: 10px; color: #dc2626; margin-top: 2px;">⚠ REFUND REQUIRED</span>
-                                        <?php endif; ?>
+                                        <?php 
+                                            elseif (strtoupper($booking['PAYMENT_STATUS']) == 'REFUNDED'):
+                                        ?>
+                                            <span style="display: block; font-size: 10px; color: #059669; margin-top: 2px;">✓ REFUND COMPLETED</span>
+                                        <?php 
+                                            endif;
+                                        endif; 
+                                        ?>
                                     </span>
                                 </td>
                                 <td>

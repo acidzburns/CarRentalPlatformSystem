@@ -101,6 +101,7 @@ $renter_subject = "Booking #$booking_id Has Been Cancelled by Admin";
 $renter_body = "
     <p>Hello {$booking['RENTER_NAME']},</p>
     <p>We regret to inform you that your booking has been <strong>cancelled by the system administrator</strong>.</p>
+    <p>Refund Information: Your refund will be processed and transferred within 24 - 48 hours.</p>
     <p><strong>Booking Details:</strong></p>
     <ul>
         <li>Booking ID: <strong>$booking_id</strong></li>
@@ -120,6 +121,7 @@ $lessor_subject = "Your Car Booking #$booking_id Was Cancelled by Admin";
 $lessor_body = "
     <p>Hello {$booking['LESSOR_NAME']},</p>
     <p>This is to notify you that a booking for your vehicle has been <strong>cancelled by the administrator</strong>.</p>
+    <p>Refund Information: Your refund will be processed and transferred within 24 - 48 hours.</p>
     <p><strong>Booking Details:</strong></p>
     <ul>
         <li>Booking ID: <strong>$booking_id</strong></li>

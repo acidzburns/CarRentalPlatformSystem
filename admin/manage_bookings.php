@@ -39,11 +39,14 @@ $query = "SELECT
             R.PHONE as RENTER_PHONE,
             L.NAME as LESSOR_NAME,
             L.EMAIL as LESSOR_EMAIL,
-            L.PHONE as LESSOR_PHONE
+            L.PHONE as LESSOR_PHONE,
+            P.PAYMENTID,
+            P.PAYMENT_STATUS
           FROM BOOKING B
           JOIN CAR C ON B.CARID = C.CARID
           JOIN RENTER R ON B.RENTERID = R.RENTERID
           JOIN LESSOR L ON C.LESSORID = L.LESSORID
+          LEFT JOIN PAYMENT P ON B.BOOKINGID = P.BOOKINGID
           WHERE 1=1";
 
 $bind_params = [];
@@ -78,8 +81,14 @@ foreach ($bind_params as $key => $value) {
 oci_execute($stmt);
 
 $bookings = [];
+$cancelled_with_payment = []; // Track cancelled bookings that need refund
 while ($row = oci_fetch_assoc($stmt)) {
     $bookings[] = $row;
+    
+    // Check if this is a cancelled booking with payment (needs refund)
+    if (strtoupper($row['BOOKING_STATUS']) == 'CANCELLED' && !empty($row['PAYMENTID']) && strtoupper($row['PAYMENT_STATUS']) == 'SUCCESS') {
+        $cancelled_with_payment[] = $row;
+    }
 }
 
 oci_free_statement($stmt);
@@ -278,6 +287,25 @@ oci_free_statement($stmt);
         
         <h1>Manage All Bookings</h1>
 
+        <!-- Refund Alert -->
+        <?php if (!empty($cancelled_with_payment)): ?>
+        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+            <h3 style="color: #92400e; margin-bottom: 10px;">⚠️ Refund Required Alert</h3>
+            <p style="color: #78350f; margin-bottom: 10px;"><strong><?php echo count($cancelled_with_payment); ?> cancelled booking(s) require refund processing:</strong></p>
+            <ul style="color: #78350f; margin-left: 20px;">
+                <?php foreach ($cancelled_with_payment as $refund_booking): ?>
+                <li>
+                    <strong>Booking #<?php echo htmlspecialchars($refund_booking['BOOKINGID']); ?></strong> - 
+                    <?php echo htmlspecialchars($refund_booking['BRAND'] . ' ' . $refund_booking['MODEL']); ?> - 
+                    <?php echo htmlspecialchars($refund_booking['RENTER_NAME']); ?> - 
+                    <strong>RM <?php echo number_format($refund_booking['TOTAL_AMOUNT'], 2); ?></strong>
+                    <a href="booking_details_admin.php?id=<?php echo $refund_booking['BOOKINGID']; ?>" style="color: #1d4ed8; margin-left: 10px;">View Details</a>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php endif; ?>
+
         <!-- Filters -->
         <form method="GET" class="filters">
             <input type="text" name="search" placeholder="Search by booking ID, car, renter, or lessor..." value="<?php echo htmlspecialchars($search); ?>">
@@ -341,6 +369,14 @@ oci_free_statement($stmt);
                                 <td>
                                     <span class="status <?php echo strtolower($booking['BOOKING_STATUS']); ?>">
                                         <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?>
+                                        <?php 
+                                        // Add refund indicator for cancelled bookings with successful payment
+                                        if (strtoupper($booking['BOOKING_STATUS']) == 'CANCELLED' && 
+                                            !empty($booking['PAYMENTID']) && 
+                                            strtoupper($booking['PAYMENT_STATUS']) == 'SUCCESS'): 
+                                        ?>
+                                            <span style="display: block; font-size: 10px; color: #dc2626; margin-top: 2px;">⚠ REFUND REQUIRED</span>
+                                        <?php endif; ?>
                                     </span>
                                 </td>
                                 <td>

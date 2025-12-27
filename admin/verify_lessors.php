@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $message .= "Thank you for joining our platform!\n\n";
                 $message .= "Best regards,\nCar Rental Platform Team";
                 
-                send_test_email($lessor_data['EMAIL'], $subject, $message);
+                send_email($lessor_data['EMAIL'], $subject, $message);
                 
                 $success = "Lessor account has been approved successfully! Confirmation email sent to {$lessor_data['EMAIL']}.";
             } else {
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $message .= "If you have questions, please contact our support team.\n\n";
                     $message .= "Best regards,\nCar Rental Platform Team";
                     
-                    send_test_email($lessor_data['EMAIL'], $subject, $message);
+                    send_email($lessor_data['EMAIL'], $subject, $message);
                     
                     $success = "Lessor account has been rejected. Notification email sent to {$lessor_data['EMAIL']}.";
                 } else {

@@ -6,6 +6,7 @@
 
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../config/email_test.php'; // your PHPMailer config
 
 // Check if admin is logged in
 require_login('admin');
@@ -19,13 +20,16 @@ if (empty($booking_id)) {
 }
 
 // Get booking details
-$query = "SELECT B.*, C.BRAND, C.MODEL, C.CARID, 
-          R.NAME as RENTER_NAME, L.NAME as LESSOR_NAME
+$query = "SELECT B.*, 
+          C.BRAND, C.MODEL, C.CARID,
+          R.NAME as RENTER_NAME, R.EMAIL as RENTER_EMAIL,
+          L.NAME as LESSOR_NAME, L.EMAIL as LESSOR_EMAIL
           FROM BOOKING B
           JOIN CAR C ON B.CARID = C.CARID
           JOIN RENTER R ON B.RENTERID = R.RENTERID
           JOIN LESSOR L ON C.LESSORID = L.LESSORID
           WHERE B.BOOKINGID = :booking_id";
+
 
 $stmt = oci_parse($conn, $query);
 oci_bind_by_name($stmt, ':booking_id', $booking_id);
@@ -84,6 +88,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Commit transaction
             oci_commit($conn);
             
+            // ================= SEND EMAIL NOTIFICATIONS =================
+
+// Common booking details
+$carName = $booking['BRAND'] . ' ' . $booking['MODEL'];
+$period = date('M d, Y', strtotime($booking['START_DATE'])) . 
+          ' - ' . 
+          date('M d, Y', strtotime($booking['END_DATE']));
+
+// -------- Email to RENTER --------
+$renter_subject = "Booking #$booking_id Has Been Cancelled by Admin";
+$renter_body = "
+    <p>Hello {$booking['RENTER_NAME']},</p>
+    <p>We regret to inform you that your booking has been <strong>cancelled by the system administrator</strong>.</p>
+    <p><strong>Booking Details:</strong></p>
+    <ul>
+        <li>Booking ID: <strong>$booking_id</strong></li>
+        <li>Car: <strong>$carName</strong></li>
+        <li>Rental Period: <strong>$period</strong></li>
+    </ul>
+    <p><strong>Reason Provided by Admin:</strong><br>" . htmlspecialchars($reason) . "</p>
+    <p>If you have any questions, please contact support.</p>
+    <p>Thank you,<br>Car Rental Platform Team</p>
+";
+
+send_email($booking['RENTER_EMAIL'], $renter_subject, $renter_body);
+
+
+// -------- Email to LESSOR --------
+$lessor_subject = "Your Car Booking #$booking_id Was Cancelled by Admin";
+$lessor_body = "
+    <p>Hello {$booking['LESSOR_NAME']},</p>
+    <p>This is to notify you that a booking for your vehicle has been <strong>cancelled by the administrator</strong>.</p>
+    <p><strong>Booking Details:</strong></p>
+    <ul>
+        <li>Booking ID: <strong>$booking_id</strong></li>
+        <li>Car: <strong>$carName</strong></li>
+        <li>Rental Period: <strong>$period</strong></li>
+        <li>Renter: <strong>{$booking['RENTER_NAME']}</strong></li>
+    </ul>
+    <p><strong>Reason Provided by Admin:</strong><br>" . htmlspecialchars($reason) . "</p>
+    <p>Your car has been set back to <strong>AVAILABLE</strong>.</p>
+    <p>Thank you,<br>Car Rental Platform Team</p>
+";
+
+send_email($booking['LESSOR_EMAIL'], $lessor_subject, $lessor_body);
+
+
             set_flash_message("Booking #" . $booking_id . " has been cancelled successfully. Reason: " . htmlspecialchars($reason), "success");
             header("Location: manage_bookings.php");
             exit();

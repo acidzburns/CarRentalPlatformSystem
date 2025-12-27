@@ -6,6 +6,7 @@
 
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once "../config/email_test.php";
 
 // Check if lessor is logged in
 require_login('lessor');
@@ -179,6 +180,30 @@ if ($action == 'complete') {
         // For now, just mark as cancelled
         oci_commit($conn);
         
+         // ===== EMAIL NOTIFICATION TO RENTER =====
+        // Get renter details
+        $sql_renter = "SELECT r.NAME, r.EMAIL 
+                       FROM BOOKING b 
+                       JOIN RENTER r ON b.RENTERID = r.RENTERID 
+                       WHERE b.BOOKINGID = :bookingid";
+
+        $stmt_renter = oci_parse($conn, $sql_renter);
+        oci_bind_by_name($stmt_renter, ':bookingid', $bookingid);
+        oci_execute($stmt_renter);
+        $renter = oci_fetch_assoc($stmt_renter);
+
+        if ($renter) {
+            $subject = "Booking Cancelled : Refund Processing";
+            $message  = "Dear {$renter['NAME']},\n\n";
+            $message .= "We regret to inform you that your booking (Booking ID: {$bookingid}) has been cancelled by the car owner.\n\n";
+            $message .= "Reason: {$cancel_reason}\n";
+            $message .= "Your refund will be processed and returned to your original payment method within 24–48 hours.\n\n";
+            $message .= "We apologize for the inconvenience.\n\n";
+            $message .= "Best regards,\nCar Rental Platform Team";
+
+            send_email($renter['EMAIL'], $subject, $message);
+        }
+
         set_flash_message(
             "Booking cancelled successfully. Renter will receive full refund. Reason: " . 
             htmlspecialchars($cancel_reason), 

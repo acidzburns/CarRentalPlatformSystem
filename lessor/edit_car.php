@@ -309,6 +309,7 @@ $current_features = !empty($car['FEATURES']) ? explode(', ', $car['FEATURES']) :
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Car - Car Rental</title>
+    <link rel="stylesheet" href="../assets/css/edit-car.css">
     <script>
         let selectedFiles = [];
         
@@ -389,6 +390,7 @@ $current_features = !empty($car['FEATURES']) ? explode(', ', $car['FEATURES']) :
             return true;
         }
     </script>
+   
 </head>
 <body>
     <nav>

@@ -15,7 +15,33 @@ $lessorid = get_user_id();
 // Get filter from URL (default: all)
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
 
-// UC20 Step 2: Retrieve all bookings for lessor's cars
+// Pagination settings
+$limit = 5;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
+
+// UC20 Step 2: Retrieve all bookings for lessor's cars (Count for pagination)
+$count_sql = "SELECT COUNT(*) as TOTAL
+              FROM BOOKING b
+              JOIN CAR c ON b.CARID = c.CARID
+              WHERE c.LESSORID = :lessorid";
+
+if ($status_filter != 'all') {
+    $count_sql .= " AND b.BOOKING_STATUS = :status";
+}
+
+$stmt_count = oci_parse($conn, $count_sql);
+oci_bind_by_name($stmt_count, ':lessorid', $lessorid);
+if ($status_filter != 'all') {
+    $status_upper = strtoupper($status_filter);
+    oci_bind_by_name($stmt_count, ':status', $status_upper);
+}
+oci_execute($stmt_count);
+$row_count = oci_fetch_assoc($stmt_count);
+$total_items = $row_count['TOTAL'];
+$total_pages = ceil($total_items / $limit);
+
+// Main Query with Pagination
 $sql = "SELECT b.BOOKINGID, b.START_DATE, b.END_DATE, b.BOOKING_STATUS, b.TOTAL_AMOUNT, b.CREATED_AT,
         c.CARID, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE, c.PHOTO1_PATH,
         r.RENTERID, r.NAME as RENTER_NAME, r.EMAIL as RENTER_EMAIL, r.PHONE as RENTER_PHONE,
@@ -29,15 +55,17 @@ $sql = "SELECT b.BOOKINGID, b.START_DATE, b.END_DATE, b.BOOKING_STATUS, b.TOTAL_
         LEFT JOIN PAYMENT p ON b.BOOKINGID = p.BOOKINGID
         WHERE c.LESSORID = :lessorid";
 
-// UC20 Step 4: Filter by status
 if ($status_filter != 'all') {
     $sql .= " AND b.BOOKING_STATUS = :status";
 }
 
-$sql .= " ORDER BY b.CREATED_AT DESC";
+$sql .= " ORDER BY b.CREATED_AT DESC 
+          OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY";
 
 $stmt = oci_parse($conn, $sql);
 oci_bind_by_name($stmt, ':lessorid', $lessorid);
+oci_bind_by_name($stmt, ':offset', $offset);
+oci_bind_by_name($stmt, ':limit', $limit);
 
 if ($status_filter != 'all') {
     $status_upper = strtoupper($status_filter);
@@ -76,80 +104,87 @@ $stats = oci_fetch_assoc($stmt_stats);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Bookings - Lessor</title>
+    <link rel="stylesheet" href="../assets/css/booking-management.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>Manage Bookings</h1>
-    
     <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="my_cars.php">My Cars</a> |
-        <a href="bookings.php">Bookings</a> |
-        <a href="earnings.php">Earnings</a> |
-        <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2>Car Rental System <span style="font-size:14px; font-weight:400; opacity:0.8;">| Lessor Panel</span></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars(get_user_name()); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="my_cars.php">My Cars</a>
+                <a href="bookings.php" class="active">Bookings</a>
+                <a href="earnings.php">Earnings</a>
+                <a href="submit_ticket.php">Support</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
+        </div>
     </nav>
     
-    <hr>
+    <div class="page-header">
+        <h1>Manage Bookings</h1>
+        <p>View and manage all booking requests for your vehicles</p>
+    </div>
     
-    <?php display_flash_message(); ?>
-    
-    <!-- UC20 Step 6: Display booking statistics -->
-    <h2>Booking Statistics</h2>
-    <p style="color: #666; font-size: 14px;">Note: Total Earned = Your actual earnings after 10% platform commission</p>
-    <table border="1">
-        <tr>
-            <th>Total Bookings</th>
-            <th>Pending</th>
-            <th>Confirmed</th>
-            <th>Completed</th>
-            <th>Cancelled</th>
-            <th>Total Earned</th>
-        </tr>
-        <tr>
-            <td><?php echo $stats['TOTAL']; ?></td>
-            <td><?php echo $stats['PENDING']; ?></td>
-            <td><?php echo $stats['CONFIRMED']; ?></td>
-            <td><?php echo $stats['COMPLETED']; ?></td>
-            <td><?php echo $stats['CANCELLED']; ?></td>
-            <td>RM <?php echo number_format($stats['TOTAL_EARNED'], 2); ?></td>
-        </tr>
-    </table>
-    
-    <hr>
-    
-    <!-- UC20 Step 4: Filter bookings -->
-    <h2>Filter Bookings</h2>
-    <a href="?status=all">All</a> |
-    <a href="?status=pending">Pending</a> |
-    <a href="?status=confirmed">Confirmed</a> |
-    <a href="?status=completed">Completed</a> |
-    <a href="?status=cancelled">Cancelled</a>
-    
-    <p>Showing: <strong><?php echo ucfirst($status_filter); ?></strong></p>
-    
-    <hr>
-    
-    <!-- UC20 Step 3: Display bookings -->
-    <h2>All Bookings (<?php echo count($bookings); ?>)</h2>
+    <div class="content-container">
+        <?php display_flash_message(); ?>
+        
+        <!-- Booking Statistics Card -->
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+            <h2 style="margin-top: 0;">Booking Statistics</h2>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Note: Total Earned = Your actual earnings after 10% platform commission</p>
+            <table border="1" class="stats-table">
+                <tr>
+                    <th>Total Bookings</th>
+                    <th>Pending</th>
+                    <th>Confirmed</th>
+                    <th>Completed</th>
+                    <th>Cancelled</th>
+                    <th>Total Earned</th>
+                </tr>
+                <tr>
+                    <td><?php echo $stats['TOTAL']; ?></td>
+                    <td><?php echo $stats['PENDING']; ?></td>
+                    <td><?php echo $stats['CONFIRMED']; ?></td>
+                    <td><?php echo $stats['COMPLETED']; ?></td>
+                    <td><?php echo $stats['CANCELLED']; ?></td>
+                    <td>RM <?php echo number_format($stats['TOTAL_EARNED'], 2); ?></td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Filter Bookings -->
+        <h2>Filter Bookings</h2>
+        <div class="filter-bar">
+            <a href="?status=all" class="<?php echo $status_filter == 'all' ? 'active' : ''; ?>">All</a>
+            <a href="?status=pending" class="<?php echo $status_filter == 'pending' ? 'active' : ''; ?>">Pending</a>
+            <a href="?status=confirmed" class="<?php echo $status_filter == 'confirmed' ? 'active' : ''; ?>">Confirmed</a>
+            <a href="?status=completed" class="<?php echo $status_filter == 'completed' ? 'active' : ''; ?>">Completed</a>
+            <a href="?status=cancelled" class="<?php echo $status_filter == 'cancelled' ? 'active' : ''; ?>">Cancelled</a>
+        </div>
+        <p style="margin: 15px 0;">Showing: <strong><?php echo ucfirst($status_filter); ?></strong></p>
+        
+        <!-- All Bookings -->
+        <h2>All Bookings</h2>
     
     <?php if (empty($bookings)): ?>
         <p>No bookings found.</p>
     <?php else: ?>
-        <?php foreach ($bookings as $booking): ?>
-            <div style="border: 1px solid #ccc; padding: 15px; margin: 15px 0; background: #f9f9f9;">
+        <?php foreach ($bookings as $booking): 
+            // Determine status class
+            $status_class = 'status-' . strtolower($booking['BOOKING_STATUS']);
+        ?>
+            <div class="booking-card">
                 <h3>Booking #<?php echo $booking['BOOKINGID']; ?> - 
-                    <span style="color: 
-                        <?php 
-                        echo $booking['BOOKING_STATUS'] == 'CONFIRMED' ? 'blue' : 
-                             ($booking['BOOKING_STATUS'] == 'COMPLETED' ? 'green' : 
-                             ($booking['BOOKING_STATUS'] == 'PENDING' ? 'orange' : 'red')); 
-                        ?>">
+                    <span class="status-badge <?php echo $status_class; ?>">
                         <?php echo $booking['BOOKING_STATUS']; ?>
                     </span>
                 </h3>
                 
                 <table border="1" style="width: 100%; margin: 10px 0;">
                     <tr>
-                        <th colspan="2" style="background: #ddd;">Car Details</th>
+                        <th colspan="2" class="section-header">Car Details</th>
                     </tr>
                     <tr>
                         <td><strong>Car:</strong></td>
@@ -161,7 +196,7 @@ $stats = oci_fetch_assoc($stmt_stats);
                     </tr>
                     
                     <tr>
-                        <th colspan="2" style="background: #ddd;">Renter Details</th>
+                        <th colspan="2" class="section-header">Renter Details</th>
                     </tr>
                     <tr>
                         <td><strong>Renter Name:</strong></td>
@@ -177,7 +212,7 @@ $stats = oci_fetch_assoc($stmt_stats);
                     </tr>
                     
                     <tr>
-                        <th colspan="2" style="background: #ddd;">Booking Details</th>
+                        <th colspan="2" class="section-header">Booking Details</th>
                     </tr>
                     <tr>
                         <td><strong>Rental Period:</strong></td>
@@ -243,9 +278,34 @@ $stats = oci_fetch_assoc($stmt_stats);
                 </div>
             </div>
         <?php endforeach; ?>
+
+        <!-- Pagination Controls -->
+        <?php if ($total_pages > 1): ?>
+        <div class="pagination">
+            <?php if ($page > 1): ?>
+                <a href="?status=<?php echo $status_filter; ?>&page=<?php echo $page - 1; ?>" class="page-link">&laquo; Previous</a>
+            <?php else: ?>
+                <span class="page-link disabled">&laquo; Previous</span>
+            <?php endif; ?>
+
+            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <a href="?status=<?php echo $status_filter; ?>&page=<?php echo $i; ?>" 
+                   class="page-link <?php echo ($i == $page) ? 'active' : ''; ?>">
+                   <?php echo $i; ?>
+                </a>
+            <?php endfor; ?>
+
+            <?php if ($page < $total_pages): ?>
+                <a href="?status=<?php echo $status_filter; ?>&page=<?php echo $page + 1; ?>" class="page-link">Next &raquo;</a>
+            <?php else: ?>
+                <span class="page-link disabled">Next &raquo;</span>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
     <?php endif; ?>
     
-    <hr>
-    <p><a href="dashboard.php">← Back to Dashboard</a></p>
+    <p style="margin-top: 30px;"><a href="dashboard.php">← Back to Dashboard</a></p>
+    </div>
 </body>
 </html>

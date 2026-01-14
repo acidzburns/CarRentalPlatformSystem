@@ -236,59 +236,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Car - Car Rental</title>
-    <style>
-        .photo-upload-container {
-            border: 2px dashed #ccc;
-            padding: 20px;
-            text-align: center;
-            background: #f9f9f9;
-        }
-        .photo-preview-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .photo-preview-item {
-            position: relative;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .photo-preview-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            display: block;
-        }
-        .photo-remove-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: red;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            line-height: 1;
-        }
-        .photo-remove-btn:hover {
-            background: darkred;
-        }
-        .photo-count {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        .photo-count.error {
-            color: red;
-        }
-        .photo-count.success {
-            color: green;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/add-car.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../assets/css/lessor-dashboard.css?v=<?php echo time(); ?>">
     <script>
         let selectedFiles = [];
         
@@ -393,20 +342,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body>
     <nav>
-        <h2>Car Rental System - Lessor Panel</h2>
-        <div>
-            <span>Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</span>
-            <a href="dashboard.php">Dashboard</a>
-            <a href="my_cars.php">My Cars</a>
-            <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2>Car Rental System <span style="font-size:14px; opacity:0.8; font-weight:400;">| Lessor Panel</span></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="my_cars.php">My Cars</a>
+                <a href="bookings.php">Bookings</a>
+                <a href="earnings.php">Earnings</a>
+                <a href="submit_ticket.php">Support</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
         </div>
     </nav>
     
-    <main>
-        <div>
-            <h1>List a New Car</h1>
-            <p>Fill in the details below to add your car to the platform</p>
-        </div>
+    <div class="page-header">
+        <h1>List a New Car</h1>
+        <p>Fill in the details below to add your car to the platform</p>
+    </div>
+    
+    <div class="content-container">
         
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
@@ -566,6 +521,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
         
         <?php endif; ?>
-    </main>
+    </div>
 </body>
 </html>

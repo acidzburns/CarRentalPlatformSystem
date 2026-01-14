@@ -86,18 +86,22 @@ if ($user_type == 'lessor') {
     $active_result = oci_fetch_assoc($stmt_active);
     
     if ($active_result['TOTAL'] > 0) {
+        log_message("Error: Renter $user_id has {$active_result['TOTAL']} active bookings.");
         set_flash_message("Cannot suspend user. User has active bookings. Please wait until bookings are completed or contact user to cancel.", "error");
         header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
         exit();
     }
 }
+log_message("No active bookings found for user $user_id.");
 
 // Handle suspension
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $reason = trim($_POST['reason']);
+    log_message("Suspension triggered. Reason: $reason");
     
     // Exception 3: Missing suspension reason
     if (empty($reason)) {
+        log_message("Error: Missing reason for suspension.");
         set_flash_message("Please provide a reason for suspension.", "error");
         header("Location: suspend_user.php?type=" . $user_type . "&id=" . $user_id);
         exit();
@@ -106,11 +110,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // UC23 Step 11-13: Suspend account
         if ($user_type == 'lessor') {
+            log_message("Suspending Lessor $user_id.");
             // For lessor: Change verification status to SUSPENDED
             $suspend_sql = "UPDATE LESSOR 
                            SET VERIFICATION_STATUS = 'SUSPENDED' 
                            WHERE LESSORID = :userid";
         } else {
+            log_message("Suspending Renter $user_id.");
             // ✅ NEW: For renter - add STATUS column handling
             // Check if STATUS column exists
             $check_column_sql = "SELECT COLUMN_NAME FROM USER_TAB_COLUMNS 
@@ -120,11 +126,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $column_exists = oci_fetch_assoc($stmt_check);
             
             if (!$column_exists) {
+                log_message("Adding STATUS column to RENTER table.");
                 // Add STATUS column to RENTER table
                 $add_column_sql = "ALTER TABLE RENTER ADD STATUS VARCHAR2(20) DEFAULT 'ACTIVE'";
                 $stmt_add = oci_parse($conn, $add_column_sql);
-                oci_execute($stmt_add);
-                oci_commit($conn);
+                if (!oci_execute($stmt_add)) {
+                    $e = oci_error($stmt_add);
+                    log_message("Failed to add STATUS column: " . $e['message']);
+                    // Decide if this should be a fatal error or just logged. For now, log and continue.
+                } else {
+                    oci_commit($conn);
+                    log_message("STATUS column added to RENTER table.");
+                }
             }
             
             // Now suspend the renter
@@ -138,35 +151,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (oci_execute($stmt_suspend)) {
             oci_commit($conn);
+            log_message("Database update successful. User $user_id STATUS set to SUSPENDED.");
             
-            require_once "../config/email_test.php";
+            try {
+                // Check if email file exists
+                if (file_exists("../config/email_test.php")) {
+                    log_message("Attempting to send suspension email to " . $user['EMAIL'] . ".");
+                    require_once "../config/email_test.php";
 
-$admin_email = "carrentalplatformsystem@gmail.com"; // Use real admin email
-$subject = "Your Account Has Been Suspended";
+                    $admin_email = "carrentalplatformsystem@gmail.com"; 
+                    $subject = "Your Account Has Been Suspended";
 
-$message  = "Dear {$user['NAME']},<br><br>";
-$message .= "Your account on Car Rental Platform has been temporarily suspended by the administrator.<br><br>";
-$message .= "<strong>Reason for suspension:</strong> {$reason}<br><br>";
-$message .= "During this period, you will be unable to login or access any features of the platform.<br><br>";
-$message .= "If you have questions or would like to appeal, please contact the admin only via email: {$admin_email}<br><br>";
-$message .= "Thank you for your understanding.<br><br>";
-$message .= "Best regards,<br>Car Rental Platform Team";
+                    $message  = "Dear {$user['NAME']},<br><br>";
+                    $message .= "Your account on Car Rental Platform has been temporarily suspended by the administrator.<br><br>";
+                    $message .= "<strong>Reason for suspension:</strong> {$reason}<br><br>";
+                    $message .= "During this period, you will be unable to login or access any features of the platform.<br><br>";
+                    $message .= "If you have questions or would like to appeal, please contact the admin only via email: {$admin_email}<br><br>";
+                    $message .= "Thank you for your understanding.<br><br>";
+                    $message .= "Best regards,<br>Car Rental Platform Team";
 
-send_email($user['EMAIL'], $subject, $message);
+                    if (function_exists('send_email')) {
+                        send_email($user['EMAIL'], $subject, $message);
+                        log_message("Suspension email sent successfully to " . $user['EMAIL'] . ".");
+                    } else {
+                        log_message("Error: send_email function not found in email_test.php.");
+                    }
+                } else {
+                    log_message("Warning: ../config/email_test.php not found. Email not sent.");
+                }
+            } catch (Exception $e) {
+                log_message("Email sending error (ignored): " . $e->getMessage());
+                // Silently fail email or log it, but don't stop the suspension
+                // verify_lessors.php does something similar
+            }
 
             // Log suspension (in production: create ADMIN_ACTIONS table)
             // UC23: System sends suspension notification to user (simulated)
             
             set_flash_message("User account suspended successfully. Reason: " . htmlspecialchars($reason), "success");
+            log_message("User $user_id suspended successfully. Redirecting to manage_users.php.");
             header("Location: manage_users.php");
             exit();
         } else {
             $e = oci_error($stmt_suspend);
+            log_message("Database update FAILED for user $user_id: " . $e['message']);
             set_flash_message("Failed to suspend user: " . $e['message'], "error");
             header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
             exit();
         }
     } catch (Exception $e) {
+        log_message("An unexpected exception occurred during suspension for user $user_id: " . $e->getMessage());
         set_flash_message("An error occurred: " . $e->getMessage(), "error");
         header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
         exit();

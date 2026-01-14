@@ -33,39 +33,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (db_execute($update_query, ['ticketid' => $ticket_id])) {
                 $_SESSION['success'] = 'Ticket #' . $ticket_id . ' has been resolved.';
                 
-                // Log resolution (you could add RESOLUTION field to TICKET table)
-                // For now, admin can add notes manually
                 // --- EMAIL NOTIFICATION TO USER ---
-    // 1. Fetch ticket info (user type and email)
-    $ticket_info = db_fetch_one("SELECT RENTERID, LESSORID, SUBJECT, DESCRIPTION 
-                                 FROM TICKET WHERE TICKETID = :ticketid", 
-                                 ['ticketid' => $ticket_id]);
+                $ticket_info = db_fetch_one("SELECT RENTERID, LESSORID, SUBJECT, DESCRIPTION 
+                                             FROM TICKET WHERE TICKETID = :ticketid", 
+                                             ['ticketid' => $ticket_id]);
 
-    if ($ticket_info) {
-        if (!empty($ticket_info['RENTERID'])) {
-            $user_email = db_fetch_one("SELECT EMAIL, NAME FROM RENTER WHERE RENTERID = :id", ['id' => $ticket_info['RENTERID']]);
-            $user_name = $user_email['NAME'] ?? 'Renter';
-            $to_email = $user_email['EMAIL'];
-        } elseif (!empty($ticket_info['LESSORID'])) {
-            $user_email = db_fetch_one("SELECT EMAIL, NAME FROM LESSOR WHERE LESSORID = :id", ['id' => $ticket_info['LESSORID']]);
-            $user_name = $user_email['NAME'] ?? 'Lessor';
-            $to_email = $user_email['EMAIL'];
-        }
-        
-        if (!empty($to_email)) {
-            $subject_email = "Your Support Ticket #$ticket_id has been resolved";
-            $body_email = "
-                <p>Hello {$user_name},</p>
-                <p>Your support ticket <strong>#{$ticket_id}</strong> has been resolved by the admin.</p>
-                <p><strong>Subject:</strong> {$ticket_info['SUBJECT']}</p>
-                <p><strong>Description:</strong><br>" . nl2br(htmlspecialchars($ticket_info['DESCRIPTION'])) . "</p>
-                <p>If you have further issues, please reply or submit a new ticket.</p>
-                <p>Thank you,<br>Car Rental Platform Team</p>
-            ";
+                if ($ticket_info) {
+                    if (!empty($ticket_info['RENTERID'])) {
+                        $user_email = db_fetch_one("SELECT EMAIL, NAME FROM RENTER WHERE RENTERID = :id", ['id' => $ticket_info['RENTERID']]);
+                        $user_name = $user_email['NAME'] ?? 'Renter';
+                        $to_email = $user_email['EMAIL'];
+                    } elseif (!empty($ticket_info['LESSORID'])) {
+                        $user_email = db_fetch_one("SELECT EMAIL, NAME FROM LESSOR WHERE LESSORID = :id", ['id' => $ticket_info['LESSORID']]);
+                        $user_name = $user_email['NAME'] ?? 'Lessor';
+                        $to_email = $user_email['EMAIL'];
+                    }
+                    
+                    if (!empty($to_email)) {
+                        $subject_email = "Your Support Ticket #$ticket_id has been resolved";
+                        $body_email = "
+                            <p>Hello {$user_name},</p>
+                            <p>Your support ticket <strong>#{$ticket_id}</strong> has been resolved by the admin.</p>
+                            <p><strong>Subject:</strong> {$ticket_info['SUBJECT']}</p>
+                            <p><strong>Description:</strong><br>" . nl2br(htmlspecialchars($ticket_info['DESCRIPTION'])) . "</p>
+                            <p>If you have further issues, please reply or submit a new ticket.</p>
+                            <p>Thank you,<br>Car Rental Platform Team</p>
+                        ";
 
-            send_email($to_email, $subject_email, $body_email);
-        }
-    }
+                        send_email($to_email, $subject_email, $body_email);
+                    }
+                }
             } else {
                 $_SESSION['error'] = 'Failed to resolve ticket.';
             }
@@ -141,149 +138,218 @@ $total_tickets = array_sum($status_counts);
 
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Manage Support Tickets - Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Tickets | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/manage_tickets.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>Support Ticket Management</h1>
-    <p>Admin: <?php echo htmlspecialchars($admin_name); ?></p>
-    <a href="dashboard.php">Dashboard</a> | <a href="../auth/logout.php">Logout</a>
-    <hr>
-    
-    <?php if (isset($_SESSION['success'])): ?>
-        <div style="background: lightgreen; padding: 10px; margin: 10px 0;">
-            <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
-        </div>
-    <?php endif; ?>
-    
-    <?php if (isset($_SESSION['error'])): ?>
-        <div style="background: #ffcccc; padding: 10px; margin: 10px 0;">
-            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-        </div>
-    <?php endif; ?>
-    
-    <!-- Filter by Status -->
-    <h2>Tickets Overview</h2>
-    <p>
-        <strong>Total Tickets: <?php echo $total_tickets; ?></strong> | 
-        Open: <?php echo $status_counts['OPEN'] ?? 0; ?> | 
-        Resolved: <?php echo $status_counts['RESOLVED'] ?? 0; ?>
-    </p>
-    
-    <p>Filter by Status:</p>
-    <a href="?status=ALL" style="padding: 5px 10px; <?php echo $status_filter === 'ALL' ? 'background: #007bff; color: white;' : 'background: #f0f0f0;'; ?>">
-        All (<?php echo $total_tickets; ?>)
-    </a>
-    <a href="?status=OPEN" style="padding: 5px 10px; <?php echo $status_filter === 'OPEN' ? 'background: #007bff; color: white;' : 'background: #f0f0f0;'; ?>">
-        Open (<?php echo $status_counts['OPEN'] ?? 0; ?>)
-    </a>
-    <a href="?status=RESOLVED" style="padding: 5px 10px; <?php echo $status_filter === 'RESOLVED' ? 'background: #007bff; color: white;' : 'background: #f0f0f0;'; ?>">
-        Resolved (<?php echo $status_counts['RESOLVED'] ?? 0; ?>)
-    </a>
-    
-    <hr>
-    
-    <!-- Tickets List -->
-    <h2>Support Tickets (<?php echo count($tickets); ?>)</h2>
-    
-    <?php if (empty($tickets)): ?>
-        <p>No tickets found.</p>
-    <?php else: ?>
-        <?php foreach ($tickets as $ticket): ?>
-        <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; background: #fafafa;">
-            <table width="100%">
-                <tr>
-                    <td width="70%">
-                        <h3 style="margin: 0;">
-                            TICKET-<?php echo $ticket['TICKETID']; ?>: 
-                            <?php echo htmlspecialchars($ticket['SUBJECT']); ?>
-                        </h3>
-                        <p style="margin: 5px 0;">
-                            <strong>From:</strong> 
-                            <?php 
-                            if ($ticket['RENTERID']) {
-                                echo htmlspecialchars($ticket['RENTER_NAME']) . ' (Renter) - ' . $ticket['RENTER_EMAIL'];
-                            } elseif ($ticket['LESSORID']) {
-                                echo htmlspecialchars($ticket['LESSOR_NAME']) . ' (Lessor) - ' . $ticket['LESSOR_EMAIL'];
-                            }
-                            ?>
-                        </p>
-                        <p style="margin: 5px 0;">
-                            <strong>Submitted:</strong> <?php echo $ticket['CREATED_AT_F']; ?>
-                        </p>
-                        <p style="margin: 5px 0;">
-                            <strong>Assigned To:</strong> <?php echo htmlspecialchars($ticket['ADMIN_NAME'] ?? 'Unassigned'); ?>
-                        </p>
-                    </td>
-                    <td width="30%" align="right">
-                        <?php if ($ticket['STATUS'] === 'OPEN'): ?>
-                            <span style="background: orange; color: white; padding: 5px 15px; border-radius: 3px;">
-                                ⚠ OPEN
-                            </span>
-                        <?php else: ?>
-                            <span style="background: green; color: white; padding: 5px 15px; border-radius: 3px;">
-                                ✓ RESOLVED
-                            </span>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            </table>
-            
-            <div style="background: white; padding: 10px; margin: 10px 0; border-left: 3px solid #007bff;">
-                <strong>Description:</strong><br>
-                <?php echo nl2br(htmlspecialchars($ticket['DESCRIPTION'])); ?>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
+        
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
+        
+        <a href="manage_users.php">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php" class="active">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Header -->
+        <header class="page-header">
+            <div>
+                <h2>🎫 Ticket Management</h2>
+                <p>Handling support request from active users</p>
             </div>
-            
-            <!-- Actions -->
-            <div style="margin-top: 10px;">
-                <?php if ($ticket['STATUS'] === 'OPEN'): ?>
-                    <?php if ($ticket['ADMINID'] != $admin_id): ?>
-                        <form method="POST" style="display: inline;">
-                            <input type="hidden" name="action" value="assign">
-                            <input type="hidden" name="ticket_id" value="<?php echo $ticket['TICKETID']; ?>">
-                            <button type="submit" style="padding: 5px 15px; background: #17a2b8; color: white; border: none;">
-                                Assign to Me
+            <div class="admin-badge">
+                <i class="fas fa-headset"></i>
+                Rep: <?php echo htmlspecialchars($admin_name); ?>
+            </div>
+        </header>
+
+        <!-- Alert Messages -->
+        <?php if (isset($_SESSION['success'])): ?>
+            <div style="background: #ecfdf5; color: #059669; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #d1fae5;">
+                <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['error'])): ?>
+            <div style="background: #fef2f2; color: #dc2626; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #fee2e2;">
+                <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Statistics Section -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <p>All Requests</p>
+                <h3><?php echo $total_tickets; ?></h3>
+            </div>
+            <div class="stat-card" style="border-bottom: 4px solid #ea580c;">
+                <p>Pending Issues</p>
+                <h3><?php echo $status_counts['OPEN'] ?? 0; ?></h3>
+            </div>
+            <div class="stat-card" style="border-bottom: 4px solid #059669;">
+                <p>Resolved</p>
+                <h3><?php echo $status_counts['RESOLVED'] ?? 0; ?></h3>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <nav class="filter-tabs">
+            <a href="?status=ALL" class="filter-tab <?php echo $status_filter === 'ALL' ? 'active' : ''; ?>">All Status</a>
+            <a href="?status=OPEN" class="filter-tab <?php echo $status_filter === 'OPEN' ? 'active' : ''; ?>">Open (<?php echo $status_counts['OPEN'] ?? 0; ?>)</a>
+            <a href="?status=RESOLVED" class="filter-tab <?php echo $status_filter === 'RESOLVED' ? 'active' : ''; ?>">Resolved</a>
+        </nav>
+
+        <!-- Tickets Section -->
+        <section>
+            <?php if (empty($tickets)): ?>
+                <div style="padding: 100px; text-align: center; color: #64748b;">
+                    <i class="fas fa-inbox-open" style="font-size: 50px; margin-bottom: 20px; opacity: 0.2;"></i>
+                    <p>Clean inbox! No support tickets found.</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($tickets as $ticket): ?>
+                <div class="ticket-card">
+                    <div class="ticket-header">
+                        <div class="ticket-info">
+                            <h3 class="ticket-title">
+                                #<?php echo $ticket['TICKETID']; ?>: <?php echo htmlspecialchars($ticket['SUBJECT']); ?>
+                            </h3>
+                            <div class="ticket-meta">
+                                <span class="meta-item">
+                                    <strong>Sender:</strong> 
+                                    <?php 
+                                    if ($ticket['RENTERID']) {
+                                        echo htmlspecialchars($ticket['RENTER_NAME']) . ' (Renter)';
+                                    } elseif ($ticket['LESSORID']) {
+                                        echo htmlspecialchars($ticket['LESSOR_NAME']) . ' (Lessor)';
+                                    }
+                                    ?>
+                                </span>
+                                <span class="meta-item">
+                                    <strong>Email:</strong> <?php echo htmlspecialchars($ticket['RENTER_EMAIL'] ?? $ticket['LESSOR_EMAIL']); ?>
+                                </span>
+                                <span class="meta-item">
+                                    <strong>Date:</strong> <?php echo $ticket['CREATED_AT_F']; ?>
+                                </span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-<?php echo strtolower($ticket['STATUS']); ?>">
+                            <?php echo $ticket['STATUS']; ?>
+                        </span>
+                    </div>
+                    
+                    <div class="ticket-body">
+                        <strong>Inquiry Details:</strong>
+                        <p><?php echo nl2br(htmlspecialchars($ticket['DESCRIPTION'])); ?></p>
+                    </div>
+
+                    <div class="ticket-actions">
+                        <?php if ($ticket['STATUS'] === 'OPEN'): ?>
+                            <?php if ($ticket['ADMINID'] != $admin_id): ?>
+                                <form method="POST">
+                                    <input type="hidden" name="action" value="assign">
+                                    <input type="hidden" name="ticket_id" value="<?php echo $ticket['TICKETID']; ?>">
+                                    <button type="submit" class="btn btn-blue">
+                                        <i class="fas fa-user-tag"></i> Assign to Me
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                            
+                            <button onclick="toggleResolutionForm(<?php echo $ticket['TICKETID']; ?>)" class="btn btn-green">
+                                <i class="fas fa-check-circle"></i> Resolve
                             </button>
-                        </form>
-                    <?php endif; ?>
-                    
-                    <button onclick="document.getElementById('resolve_<?php echo $ticket['TICKETID']; ?>').style.display='block'" 
-                            style="padding: 5px 15px; background: #28a745; color: white; border: none;">
-                        Resolve Ticket
-                    </button>
-                    
-                    <!-- Resolve Form (Hidden) -->
-                    <div id="resolve_<?php echo $ticket['TICKETID']; ?>" style="display: none; margin-top: 10px; background: #e9f7ef; padding: 10px;">
+                        <?php else: ?>
+                            <form method="POST">
+                                <input type="hidden" name="action" value="reopen">
+                                <input type="hidden" name="ticket_id" value="<?php echo $ticket['TICKETID']; ?>">
+                                <button type="submit" class="btn btn-orange">
+                                    <i class="fas fa-undo"></i> Reopen
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Resolution Panel -->
+                    <div id="resolve_<?php echo $ticket['TICKETID']; ?>" class="resolution-panel">
                         <form method="POST">
                             <input type="hidden" name="action" value="resolve">
                             <input type="hidden" name="ticket_id" value="<?php echo $ticket['TICKETID']; ?>">
-                            
-                            <label>Resolution Notes:</label><br>
-                            <textarea name="resolution" rows="3" style="width: 100%; padding: 5px;" required
-                                      placeholder="Describe how you resolved this issue..."></textarea><br><br>
-                            
-                            <button type="submit" style="padding: 5px 15px; background: #28a745; color: white; border: none;">
-                                Confirm Resolution
-                            </button>
-                            <button type="button" onclick="document.getElementById('resolve_<?php echo $ticket['TICKETID']; ?>').style.display='none'"
-                                    style="padding: 5px 15px; background: #6c757d; color: white; border: none;">
-                                Cancel
-                            </button>
+                            <label>Internal Resolution Notes</label>
+                            <textarea name="resolution" rows="3" placeholder="Provide details on how the issue was resolved..."></textarea>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="submit" class="btn btn-green">Submit Resolution</button>
+                                <button type="button" onclick="toggleResolutionForm(<?php echo $ticket['TICKETID']; ?>)" class="btn btn-secondary">Discard</button>
+                            </div>
                         </form>
                     </div>
-                <?php else: ?>
-                    <form method="POST" style="display: inline;">
-                        <input type="hidden" name="action" value="reopen">
-                        <input type="hidden" name="ticket_id" value="<?php echo $ticket['TICKETID']; ?>">
-                        <button type="submit" style="padding: 5px 15px; background: #ffc107; color: black; border: none;">
-                            Reopen Ticket
-                        </button>
-                    </form>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </section>
+
+    </main>
+
+    <script>
+        function toggleResolutionForm(ticketId) {
+            const form = document.getElementById('resolve_' + ticketId);
+            form.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
+
+        <p style="text-align: center; margin: 20px 0;">
+            <a href="dashboard.php" style="color: white; text-decoration: none; font-weight: 600;">← Back to Dashboard</a>
+        </p>
+    </div>
+
+    <script>
+        function toggleResolutionForm(ticketId) {
+            const form = document.getElementById('resolve_' + ticketId);
+            if (form.classList.contains('active')) {
+                form.classList.remove('active');
+            } else {
+                // Close all other forms first
+                document.querySelectorAll('.resolution-form').forEach(f => {
+                    f.classList.remove('active');
+                });
+                form.classList.add('active');
+            }
+        }
+    </script>
 </body>
 </html>

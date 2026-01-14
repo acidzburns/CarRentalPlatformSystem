@@ -118,9 +118,63 @@ if ($lessor_id > 0) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lessor Details - Admin Panel</title>
+    <link rel="stylesheet" href="../assets/css/verify-lessor-details.css" />
+    <style>
+        /* === BUTTON IMPROVEMENTS ONLY === */
+
+        form[method="POST"] button[type="submit"],
+        button[type="button"],
+        a {
+            font-weight: 600;
+            padding: 10px 22px;
+            margin: 8px 8px 8px 0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+            user-select: none;
+        }
+
+        form[method="POST"] button[type="submit"] {
+            background: #22c55e;
+            color: white;
+            box-shadow: 0 4px 12px rgba(34,197,94,0.4);
+        }
+        form[method="POST"] button[type="submit"]:hover {
+            background: #16a34a;
+            box-shadow: 0 6px 18px rgba(22,163,74,0.6);
+            transform: translateY(-2px);
+        }
+
+        button[type="button"] {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+        }
+        button[type="button"]:hover {
+            background: #dc2626;
+            box-shadow: 0 6px 18px rgba(220,38,38,0.6);
+            transform: translateY(-2px);
+        }
+
+        a {
+            background: #e5e7eb;
+            color: #374151;
+            line-height: 2.2rem;
+        }
+        a:hover {
+            background: #d1d5db;
+            color: #1f2937;
+            text-decoration: none;
+        }
+    </style>
+
     <script>
         function showRejectModal() {
             document.getElementById('reject_modal').style.display = 'block';
@@ -288,8 +342,8 @@ if ($lessor_id > 0) {
                     <h2>Verification Actions</h2>
                     
                     <form method="POST" style="display:inline;" onsubmit="return confirmApprove('<?php echo htmlspecialchars($lessor['NAME']); ?>')">
-                        <input type="hidden" name="action" value="approve">
-                        <input type="hidden" name="lessor_id" value="<?php echo $lessor['LESSORID']; ?>">
+                        <input type="hidden" name="action" value="approve" />
+                        <input type="hidden" name="lessor_id" value="<?php echo $lessor['LESSORID']; ?>" />
                         <button type="submit">✓ Approve Lessor</button>
                     </form>
                     
@@ -313,15 +367,15 @@ if ($lessor_id > 0) {
             <p>You are about to reject: <strong><?php echo isset($lessor) ? htmlspecialchars($lessor['NAME']) : ''; ?></strong></p>
             
             <form method="POST">
-                <input type="hidden" name="action" value="reject">
-                <input type="hidden" name="lessor_id" value="<?php echo isset($lessor) ? $lessor['LESSORID'] : ''; ?>">
+                <input type="hidden" name="action" value="reject" />
+                <input type="hidden" name="lessor_id" value="<?php echo isset($lessor) ? $lessor['LESSORID'] : ''; ?>" />
                 
                 <div>
                     <label for="rejection_reason">Reason for Rejection *</label>
                     <textarea id="rejection_reason" name="rejection_reason" rows="4" required placeholder="Please provide a clear reason for rejection (e.g., unclear documents, invalid information)..."></textarea>
                 </div>
                 
-                <div>
+                <div style="margin-top: 15px;">
                     <button type="submit">Confirm Rejection</button>
                     <button type="button" onclick="closeRejectModal()">Cancel</button>
                 </div>

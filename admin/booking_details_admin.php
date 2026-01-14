@@ -69,154 +69,53 @@ if (!$booking) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Details - Admin</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #2563eb;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .status {
-            padding: 6px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            display: inline-block;
-        }
-
-        .status.pending { background-color: #fef3c7; color: #92400e; }
-        .status.approved { background-color: #d1fae5; color: #065f46; }
-        .status.ongoing { background-color: #dbeafe; color: #1e40af; }
-        .status.completed { background-color: #e0e7ff; color: #3730a3; }
-        .status.cancelled { background-color: #fee2e2; color: #991b1b; }
-        .status.rejected { background-color: #fecaca; color: #7f1d1d; }
-
-        .content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .card h2 {
-            color: #333;
-            font-size: 18px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .detail-value {
-            color: #111827;
-            font-weight: 600;
-            text-align: right;
-        }
-
-        .user-link {
-            color: #2563eb;
-            text-decoration: none;
-        }
-
-        .user-link:hover {
-            text-decoration: underline;
-        }
-
-        .actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-danger {
-            background-color: #ef4444;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #dc2626;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-    </style>
+    <title>Booking Details | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/booking_details_admin.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <div class="container">
-        <a href="manage_bookings.php" class="back-link">← Back to Bookings</a>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
         
-        <div class="header">
-            <h1>Booking #<?php echo htmlspecialchars($booking['BOOKINGID']); ?></h1>
-            <span class="status <?php echo strtolower($booking['BOOKING_STATUS']); ?>">
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
+        
+        <a href="manage_users.php">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php" class="active">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2><i class="fas fa-file-invoice"></i> Booking #<?php echo htmlspecialchars($booking['BOOKINGID']); ?></h2>
+            <span class="status-badge status-<?php echo strtolower($booking['BOOKING_STATUS']); ?>">
                 <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?>
             </span>
             
@@ -228,29 +127,30 @@ if (!$booking) {
             
             if ($needs_refund): 
             ?>
-                <div style="background-color: #fee2e2; border: 2px solid #dc2626; padding: 15px; margin-top: 20px; border-radius: 8px;">
-                    <h3 style="color: #991b1b; margin-bottom: 10px;">⚠️ REFUND REQUIRED</h3>
-                    <p style="color: #7f1d1d; margin: 0;">
+                <div class="alert alert-danger">
+                    <h3><i class="fas fa-exclamation-triangle"></i> REFUND REQUIRED</h3>
+                    <p>
                         This booking was cancelled AFTER payment was made. 
                         <strong>Refund amount: RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></strong>
                     </p>
-                    <p style="color: #7f1d1d; margin-top: 10px; font-size: 14px;">
+                    <p style="margin-top: 10px; font-size: 14px;">
                         Please process the refund to: <?php echo htmlspecialchars($booking['RENTER_EMAIL']); ?>
                     </p>
                 </div>
             <?php elseif (strtoupper($booking['BOOKING_STATUS']) == 'CANCELLED' && empty($booking['PAYMENTID'])): ?>
-                <div style="background-color: #e0f2fe; border: 2px solid #0284c7; padding: 15px; margin-top: 20px; border-radius: 8px;">
-                    <p style="color: #075985; margin: 0;">
-                        ℹ️ This booking was cancelled BEFORE payment. No refund required.
+                <div class="alert alert-info">
+                    <p>
+                        <i class="fas fa-info-circle"></i> This booking was cancelled BEFORE payment. No refund required.
                     </p>
                 </div>
             <?php endif; ?>
         </div>
 
-        <div class="content">
+        <!-- Details Grid -->
+        <div class="details-grid">
             <!-- Booking Information -->
-            <div class="card">
-                <h2>Booking Information</h2>
+            <div class="detail-card">
+                <h3>Booking Information</h3>
                 <div class="detail-row">
                     <span class="detail-label">Booking ID</span>
                     <span class="detail-value"><?php echo htmlspecialchars($booking['BOOKINGID']); ?></span>
@@ -389,6 +289,11 @@ if (!$booking) {
             
 
 
+            <div style="margin-top: 20px;">
+                <a href="manage_bookings.php" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Bookings
+                </a>
+            </div>
         </div>
     </div>
 </body>

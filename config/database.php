@@ -1,174 +1,119 @@
 <?php
-/**
- * Database Configuration File
- * Oracle Database Connection using OCI8
- * 
- * Make sure you have Oracle Instant Client and PHP OCI8 extension installed
- */
-
-// Database Configuration
+// Database Configuration for Oracle 23ai
 define('DB_HOST', 'localhost');
 define('DB_PORT', '1521');
-define('DB_SERVICE_NAME', 'FREEPDB1');
-define('DB_USERNAME', 'car');
-define('DB_PASSWORD', 'car');
+define('DB_SERVICE_NAME', 'freepdb1');
+define('DB_USERNAME', 'CAR');
+define('DB_PASSWORD', 'carRental');
 
-// Character set
-define('DB_CHARSET', 'AL32UTF8');
+// Connection String
+$tns = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=" . DB_HOST . ")(PORT=" . DB_PORT . "))(CONNECT_DATA=(SERVICE_NAME=" . DB_SERVICE_NAME . ")))";
 
-// Create connection string
-$connection_string = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=".DB_HOST.")(PORT=".DB_PORT."))(CONNECT_DATA=(SERVICE_NAME=".DB_SERVICE_NAME.")))";
+$conn = oci_connect(DB_USERNAME, DB_PASSWORD, $tns);
 
-// Establish connection
-$conn = oci_connect(DB_USERNAME, DB_PASSWORD, $connection_string, DB_CHARSET);
-
-// Check if connection was successful
 if (!$conn) {
-    $error = oci_error();
-    die("Database Connection Failed: " . htmlentities($error['message'], ENT_QUOTES));
+    $e = oci_error();
+    die("Database Connection Failed: " . $e['message']);
 }
 
 /**
- * Execute SELECT query and return results as associative array
- * 
- * @param string $sql SQL query with bind variables (e.g., :email)
- * @param array $params Associative array of parameters (e.g., ['email' => 'test@example.com'])
- * @return array|false Returns array of results or false on error
+ * Helper: db_query
+ * Used for SELECT queries (returns multiple rows)
  */
 function db_query($sql, $params = []) {
     global $conn;
+    $stid = oci_parse($conn, $sql);
     
-    // Parse the SQL statement
-    $stmt = oci_parse($conn, $sql);
+    foreach ($params as $key => &$val) {
+        oci_bind_by_name($stid, ":" . $key, $val);
+    }
     
-    if (!$stmt) {
-        $error = oci_error($conn);
+    if (!@oci_execute($stid)) {
         return false;
     }
     
-    // Bind parameters if provided
-    foreach ($params as $key => $value) {
-        // Remove colon if present in key
-        $bind_key = (strpos($key, ':') === 0) ? $key : ':' . $key;
-        oci_bind_by_name($stmt, $bind_key, $params[$key]);
+    $results = [];
+    while ($row = oci_fetch_array($stid, OCI_ASSOC + OCI_RETURN_NULLS)) {
+        $results[] = $row;
     }
-    
-    // Execute the statement
-    $result = oci_execute($stmt);
-    
-    if (!$result) {
-        $error = oci_error($stmt);
-        oci_free_statement($stmt);
-        return false;
-    }
-    
-    // Fetch all results
-    $rows = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $rows[] = $row;
-    }
-    
-    oci_free_statement($stmt);
-    return $rows;
+    oci_free_statement($stid);
+    return $results;
 }
 
 /**
- * Execute INSERT/UPDATE/DELETE and return affected rows
- * 
- * @param string $sql SQL query with bind variables
- * @param array $params Associative array of parameters
- * @return bool Returns true on success, false on failure
+ * Helper: db_fetch_one
+ * Used for Login (returns single row)
+ */
+function db_fetch_one($sql, $params = []) {
+    global $conn;
+    $stid = oci_parse($conn, $sql);
+    
+    foreach ($params as $key => &$val) {
+        oci_bind_by_name($stid, ":" . $key, $val);
+    }
+    
+    if (!@oci_execute($stid)) {
+        return false;
+    }
+    
+    $row = oci_fetch_array($stid, OCI_ASSOC + OCI_RETURN_NULLS);
+    oci_free_statement($stid);
+    return $row;
+}
+
+/**
+ * Helper: db_execute
+ * REQUIRED: This was missing! used for INSERT/UPDATE (Registration)
  */
 function db_execute($sql, $params = []) {
     global $conn;
+    $stid = oci_parse($conn, $sql);
     
-    $stmt = oci_parse($conn, $sql);
+    foreach ($params as $key => &$val) {
+        oci_bind_by_name($stid, ":" . $key, $val);
+    }
     
-    if (!$stmt) {
+    // OCI_COMMIT_ON_SUCCESS ensures the data is actually saved
+    if (!@oci_execute($stid, OCI_COMMIT_ON_SUCCESS)) {
         return false;
     }
-    
-    // Bind parameters
-    foreach ($params as $key => $value) {
-        $bind_key = (strpos($key, ':') === 0) ? $key : ':' . $key;
-        oci_bind_by_name($stmt, $bind_key, $params[$key]);
-    }
-    
-    // Execute with auto-commit
-    $result = oci_execute($stmt, OCI_COMMIT_ON_SUCCESS);
-    
-    oci_free_statement($stmt);
-    return $result;
+    return true;
 }
 
 /**
- * Execute SELECT query and return single row
- * 
- * @param string $sql SQL query
- * @param array $params Parameters
- * @return array|false Returns single row or false
+ * Helper: Sanitize Input
+ * Used by Login/Register pages
  */
-function db_fetch_one($sql, $params = []) {
-    $results = db_query($sql, $params);
-    return ($results && count($results) > 0) ? $results[0] : false;
+function sanitize_input($data) {
+    return htmlspecialchars(stripslashes(trim($data)));
 }
 
 /**
- * Execute SELECT query and return all rows
- * Alias for db_query for consistency
- * 
- * @param string $sql SQL query
- * @param array $params Parameters
- * @return array Returns array of rows (empty array if no results)
+ * Helper: db_fetch_all
+ * Alias for db_query - returns all rows found
+ * Required by: admin/verify_lessors.php
  */
 function db_fetch_all($sql, $params = []) {
-    $results = db_query($sql, $params);
-    return $results ? $results : [];
+    // This simply calls the existing db_query function
+    return db_query($sql, $params);
 }
 
-/**
- * Get the last inserted ID from a sequence
- * 
- * @param string $sequence_name Name of the sequence
- * @return int|false Returns the current value or false
- */
 function db_last_insert_id($sequence_name) {
     global $conn;
     
-    $sql = "SELECT {$sequence_name}.CURRVAL FROM DUAL";
-    $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-    $row = oci_fetch_assoc($stmt);
-    oci_free_statement($stmt);
+    // In Oracle, we get the last inserted ID by checking the current value of the sequence
+    $sql = "SELECT " . $sequence_name . ".CURRVAL AS ID FROM DUAL";
     
-    return $row ? $row['CURRVAL'] : false;
-}
-
-/**
- * Sanitize input to prevent SQL injection
- * Note: Always use bind parameters instead when possible
- * 
- * @param string $data Input data
- * @return string Sanitized data
- */
-function sanitize_input($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
-    return $data;
-}
-
-/**
- * Close database connection
- */
-function db_close() {
-    global $conn;
-    if ($conn) {
-        oci_close($conn);
+    $stid = oci_parse($conn, $sql);
+    
+    if (!@oci_execute($stid)) {
+        return false;
     }
+    
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+    oci_free_statement($stid);
+    
+    return $row['ID'];
 }
-
-// Register shutdown function to close connection
-register_shutdown_function('db_close');
-
 ?>
+

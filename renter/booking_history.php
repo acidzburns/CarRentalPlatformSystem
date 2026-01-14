@@ -2,6 +2,7 @@
 /**
  * UC11: Booking History (Full Version)
  * Display all bookings with filters and actions
+ * Styled: Royal Blue Design System
  */
 
 require_once '../config/database.php';
@@ -11,6 +12,7 @@ require_once '../config/session.php';
 require_login('renter');
 
 $renterid = get_user_id();
+$user_name = get_user_name(); // Needed for Nav
 
 // Get filter from URL (default: all)
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
@@ -70,391 +72,330 @@ $stats = oci_fetch_assoc($stmt_stats);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bookings - Car Rental System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link href="../assets/css/renter-dashboard.css?v=<?php echo time(); ?>" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* --- Royal Blue Design System --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f8f9fa;
             color: #333;
-            margin-bottom: 20px;
+            line-height: 1.6;
         }
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+        /* Navigation handled by renter-dashboard.css */
+
+        /* Page Header */
+        .page-header {
+            background-color: #1864FF;
+            color: white;
+            padding: 40px 20px 80px 20px; /* Extra padding for overlap */
             text-align: center;
         }
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #2196F3;
+        .page-header h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+        .page-header p { color: rgba(255, 255, 255, 0.8); }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: -50px auto 40px auto; /* Negative margin for overlap */
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
         }
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
+
+        /* --- Statistics Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        .filters {
+
+        .stat-card {
+            background: white;
+            padding: 25px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            border-bottom: 3px solid transparent;
+        }
+
+        /* Color Coding Stats */
+        .stat-card.total { border-color: #6c757d; }
+        .stat-card.pending { border-color: #f59e0b; }
+        .stat-card.confirmed { border-color: #1864FF; }
+        .stat-card.completed { border-color: #10b981; }
+        .stat-card.cancelled { border-color: #ef4444; }
+
+        .stat-number { font-size: 36px; font-weight: 800; line-height: 1.2; margin-bottom: 5px; }
+        .stat-label { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* --- Filters --- */
+        .filters-container {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            margin: 20px 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            padding: 10px 20px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            color: #333;
-            transition: all 0.3s;
-        }
-        .filter-btn:hover {
-            border-color: #2196F3;
-            color: #2196F3;
-        }
-        .filter-btn.active {
-            background: #2196F3;
-            border-color: #2196F3;
-            color: white;
-        }
-        .booking-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 15px 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .booking-header {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        .booking-id {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-        .status-badge {
+
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        .filter-btn {
+            text-decoration: none;
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 500;
+            color: #64748b;
+            background: #f1f5f9;
+            transition: all 0.2s;
+            border: 1px solid transparent;
         }
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        .status-confirmed {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-        .status-completed {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-cancelled {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        .booking-content {
+
+        .filter-btn:hover { background: #e2e8f0; color: #333; }
+        .filter-btn.active { background: #1864FF; color: white; box-shadow: 0 2px 5px rgba(24, 100, 255, 0.3); }
+
+        /* --- Booking Card --- */
+        .booking-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
             display: flex;
-            gap: 20px;
+            border: 1px solid #eee;
+            transition: transform 0.2s;
         }
-        .booking-image {
-            width: 250px;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 5px;
-        }
-        .booking-details {
-            flex: 1;
-        }
-        .booking-details h3 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .detail-row {
+
+        .booking-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+        .booking-image-col { width: 280px; position: relative; }
+        .booking-image { width: 100%; height: 100%; object-fit: cover; }
+
+        .booking-content-col { flex: 1; padding: 25px; }
+        
+        .booking-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
+        
+        .car-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+        .booking-id { font-size: 13px; color: #94a3b8; }
+
+        .status-badge { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-pending { background: #fffbeb; color: #b45309; }
+        .status-confirmed { background: #eff6ff; color: #1d4ed8; }
+        .status-completed { background: #ecfdf5; color: #047857; }
+        .status-cancelled { background: #fef2f2; color: #b91c1c; }
+
+        .details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px; }
+        .detail-item label { display: block; font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 2px; }
+        .detail-item span { font-size: 14px; color: #333; font-weight: 500; }
+        
+        .price-tag { font-size: 18px; font-weight: 700; color: #1864FF; }
+
+        .booking-actions-col {
+            width: 220px;
+            padding: 25px;
+            background: #f8fafc;
+            border-left: 1px solid #eee;
             display: flex;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .detail-label {
-            width: 150px;
-            color: #666;
-            font-weight: bold;
-        }
-        .detail-value {
-            color: #333;
-        }
-        .booking-actions {
-            display: flex;
+            flex-direction: column;
+            justify-content: center;
             gap: 10px;
-            margin-top: 15px;
         }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-            text-align: center;
+
+        /* Buttons */
+        .btn { display: block; width: 100%; padding: 10px; text-align: center; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
+        
+        .btn-primary { background: #1864FF; color: white; box-shadow: 0 2px 4px rgba(24,100,255,0.2); }
+        .btn-primary:hover { background: #0056e0; transform: translateY(-1px); }
+        
+        .btn-outline { background: white; color: #333; border: 1px solid #cbd5e1; }
+        .btn-outline:hover { border-color: #333; background: #333; color: white; }
+
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+
+        .btn-danger { background: white; color: #ef4444; border: 1px solid #ef4444; }
+        .btn-danger:hover { background: #ef4444; color: white; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .empty-icon { font-size: 60px; color: #cbd5e1; margin-bottom: 20px; }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .booking-card { flex-direction: column; }
+            .booking-image-col { width: 100%; height: 200px; }
+            .booking-actions-col { width: 100%; border-left: none; border-top: 1px solid #eee; flex-direction: row; }
         }
-        .btn-review {
-            background: #4CAF50;
-            color: white;
-        }
-        .btn-review:hover {
-            background: #45a049;
-        }
-        .btn-details {
-            background: #2196F3;
-            color: white;
-        }
-        .btn-details:hover {
-            background: #0b7dda;
-        }
-        .btn-cancel {
-            background: #f44336;
-            color: white;
-        }
-        .btn-cancel:hover {
-            background: #da190b;
-        }
-        .empty-state {
-            background: white;
-            padding: 60px 20px;
-            text-align: center;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .empty-state-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-        .nav-links {
-            background: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .nav-links a {
-            color: #2196F3;
-            text-decoration: none;
-            margin-right: 20px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
+        @media (max-width: 600px) {
+            .booking-actions-col { flex-direction: column; }
+            .details-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; } /* Hide extra nav links on mobile if needed */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Navigation -->
-        <div class="nav-links">
-            <a href="dashboard.php">← Dashboard</a>
-            <a href="search_cars.php">Search Cars</a>
-            <a href="../auth/logout.php">Logout</a>
-        </div>
-        
-        <h1>📚 My Bookings</h1>
-        
-        <?php display_flash_message(); ?>
-        
-        <!-- Statistics -->
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $stats['TOTAL']; ?></div>
-                <div class="stat-label">Total Bookings</div>
+
+    <nav>
+        <div class="nav-container">
+            <h2><a href="dashboard.php" style="text-decoration:none; color:white;">Car Rental System</a></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($user_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="search_cars.php">Search Cars</a>
+                <a href="booking_history.php" class="active">My Bookings</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: #FF9800;"><?php echo $stats['PENDING']; ?></div>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <h1>My Bookings</h1>
+        <p>Track your rental history and manage upcoming trips</p>
+    </div>
+
+    <div class="container">
+        
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-number"><?php echo $stats['TOTAL']; ?></div>
+                <div class="stat-label">All Bookings</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-number" style="color: #d97706;"><?php echo $stats['PENDING']; ?></div>
                 <div class="stat-label">Pending</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: #2196F3;"><?php echo $stats['CONFIRMED']; ?></div>
+            <div class="stat-card confirmed">
+                <div class="stat-number" style="color: #1864FF;"><?php echo $stats['CONFIRMED']; ?></div>
                 <div class="stat-label">Confirmed</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: #4CAF50;"><?php echo $stats['COMPLETED']; ?></div>
+            <div class="stat-card completed">
+                <div class="stat-number" style="color: #10b981;"><?php echo $stats['COMPLETED']; ?></div>
                 <div class="stat-label">Completed</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: #f44336;"><?php echo $stats['CANCELLED']; ?></div>
+            <div class="stat-card cancelled">
+                <div class="stat-number" style="color: #ef4444;"><?php echo $stats['CANCELLED']; ?></div>
                 <div class="stat-label">Cancelled</div>
             </div>
         </div>
-        
-        <!-- Filters -->
-        <div class="filters">
-            <h3 style="margin-bottom: 15px;">Filter by Status:</h3>
+
+        <?php if(function_exists('display_flash_message')) display_flash_message(); ?>
+
+        <div class="filters-container">
+            <h3 style="font-size: 16px; color:#64748b;">Filter Bookings:</h3>
             <div class="filter-buttons">
-                <a href="?status=all" class="filter-btn <?php echo $status_filter == 'all' ? 'active' : ''; ?>">
-                    All Bookings
-                </a>
-                <a href="?status=pending" class="filter-btn <?php echo $status_filter == 'pending' ? 'active' : ''; ?>">
-                    Pending
-                </a>
-                <a href="?status=confirmed" class="filter-btn <?php echo $status_filter == 'confirmed' ? 'active' : ''; ?>">
-                    Confirmed
-                </a>
-                <a href="?status=completed" class="filter-btn <?php echo $status_filter == 'completed' ? 'active' : ''; ?>">
-                    Completed
-                </a>
-                <a href="?status=cancelled" class="filter-btn <?php echo $status_filter == 'cancelled' ? 'active' : ''; ?>">
-                    Cancelled
-                </a>
+                <a href="?status=all" class="filter-btn <?php echo $status_filter == 'all' ? 'active' : ''; ?>">All</a>
+                <a href="?status=pending" class="filter-btn <?php echo $status_filter == 'pending' ? 'active' : ''; ?>">Pending</a>
+                <a href="?status=confirmed" class="filter-btn <?php echo $status_filter == 'confirmed' ? 'active' : ''; ?>">Confirmed</a>
+                <a href="?status=completed" class="filter-btn <?php echo $status_filter == 'completed' ? 'active' : ''; ?>">Completed</a>
+                <a href="?status=cancelled" class="filter-btn <?php echo $status_filter == 'cancelled' ? 'active' : ''; ?>">Cancelled</a>
             </div>
         </div>
-        
-        <!-- Bookings List -->
+
         <?php if (empty($bookings)): ?>
             <div class="empty-state">
-                <div class="empty-state-icon">📭</div>
-                <h2>No bookings found</h2>
-                <p style="color: #666; margin: 15px 0;">
+                <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
+                <h2 style="color: #333; margin-bottom: 10px;">No bookings found</h2>
+                <p style="color: #64748b; margin-bottom: 25px;">
                     <?php 
-                    if ($status_filter == 'all') {
-                        echo "You haven't made any bookings yet.";
-                    } else {
-                        echo "No bookings with status: " . htmlspecialchars($status_filter);
-                    }
+                    if ($status_filter == 'all') echo "You haven't made any bookings yet.";
+                    else echo "No bookings found with status: " . htmlspecialchars(ucfirst($status_filter));
                     ?>
                 </p>
-                <a href="search_cars.php" class="btn btn-details" style="margin-top: 20px;">
-                    Search Cars
+                <a href="search_cars.php" class="btn btn-primary" style="display:inline-block; width:auto; padding: 12px 30px;">
+                    Find a Car to Rent
                 </a>
             </div>
         <?php else: ?>
             <?php foreach ($bookings as $booking): ?>
                 <div class="booking-card">
-                    <div class="booking-header">
-                        <div class="booking-id">
-                            Booking #<?php echo htmlspecialchars($booking['BOOKINGID']); ?>
+                    <div class="booking-image-col">
+                        <?php if ($booking['PHOTO1_PATH']): ?>
+                            <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" alt="Car" class="booking-image">
+                        <?php else: ?>
+                            <div style="width:100%; height:100%; background:#eee; display:flex; align-items:center; justify-content:center; color:#999;">No Image</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="booking-content-col">
+                        <div class="booking-header">
+                            <div>
+                                <div class="car-title"><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></div>
+                                <div class="booking-id">Booking ID: #<?php echo htmlspecialchars($booking['BOOKINGID']); ?></div>
+                            </div>
+                            <div class="status-badge status-<?php echo strtolower($booking['BOOKING_STATUS']); ?>">
+                                <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?>
+                            </div>
                         </div>
-                        <div class="status-badge status-<?php echo strtolower($booking['BOOKING_STATUS']); ?>">
-                            <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?>
+
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <label>License Plate</label>
+                                <span><?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Total Amount</label>
+                                <span class="price-tag">RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Dates</label>
+                                <span><?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' - ' . $booking['END_DATE_FMT']); ?></span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Lessor</label>
+                                <span><?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                             <label>Booked On</label>
+                             <span style="font-size: 13px; color: #64748b;"><?php echo date('d M Y, h:i A', strtotime($booking['CREATED_AT'])); ?></span>
                         </div>
                     </div>
-                    
-                    <div class="booking-content">
-                        <?php if ($booking['PHOTO1_PATH']): ?>
-                            <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
-                                 alt="Car" class="booking-image">
-                        <?php endif; ?>
-                        
-                        <div class="booking-details">
-                            <h3><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h3>
-                            
-                            <div class="detail-row">
-                                <div class="detail-label">License Plate:</div>
-                                <div class="detail-value"><?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></div>
-                            </div>
-                            
-                            <div class="detail-row">
-                                <div class="detail-label">Rental Period:</div>
-                                <div class="detail-value">
-                                    <?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' to ' . $booking['END_DATE_FMT']); ?>
-                                </div>
-                            </div>
-                            
-                            <div class="detail-row">
-                                <div class="detail-label">Owner:</div>
-                                <div class="detail-value"><?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></div>
-                            </div>
-                            
-                            <div class="detail-row">
-                                <div class="detail-label">Total Amount:</div>
-                                <div class="detail-value" style="font-weight: bold; color: #4CAF50;">
-                                    RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?>
-                                </div>
-                            </div>
-                            
-                            <div class="detail-row">
-                                <div class="detail-label">Booked On:</div>
-                                <div class="detail-value">
-                                    <?php echo date('d M Y, h:i A', strtotime($booking['CREATED_AT'])); ?>
-                                </div>
-                            </div>
-                            
-                            <!-- Actions based on booking status -->
-                            <div class="booking-actions">
-                                <?php if ($booking['BOOKING_STATUS'] == 'PENDING'): ?>
-                                    <a href="make_payment.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" 
-                                       class="btn btn-review">
-                                        💳 Complete Payment
-                                    </a>
-                                    <a href="#" onclick="cancelBooking(<?php echo $booking['BOOKINGID']; ?>)" 
-                                       class="btn btn-cancel">
-                                        ❌ Cancel Booking
-                                    </a>
-                                
-                                <?php elseif ($booking['BOOKING_STATUS'] == 'CONFIRMED'): ?>
-                                    <span style="color: #4CAF50; font-weight: bold;">
-                                        ✓ Payment Confirmed - Owner will contact you soon
-                                    </span>
-                                
-                                <?php elseif ($booking['BOOKING_STATUS'] == 'COMPLETED'): ?>
-                                    <?php if ($booking['HAS_REVIEW'] == 0): ?>
-                                        <!-- UC6: Leave Review Button -->
-                                        <a href="submit_review.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" 
-                                           class="btn btn-review">
-                                            ⭐ Leave a Review
-                                        </a>
-                                    <?php else: ?>
-                                        <span style="color: #4CAF50; font-weight: bold;">
-                                            ✓ Review Submitted
-                                        </span>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                                
-                                <a href="booking_details.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" 
-                                   class="btn btn-details">
-                                    👁️ View Details
+
+                    <div class="booking-actions-col">
+                        <a href="booking_details.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" class="btn btn-outline">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+
+                        <?php if ($booking['BOOKING_STATUS'] == 'PENDING'): ?>
+                            <a href="make_payment.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" class="btn btn-primary">
+                                <i class="fas fa-credit-card"></i> Pay Now
+                            </a>
+                            <button onclick="cancelBooking(<?php echo $booking['BOOKINGID']; ?>)" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+
+                        <?php elseif ($booking['BOOKING_STATUS'] == 'COMPLETED'): ?>
+                            <?php if ($booking['HAS_REVIEW'] == 0): ?>
+                                <a href="submit_review.php?bookingid=<?php echo $booking['BOOKINGID']; ?>" class="btn btn-success">
+                                    <i class="fas fa-star"></i> Review
                                 </a>
-                            </div>
-                        </div>
+                            <?php else: ?>
+                                <div style="text-align:center; font-size:12px; color:#10b981; font-weight:bold;">
+                                    <i class="fas fa-check-circle"></i> Reviewed
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
-    
+
     <script>
     function cancelBooking(bookingId) {
-        if (confirm('Are you sure you want to cancel this booking?')) {
-            
-             window.location.href = 'cancel_booking.php?id=' + bookingId;
+        if (confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+            window.location.href = 'cancel_booking.php?id=' + bookingId;
         }
     }
     </script>

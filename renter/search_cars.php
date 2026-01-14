@@ -2,8 +2,7 @@
 /**
  * Renter Search Cars Page
  * UC2: Car Search and Filter
- * 
- * Allows renters to search and filter available cars
+ * * Allows renters to search and filter available cars
  */
 
 require_once '../config/database.php';
@@ -110,30 +109,33 @@ $locations = db_fetch_all($sql_locations);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Cars - Car Rental</title>
+    <link href="../assets/css/search-cars.css?v=<?php echo time(); ?>" rel="stylesheet">
+    <link href="../assets/css/renter-dashboard.css?v=<?php echo time(); ?>" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <nav>
-        <h2>Car Rental System</h2>
-        <div>
-            <span>Welcome, <?php echo htmlspecialchars($renter_name); ?>!</span>
-            <a href="dashboard.php">Dashboard</a>
-            <a href="booking_history.php">My Bookings</a>
-            <a href="search_cars.php">Search Cars</a>
-            <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2><a href="dashboard.php" style="text-decoration:none; color:white;">Car Rental System</a></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($renter_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="search_cars.php" class="active">Search Cars</a>
+                <a href="booking_history.php">My Bookings</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
         </div>
     </nav>
     
     <main>
-        <div>
+        <header class="page-header">
             <h1>Search Available Cars</h1>
             <p>Find your perfect rental car</p>
-        </div>
+        </header>
         
-        <!-- Search Filters -->
-        <div>
-            <h2>Filter Cars</h2>
+        <div class="filter-section">
             <form method="GET" action="">
-                <div>
+                <div class="filter-grid">
                     <div>
                         <label for="brand">Brand</label>
                         <input type="text" id="brand" name="brand" value="<?php echo htmlspecialchars($search_brand); ?>" placeholder="e.g., Toyota, Honda">
@@ -187,12 +189,12 @@ $locations = db_fetch_all($sql_locations);
                     </div>
                     
                     <div>
-                        <label for="min_price">Min Price (RM/day)</label>
+                        <label for="min_price">Min Price (RM)</label>
                         <input type="number" id="min_price" name="min_price" value="<?php echo $min_price > 0 ? $min_price : ''; ?>" placeholder="0" step="10">
                     </div>
                     
                     <div>
-                        <label for="max_price">Max Price (RM/day)</label>
+                        <label for="max_price">Max Price (RM)</label>
                         <input type="number" id="max_price" name="max_price" value="<?php echo $max_price > 0 ? $max_price : ''; ?>" placeholder="1000" step="10">
                     </div>
                     
@@ -207,76 +209,67 @@ $locations = db_fetch_all($sql_locations);
                     </div>
                 </div>
                 
-                <div>
-                    <button type="submit">Search</button>
-                    <a href="search_cars.php">Clear Filters</a>
+                <div class="filter-actions">
+                    <a href="search_cars.php" class="clear-btn">Clear Filters</a>
+                    <button type="submit" class="search-btn">Search Cars</button>
                 </div>
             </form>
         </div>
         
-        <!-- Results Summary -->
-        <div>
+        <div class="results-summary">
             <h2>Available Cars (<?php echo count($cars); ?> results)</h2>
         </div>
         
-        <!-- Car Results -->
+        <div class="cars-grid">
         <?php if (empty($cars)): ?>
-            <!-- Exception 1: No cars match criteria -->
-            <div>
+            <div class="empty-state">
+                <i class="fas fa-search" style="font-size:48px; color:#cbd5e1; margin-bottom:20px;"></i>
                 <h3>No cars found</h3>
                 <p>No cars match your search criteria. Please try different filters.</p>
-                <a href="search_cars.php">View All Cars</a>
+                <a href="search_cars.php" class="btn-reset">View All Cars</a>
             </div>
         <?php else: ?>
-            <div>
-                <?php foreach ($cars as $car): ?>
-                    <div>
+            <?php foreach ($cars as $car): ?>
+                <div class="car-card">
+                    <div class="car-image-container">
                         <?php if (!empty($car['PHOTO1_PATH'])): ?>
                             <img src="../uploads/cars/<?php echo htmlspecialchars($car['PHOTO1_PATH']); ?>" 
-                                 alt="<?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL']); ?>" 
-                                 width="300" height="200">
+                                 alt="<?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL']); ?>">
                         <?php else: ?>
-                            <p>No Image Available</p>
+                            <div class="no-image">No Image Available</div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="car-details">
+                        <div class="car-header">
+                            <h3><?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL']); ?> <span style="font-size:14px; font-weight:400; color:#666;">(<?php echo $car['YEAR']; ?>)</span></h3>
+                            <?php if ($car['AVG_RATING']): ?>
+                                <div class="rating">
+                                    <i class="fas fa-star"></i> <?php echo number_format($car['AVG_RATING'], 1); ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="price">RM <?php echo number_format($car['DAILY_RATE'], 2); ?> <span style="font-size:14px; color:#666; font-weight:400;">/day</span></div>
+                        
+                        <div class="specs">
+                            <span><i class="fas fa-cogs"></i> <?php echo htmlspecialchars($car['TRANSMISSION']); ?></span>
+                            <span><i class="fas fa-gas-pump"></i> <?php echo htmlspecialchars($car['FUEL_TYPE']); ?></span>
+                            <?php if ($car['SEATS']): ?>
+                                <span><i class="fas fa-chair"></i> <?php echo $car['SEATS']; ?> Seats</span>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <?php if (!empty($car['LOCATION'])): ?>
+                            <div class="location"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($car['LOCATION']); ?></div>
                         <?php endif; ?>
                         
-                        <div>
-                            <h3>
-                                <?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL']); ?>
-                                (<?php echo $car['YEAR']; ?>)
-                            </h3>
-                            
-                            <?php if ($car['AVG_RATING']): ?>
-                                <p>
-                                    Rating: <?php echo number_format($car['AVG_RATING'], 1); ?>/5
-                                    (<?php echo $car['BOOKING_COUNT']; ?> bookings)
-                                </p>
-                            <?php endif; ?>
-                            
-                            <p><strong>RM <?php echo number_format($car['DAILY_RATE'], 2); ?>/day</strong></p>
-                            
-                            <p>
-                                Transmission: <?php echo htmlspecialchars($car['TRANSMISSION']); ?> | 
-                                Fuel: <?php echo htmlspecialchars($car['FUEL_TYPE']); ?>
-                                <?php if ($car['SEATS']): ?>
-                                    | Seats: <?php echo $car['SEATS']; ?>
-                                <?php endif; ?>
-                            </p>
-                            
-                            <?php if (!empty($car['LOCATION'])): ?>
-                                <p>Location: <?php echo htmlspecialchars($car['LOCATION']); ?></p>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($car['FEATURES'])): ?>
-                                <p>Features: <?php echo htmlspecialchars(substr($car['FEATURES'], 0, 50)); ?>...</p>
-                            <?php endif; ?>
-                            
-                            <a href="car_details.php?id=<?php echo $car['CARID']; ?>">View Details & Book</a>
-                        </div>
+                        <a href="car_details.php?id=<?php echo $car['CARID']; ?>" class="book-btn">View Details & Book</a>
                     </div>
-                    <hr>
-                <?php endforeach; ?>
-            </div>
+                </div>
+            <?php endforeach; ?>
         <?php endif; ?>
+        </div>
     </main>
 </body>
 </html>

@@ -3,7 +3,6 @@ require_once '../config/database.php';
 require_once '../config/session.php';
 require_once '../config/email_test.php';
 
-
 // Check if renter is logged in
 require_login('renter');
 
@@ -17,7 +16,7 @@ if (!isset($_GET['bookingid'])) {
 
 $bookingid = $_GET['bookingid'];
 
-// Fetch payment and booking details from database
+// Fetch payment and booking details
 $payment_sql = "SELECT p.*, b.TOTAL_AMOUNT, b.START_DATE, b.END_DATE, b.BOOKING_STATUS,
                 c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE, c.PHOTO1_PATH,
                 l.NAME as LESSOR_NAME, l.EMAIL as LESSOR_EMAIL,
@@ -47,10 +46,8 @@ if (!$payment) {
     exit();
 }
 
-// Send email notifications only if booking is CONFIRMED
+// Send email notifications
 if ($payment['BOOKING_STATUS'] === 'CONFIRMED') {
-
-    // Email to renter
     $renter_subject = "Your Car Rental Booking is Confirmed!";
     $renter_body = "
     <p>Dear {$payment['RENTER_NAME']},</p>
@@ -59,16 +56,10 @@ if ($payment['BOOKING_STATUS'] === 'CONFIRMED') {
        <strong>Car:</strong> {$payment['BRAND']} {$payment['MODEL']} {$payment['YEAR']}<br>
        <strong>Rental Period:</strong> {$payment['START_DATE_FMT']} to {$payment['END_DATE_FMT']}<br>
        <strong>Total Paid:</strong> RM ".number_format($payment['TOTAL_AMOUNT'], 2)."</p>
-    <p>The car owner ({$payment['LESSOR_NAME']}) will contact you to arrange pickup.</p>
-    <p>Thank you for using our Car Rental Platform!</p>
-    ";
+    <p>The car owner ({$payment['LESSOR_NAME']}) will contact you to arrange pickup.</p>";
 
-    // Use PHPMailer function and log errors
-    if (!send_email($payment['RENTER_EMAIL'], $renter_subject, $renter_body)) {
-        error_log("Email to renter ({$payment['RENTER_EMAIL']}) failed to send.");
-    }
+    send_email($payment['RENTER_EMAIL'], $renter_subject, $renter_body);
 
-    // Email to lessor
     $lessor_subject = "New Booking Confirmed for Your Car!";
     $lessor_body = "
     <p>Dear {$payment['LESSOR_NAME']},</p>
@@ -77,391 +68,71 @@ if ($payment['BOOKING_STATUS'] === 'CONFIRMED') {
        <strong>Renter:</strong> {$payment['RENTER_NAME']} ({$payment['RENTER_EMAIL']})<br>
        <strong>Car:</strong> {$payment['BRAND']} {$payment['MODEL']} {$payment['YEAR']}<br>
        <strong>Rental Period:</strong> {$payment['START_DATE_FMT']} to {$payment['END_DATE_FMT']}<br>
-       <strong>Total Paid:</strong> RM ".number_format($payment['TOTAL_AMOUNT'], 2)."</p>
-    <p>Please contact the renter to arrange pickup details.</p>
-    <p>Thank you for using our Car Rental Platform!</p>
-    ";
+       <strong>Total Paid:</strong> RM ".number_format($payment['TOTAL_AMOUNT'], 2)."</p>";
 
-    if (!send_email($payment['LESSOR_EMAIL'], $lessor_subject, $lessor_body)) {
-        error_log("Email to lessor ({$payment['LESSOR_EMAIL']}) failed to send.");
-    }
+    send_email($payment['LESSOR_EMAIL'], $lessor_subject, $lessor_body);
 }
 
-// ✅ Get additional payment details from session (if available)
-$payment_session = isset($_SESSION['payment_success']) ? $_SESSION['payment_success'] : [];
-
-// ✅ Determine payment method display name
-$payment_method_display = '';
-switch ($payment['PAYMENT_METHOD']) {
-    case 'FPX':
-        $payment_method_display = 'FPX Online Banking';
-        break;
-    case 'CARD':
-        $payment_method_display = 'Credit/Debit Card';
-        break;
-    case 'E_WALLET':
-        $payment_method_display = 'E-Wallet';
-        break;
-    default:
-        $payment_method_display = htmlspecialchars($payment['PAYMENT_METHOD']);
+// Clear specific session item
+if (isset($_SESSION['payment_success'])) {
+    unset($_SESSION['payment_success']);
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Success - Car Rental System</title>
+    <link rel="stylesheet" href="../assets/css/make-payment.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .success-container {
-            max-width: 800px;
-            margin: 30px auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        .success-header {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-        }
-        .success-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: scaleIn 0.5s ease-out;
-        }
-        @keyframes scaleIn {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        .success-header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-        .success-body {
-            padding: 30px;
-        }
-        .info-box {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-        .info-box h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 20px;
-            border-bottom: 2px solid #4CAF50;
-            padding-bottom: 10px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        .info-row strong {
-            color: #555;
-        }
-        .escrow-notice {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-        .escrow-notice h3 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-        .escrow-notice ol {
-            margin-left: 20px;
-            margin-top: 10px;
-        }
-        .escrow-notice li {
-            margin: 8px 0;
-        }
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            margin: 10px 5px;
-            text-align: center;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .btn-primary {
-            background: #2196F3;
-            color: white;
-        }
-        .btn-secondary {
-            background: #4CAF50;
-            color: white;
-        }
-        .btn-print {
-            background: #666;
-            color: white;
-        }
-        .next-steps {
-            background: #e3f2fd;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            border-left: 4px solid #2196F3;
-        }
-        .next-steps h3 {
-            color: #1565c0;
-            margin-bottom: 15px;
-        }
-        .next-steps ol {
-            margin-left: 20px;
-        }
-        .next-steps li {
-            margin: 10px 0;
-            color: #333;
-        }
-        @media print {
-            body {
-                background: white;
-            }
-            .no-print {
-                display: none;
-            }
-            .success-container {
-                box-shadow: none;
-            }
-        }
-        @media (max-width: 768px) {
-            .success-container {
-                margin: 10px;
-            }
-            .success-body {
-                padding: 20px;
-            }
-            .btn {
-                display: block;
-                margin: 10px 0;
-            }
-        }
+        .success-card { text-align: center; padding: 40px !important; max-width: 800px; margin: 0 auto; }
+        .success-icon { width: 80px; height: 80px; background: #f0fdf4; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 30px; }
+        .receipt-details { text-align: left; margin: 30px 0; background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .receipt-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+        .receipt-row:last-child { border: none; }
+        .receipt-row label { color: #64748b; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .receipt-row span { font-weight: 600; color: #1e293b; font-size: 14px; }
+        .action-flex { display: flex; gap: 15px; margin-top: 30px; }
+        @media print { nav, .page-header, .no-print { display: none !important; } .container { margin-top: 0; padding: 0; } .details-card { box-shadow: none; border: none; } }
     </style>
 </head>
 <body>
-    <div class="success-container">
-        <div class="success-header">
-            <div class="success-icon">✓</div>
-            <h1>Payment Successful!</h1>
-            <p>Your booking has been confirmed</p>
+    <nav>
+        <div class="nav-container">
+            <h2><a href="dashboard.php" style="color:white; text-decoration:none;">Car Rental System</a></h2>
+            <div class="nav-links">
+                <a href="dashboard.php">Dashboard</a>
+                <a href="search_cars.php">Search Cars</a>
+                <a href="booking_history.php">My Bookings</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
         </div>
-        
-        <div class="success-body">
-            <div style="text-align: center; margin: 20px 0;">
-                <h2 style="color: #4CAF50; margin-bottom: 10px;">Booking Confirmed</h2>
-                <p style="color: #666;">Confirmation sent to <?php echo htmlspecialchars($payment['RENTER_EMAIL']); ?></p>
+    </nav>
+    <header class="page-header">
+        <h1>Payment Confirmed!</h1>
+        <p>Your booking has been successfully processed</p>
+    </header>
+    <main class="details-container">
+        <div style="grid-column: 1 / -1;">
+            <div class="details-card success-card">
+                <div class="success-icon"><i class="fas fa-check"></i></div>
+                <h2 style="font-size: 28px; margin-bottom: 10px;">Thank you for your payment</h2>
+                <p style="color: #64748b;">A confirmation email has been sent to <strong><?php echo htmlspecialchars($payment['RENTER_EMAIL']); ?></strong></p>
+                <div class="receipt-details">
+                    <h3 style="margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #1864FF; padding-bottom: 5px; display: inline-block;">Booking Receipt</h3>
+                    <div class="receipt-row"><label>Booking ID</label><span>#<?php echo htmlspecialchars($payment['BOOKINGID']); ?></span></div>
+                    <div class="receipt-row"><label>Car Reserved</label><span><?php echo htmlspecialchars($payment['BRAND'] . ' ' . $payment['MODEL'] . ' ' . $payment['YEAR']); ?></span></div>
+                    <div class="receipt-row"><label>Rental Period</label><span><?php echo htmlspecialchars($payment['START_DATE_FMT'] . ' - ' . $payment['END_DATE_FMT']); ?></span></div>
+                    <div class="receipt-row"><label>Payment Method</label><span><?php echo $payment['PAYMENT_METHOD'] == 'CARD' ? 'Credit/Debit Card' : 'FPX Online Banking'; ?></span></div>
+                    <div class="receipt-row"><label>Transaction Time</label><span><?php echo $payment['PAYMENT_DATE_FMT']; ?></span></div>
+                    <div class="receipt-row" style="border-top: 2px solid #e2e8f0; margin-top: 10px; padding-top: 15px;"><label style="color: #1e293b; font-size: 14px;">Total Paid</label><span style="color: #1864FF; font-size: 24px; font-weight: 800;">RM <?php echo number_format($payment['TOTAL_AMOUNT'], 2); ?></span></div>
+                </div>
+                <div class="security-card" style="background: #fffbeb; border: 1px solid #fef3c7; text-align: left; margin-bottom: 30px;"><i class="fas fa-info-circle" style="color: #d97706;"></i><div class="security-text"><strong style="color: #92400e;">What's Next?</strong><p style="color: #92400e;">Your payment is securely held. The car owner <strong><?php echo htmlspecialchars($payment['LESSOR_NAME']); ?></strong> will contact you soon to arrange lookup.</p></div></div>
+                <div class="action-flex no-print"><a href="booking_history.php" class="btn-primary" style="text-decoration:none;">Go to My Bookings</a><button onclick="window.print()" class="btn-primary" style="background:#f1f5f9; color:#1e293b; border:1px solid #e2e8f0; box-shadow:none;"><i class="fas fa-print"></i> Print Receipt</button></div>
             </div>
-            
-            <!-- Escrow Notice -->
-            <div class="escrow-notice">
-                <h3>🔒 Payment Escrow Protection</h3>
-                <p><strong>Your payment is secure!</strong></p>
-                <p>Your payment of <strong>RM <?php echo number_format($payment['TOTAL_AMOUNT'], 2); ?></strong> 
-                   is now being held safely by our platform. Here's what happens next:</p>
-                <ol>
-                    <li><strong>Now:</strong> Payment held by platform (secure holding)</li>
-                    <li><strong>During Rental:</strong> Money remains protected</li>
-                    <li><strong>After Return:</strong> You confirm car returned OK</li>
-                    <li><strong>Lessor Marks Complete:</strong> Platform records completion</li>
-                    <li><strong>Within 24 Hours:</strong> Platform manually transfers 90% to owner (RM <?php echo number_format($payment['TOTAL_AMOUNT'] * 0.90, 2); ?>)</li>
-                    <li><strong>Commission:</strong> Platform keeps 10% service fee (RM <?php echo number_format($payment['TOTAL_AMOUNT'] * 0.10, 2); ?>)</li>
-                </ol>
-                <p style="margin-top: 10px;">
-                    <strong>This protects you:</strong> If there are any issues, the payment can be refunded before manual transfer.
-                </p>
-            </div>
-            
-            <!-- Booking Details -->
-            <div class="info-box">
-                <h3>📋 Booking Details</h3>
-                
-                <?php if (!empty($payment['PHOTO1_PATH'])): ?>
-                <div style="text-align: center; margin: 15px 0;">
-                    <img src="../uploads/cars/<?php echo htmlspecialchars($payment['PHOTO1_PATH']); ?>" 
-                         alt="Car" style="max-width: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                </div>
-                <?php endif; ?>
-                
-                <div class="info-row">
-                    <strong>Booking ID:</strong>
-                    <span>#<?php echo htmlspecialchars($payment['BOOKINGID']); ?></span>
-                </div>
-                <div class="info-row">
-                    <strong>Payment ID:</strong>
-                    <span>#<?php echo htmlspecialchars($payment['PAYMENTID']); ?></span>
-                </div>
-                <div class="info-row">
-                    <strong>Car:</strong>
-                    <span><?php echo htmlspecialchars($payment['BRAND'] . ' ' . $payment['MODEL'] . ' ' . $payment['YEAR']); ?></span>
-                </div>
-                <div class="info-row">
-                    <strong>License Plate:</strong>
-                    <span><?php echo htmlspecialchars($payment['LICENSE_PLATE']); ?></span>
-                </div>
-                <div class="info-row">
-                    <strong>Rental Period:</strong>
-                    <span><?php echo htmlspecialchars($payment['START_DATE_FMT'] . ' to ' . $payment['END_DATE_FMT']); ?></span>
-                </div>
-                <div class="info-row">
-                    <strong>Status:</strong>
-                    <span style="color: #4CAF50; font-weight: bold;">
-                        <?php echo htmlspecialchars($payment['BOOKING_STATUS']); ?>
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Payment Details -->
-            <div class="info-box">
-                <h3>💳 Payment Details</h3>
-                <div class="info-row">
-                    <strong>Payment Method:</strong>
-                    <span><?php echo $payment_method_display; ?></span>
-                </div>
-                
-                <?php if ($payment['PAYMENT_METHOD'] == 'FPX' && isset($payment_session['bank'])): ?>
-                    <!-- ✅ Show bank details only for FPX -->
-                    <div class="info-row">
-                        <strong>Bank:</strong>
-                        <span><?php echo htmlspecialchars($payment_session['bank']); ?></span>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if ($payment['PAYMENT_METHOD'] == 'FPX' && isset($payment_session['fpx_reference'])): ?>
-                    <!-- ✅ Show FPX reference only for FPX -->
-                    <div class="info-row">
-                        <strong>FPX Reference:</strong>
-                        <span><?php echo htmlspecialchars($payment_session['fpx_reference']); ?></span>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if ($payment['PAYMENT_METHOD'] == 'CARD' && isset($payment_session['card_type'])): ?>
-                    <!-- ✅ Show card details only for Card payments -->
-                    <div class="info-row">
-                        <strong>Card Type:</strong>
-                        <span><?php echo htmlspecialchars($payment_session['card_type']); ?></span>
-                    </div>
-                    <?php if (isset($payment_session['card_last4'])): ?>
-                    <div class="info-row">
-                        <strong>Card Number:</strong>
-                        <span>**** **** **** <?php echo htmlspecialchars($payment_session['card_last4']); ?></span>
-                    </div>
-                    <?php endif; ?>
-                <?php endif; ?>
-                
-                <?php if ($payment['PAYMENT_METHOD'] == 'E_WALLET' && isset($payment_session['wallet_type'])): ?>
-                    <!-- ✅ Show wallet details only for E-Wallet payments -->
-                    <div class="info-row">
-                        <strong>E-Wallet:</strong>
-                        <span><?php echo htmlspecialchars($payment_session['wallet_type']); ?></span>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if (!empty($payment['TRANSACTION_ID'])): ?>
-                <div class="info-row">
-                    <strong>Transaction ID:</strong>
-                    <span><?php echo htmlspecialchars($payment['TRANSACTION_ID']); ?></span>
-                </div>
-                <?php endif; ?>
-                
-                <div class="info-row">
-                    <strong>Payment Date:</strong>
-                    <span><?php echo htmlspecialchars($payment['PAYMENT_DATE_FMT']); ?></span>
-                </div>
-                <div class="info-row">
-                    <strong>Payment Status:</strong>
-                    <span style="color: #4CAF50; font-weight: bold;">✓ SUCCESS</span>
-                </div>
-                <div class="info-row" style="border-top: 2px solid #333; margin-top: 10px; padding-top: 15px; font-size: 18px;">
-                    <strong>Total Paid:</strong>
-                    <strong style="color: #4CAF50;">RM <?php echo number_format($payment['TOTAL_AMOUNT'], 2); ?></strong>
-                </div>
-            </div>
-            
-            <!-- Car Owner Details -->
-            <div class="info-box">
-                <h3>👤 Car Owner Contact</h3>
-                <div class="info-row">
-                    <strong>Name:</strong>
-                    <span><?php echo htmlspecialchars($payment['LESSOR_NAME']); ?></span>
-                </div>
-                <div class="info-row">
-                    <strong>Email:</strong>
-                    <span><?php echo htmlspecialchars($payment['LESSOR_EMAIL']); ?></span>
-                </div>
-                <p style="margin-top: 15px; font-size: 14px; color: #666; background: #fff3cd; padding: 10px; border-radius: 5px;">
-                    <strong>📞 Note:</strong> The car owner will contact you before the rental period to arrange pickup details.
-                </p>
-            </div>
-            
-            <!-- Next Steps -->
-            <div class="next-steps">
-                <h3>📋 Next Steps</h3>
-                <ol>
-                    <li>Wait for car owner to contact you via email/phone</li>
-                    <li>Arrange pickup time and location</li>
-                    <li>Bring your ID and driver's license</li>
-                    <li>Inspect the car before driving</li>
-                    <li>Enjoy your rental!</li>
-                    <li>Return car on time and in good condition</li>
-                    <li>After return, payment will be released to owner</li>
-                </ol>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div style="text-align: center; margin: 30px 0;" class="no-print">
-                <a href="booking_history.php" class="btn btn-primary">📚 View Booking History</a>
-                <a href="dashboard.php" class="btn btn-secondary">🏠 Back to Dashboard</a>
-                <button onclick="window.print()" class="btn btn-print">
-                    🖨️ Print Receipt
-                </button>
-            </div>
-            
-            <p style="text-align: center; font-size: 12px; color: #666; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                Thank you for using our Car Rental Platform System!<br>
-                If you have any questions, please contact our support team.
-            </p>
         </div>
-    </div>
-    
-    <?php
-    // Clear payment success from session after displaying
-    if (isset($_SESSION['payment_success'])) {
-        unset($_SESSION['payment_success']);
-    }
-    ?>
+    </main>
 </body>
 </html>

@@ -183,6 +183,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             text-decoration: underline;
         }
     </style>
+    <link rel="stylesheet" href="../assets/css/sys_globals.css">
+<link rel="stylesheet" href="../assets/css/sys_components.css">
+<link rel="stylesheet" href="../assets/css/sys_auth.css">
+<!-- Important: Add class="auth-page" to your <body> tag -->
+<body class="auth-page"></body>
 </head>
 <body>
     <div class="container">

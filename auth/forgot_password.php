@@ -54,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html>
 <head>
     <title>Forgot Password</title>
+    <link rel="stylesheet" href="../assets/css/sys_globals.css">
+<link rel="stylesheet" href="../assets/css/sys_layout.css">
+<link rel="stylesheet" href="../assets/css/sys_components.css">
 </head>
 <body>
     <h2>Forgot Password</h2>

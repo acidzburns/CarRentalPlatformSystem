@@ -31,10 +31,6 @@ if (isset($_GET['message']) && $_GET['message'] == 'logged_out') {
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                    <path d="M5 17H4a2 2 0 01-2-2V9a2 2 0 012-2h1m15 10h1a2 2 0 002-2V9a2 2 0 00-2-2h-1m-5 10a2 2 0 100-4 2 2 0 000 4zm-8 0a2 2 0 100-4 2 2 0 000 4z"/>
-                    <path d="M5 7l1.5-3h11L19 7"/>
-                </svg>
                 <span>CarRental</span>
             </div>
             

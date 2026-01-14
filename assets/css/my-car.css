@@ -1,0 +1,452 @@
+/* ===================================
+   Royal Blue My Cars Styles
+   Icons Removed & Fixed Structure
+   =================================== */
+
+/* --- Reset --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- NAVIGATION (Royal Blue) --- */
+nav {
+    background-color: #1864FF;
+    /* Royal Blue */
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+nav h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.welcome-text {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 15px;
+    margin-right: 15px;
+}
+
+/* Nav Links */
+.nav-links a:not(.logout-btn) {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-links a:not(.logout-btn):hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.nav-links a.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+/* Logout */
+.logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ffffff;
+    color: #1864FF;
+}
+
+/* --- HERO SECTION --- */
+.page-header {
+    background-color: #1864FF;
+    color: white;
+    text-align: center;
+    padding: 40px 20px 100px 20px;
+    margin-bottom: 0;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.page-header p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+}
+
+/* --- CONTENT CONTAINER --- */
+.content-container {
+    max-width: 1200px;
+    margin: -60px auto 40px auto;
+    /* Overlap effect */
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+}
+
+/* --- FILTERS --- */
+.filter-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 14px;
+    margin-right: 5px;
+}
+
+.filter-bar a {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #64748b;
+    background: #f1f5f9;
+    font-weight: 500;
+}
+
+.filter-bar a.active,
+.filter-bar a:hover {
+    background: #1864FF;
+    color: white;
+}
+
+.divider {
+    display: none;
+}
+
+/* Add Button */
+.btn-add {
+    display: inline-block;
+    background: #1864FF;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(24, 100, 255, 0.2);
+    transition: background 0.2s;
+}
+
+.btn-add:hover {
+    background: #0056e0;
+}
+
+/* --- CAR GRID --- */
+.car-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+}
+
+/* Card Style */
+.car-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    transition: transform 0.2s;
+}
+
+.car-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: #1864FF;
+}
+
+.car-image-box {
+    height: 200px;
+    background: #eef2f6;
+    position: relative;
+}
+
+.car-image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-photo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+/* Status Badge */
+.status-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: white;
+}
+
+.status-available {
+    background: #10b981;
+}
+
+.status-rented {
+    background: #6366f1;
+}
+
+.status-inactive {
+    background: #f59e0b;
+}
+
+.status-maintenance {
+    background: #ef4444;
+}
+
+/* Details */
+.car-details {
+    padding: 20px;
+}
+
+.car-details h3 {
+    font-size: 18px;
+    color: #1e293b;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.year {
+    font-weight: 400;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.info-row {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.info-row .label {
+    color: #94a3b8;
+}
+
+.price {
+    color: #1864FF;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* Mini Stats Box */
+.stats-box {
+    display: flex;
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 10px;
+    margin: 15px 0;
+    justify-content: space-between;
+}
+
+.stats-box .stat {
+    text-align: center;
+    flex: 1;
+}
+
+.stats-box .val {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    color: #333;
+}
+
+.stats-box .lbl {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    align-items: stretch;
+}
+
+/* Ensure form displays inline and takes equal space */
+.actions form {
+    flex: 1;
+    display: flex;
+}
+
+.btn-action {
+    flex: 1;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.edit {
+    background: #eff6ff;
+    color: #1864FF;
+    border: 1px solid #1864FF;
+}
+
+.edit:hover {
+    background: #1864FF;
+    color: white;
+}
+
+.delete {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
+.delete:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* Toggle buttons - same size as edit/remove */
+.toggle {
+    width: 100%;
+    /* Fill the form container which has flex: 1 */
+}
+
+.inactive {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #d97706;
+}
+
+.inactive:hover {
+    background: #d97706;
+    color: white;
+}
+
+.active {
+    background: #ecfdf5;
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.active:hover {
+    background: #10b981;
+    color: white;
+}
+
+/* Alerts */
+.alert {
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.alert.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.alert.error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary {
+    display: inline-block;
+    background: #1864FF;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-top: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}

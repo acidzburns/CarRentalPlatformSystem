@@ -1,0 +1,374 @@
+/* ===================================
+   Cancel Booking Page - Renter Dashboard Theme
+   Matches renter-dashboard.css exactly
+   =================================== */
+
+/* --- Reset & Base Styles --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f9fa;
+    /* Clean light gray background */
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- Navigation Bar (Exactly from renter-dashboard.css) --- */
+nav {
+    background-color: #1864FF;
+    /* Royal Blue */
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+nav>div {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+nav h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+nav>div>div span {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    margin-right: 20px;
+}
+
+nav a {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    padding: 8px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+nav a:hover {
+    background: #ffffff;
+    color: #1864FF;
+    border-color: #ffffff;
+}
+
+/* --- Main Layout --- */
+main {
+    width: 100%;
+}
+
+/* Hero Section (Exactly from renter-dashboard.css) */
+.hero-section {
+    background-color: #1864FF;
+    color: white;
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.hero-section h1 {
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.hero-section p {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Content Container (Centers everything on the white bg) */
+.content-container {
+    max-width: 1200px;
+    margin: 50px auto;
+    /* Spacing from hero and bottom */
+    padding: 0 30px;
+}
+
+/* --- Section Headings --- */
+h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #1864FF;
+    /* Theme Blue underline */
+}
+
+h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 10px;
+}
+
+/* --- Alert Messages --- */
+div[style*="background: #ffcccc"],
+div[style*="background: #f8d7da"] {
+    background-color: #fee2e2 !important;
+    /* Soft Red */
+    color: #991b1b !important;
+    border: 2px solid #fecaca !important;
+    border-radius: 8px;
+    padding: 16px 20px !important;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    margin-bottom: 30px !important;
+    font-weight: 500;
+}
+
+div[style*="background: #d4edda"] {
+    background-color: #d1fae5 !important;
+    /* Soft Green */
+    color: #065f46 !important;
+    border: 2px solid #a7f3d0 !important;
+    border-radius: 8px;
+    padding: 16px 20px !important;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    margin-bottom: 30px !important;
+}
+
+/* --- Booking Details Table (Card Style) --- */
+table {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 30px;
+    background: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none !important;
+    /* Remove the border="1" effect */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+table th,
+table td {
+    padding: 18px 25px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+}
+
+table th {
+    background-color: #1864FF;
+    /* Royal Blue header */
+    color: #ffffff;
+    font-weight: 600;
+    width: 40%;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+table td {
+    font-size: 16px;
+    color: #334155;
+    background-color: #ffffff;
+}
+
+table tr:last-child th,
+table tr:last-child td {
+    border-bottom: none;
+}
+
+table strong {
+    color: #1864FF;
+    /* Highlight IDs and Prices in Theme Blue */
+    font-weight: 700;
+}
+
+/* --- Forms & Inputs --- */
+form {
+    background: #ffffff;
+    padding: 35px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    max-width: 900px;
+    margin: 0 auto 30px;
+}
+
+form p {
+    margin-bottom: 10px;
+}
+
+form p strong {
+    color: #1e293b;
+    font-size: 15px;
+}
+
+textarea {
+    width: 100% !important;
+    /* Override inline width */
+    max-width: 100%;
+    padding: 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    transition: border-color 0.2s;
+    margin-top: 10px;
+    resize: vertical;
+    min-height: 120px;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #1864FF;
+    box-shadow: 0 0 0 3px rgba(24, 100, 255, 0.1);
+}
+
+/* --- Buttons (Matching Dashboard Theme) --- */
+
+/* Cancel Button (Danger Action) */
+button[type="submit"] {
+    background-color: #ef4444 !important;
+    /* Red */
+    color: white !important;
+    padding: 14px 32px !important;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px !important;
+    border: 2px solid #ef4444 !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 15px;
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.25);
+    min-width: 200px;
+    text-align: center;
+}
+
+button[type="submit"]:hover {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35);
+}
+
+/* "Keep Booking" / Back Button (Secondary Button Style) */
+a[href="booking_history.php"],
+form a,
+div a[href="booking_history.php"] {
+    background-color: #ffffff !important;
+    color: #1864FF !important;
+    /* Theme Blue */
+    border: 2px solid #1864FF !important;
+    padding: 14px 32px !important;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none !important;
+    display: inline-block;
+    transition: all 0.2s ease;
+    min-width: 200px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+a[href="booking_history.php"]:hover,
+form a:hover,
+div a[href="booking_history.php"]:hover {
+    background-color: #f0f7ff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(24, 100, 255, 0.15);
+}
+
+/* Override for "Cannot Cancel" section */
+div[style*="background: #f8d7da"] h3 {
+    color: #991b1b;
+    margin-bottom: 10px;
+}
+
+div[style*="background: #f8d7da"] p {
+    color: #991b1b;
+    margin-bottom: 15px;
+}
+
+/* --- Responsive Adjustments (Exactly from renter-dashboard.css) --- */
+@media (max-width: 768px) {
+    nav>div {
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .hero-section {
+        padding: 40px 20px;
+    }
+
+    .hero-section h1 {
+        font-size: 28px;
+    }
+
+    .content-container {
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    table {
+        border-radius: 8px;
+    }
+
+    table th,
+    table td {
+        display: block;
+        width: 100%;
+        padding: 12px 20px;
+    }
+
+    table th {
+        background-color: #f1f5f9;
+        color: #1864FF;
+        padding-bottom: 8px;
+        font-size: 13px;
+    }
+
+    table td {
+        padding-top: 5px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    table tr:last-child td {
+        border-bottom: none;
+    }
+
+    form {
+        padding: 25px 20px;
+    }
+
+    button[type="submit"],
+    a[href="booking_history.php"],
+    form a,
+    div a[href="booking_history.php"] {
+        width: 100%;
+        min-width: auto;
+        margin: 5px 0;
+        display: block;
+    }
+
+    textarea {
+        min-height: 100px;
+    }
+}

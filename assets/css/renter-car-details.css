@@ -1,0 +1,327 @@
+/* ===================================
+   Renter Car Details - Royal Blue Theme
+   Aligned with search-cars.css design
+   =================================== */
+
+/* --- Reset & Base --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- NAVIGATION BAR (FIXED) --- */
+nav {
+    background-color: #1864FF;
+    /* Royal Blue */
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+nav h2 a {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+nav h2 {
+    border-bottom: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.welcome-text {
+    color: #ffffff !important;
+    font-weight: 500;
+    font-size: 15px;
+    margin-right: 10px;
+}
+
+.nav-links a:not(.logout-btn) {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-links a:not(.logout-btn):hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.nav-links a.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+.logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ffffff;
+    color: #1864FF;
+}
+
+/* --- PAGE HEADER --- */
+.page-header {
+    background-color: #1864FF;
+    color: white;
+    text-align: center;
+    padding: 40px 20px 100px 20px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.page-header p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+}
+
+/* --- CONTENT SECTION --- */
+.container {
+    max-width: 1200px;
+    margin: -60px auto 40px auto;
+    /* Overlap effect */
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+}
+
+.details-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eef2f6;
+    margin-bottom: 30px;
+}
+
+/* --- Section Headings --- */
+h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+/* --- Photo Gallery --- */
+.photo-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 0;
+}
+
+.photo-gallery img {
+    width: calc(33.333% - 10px);
+    height: 250px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+/* --- Tables --- */
+table[border="1"] {
+    width: 100%;
+    max-width: 100%;
+    background-color: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin: 20px 0;
+}
+
+table[border="1"] th {
+    background-color: #f8fafc;
+    color: #64748b;
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #f1f5f9;
+    width: 200px;
+}
+
+table[border="1"] td {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 14px;
+}
+
+table[border="1"] tr:last-child td {
+    border-bottom: none;
+}
+
+table[border="1"] tr:hover {
+    background-color: #f8fafc;
+}
+
+/* --- Reviews --- */
+.review-item {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border-left: 4px solid #1864FF;
+}
+
+.review-item p {
+    margin: 8px 0;
+}
+
+.review-item strong {
+    color: #1e293b;
+}
+
+.review-item small {
+    color: #64748b;
+}
+
+/* --- Buttons --- */
+.book-btn {
+    display: inline-block;
+    background-color: #1864FF;
+    color: white;
+    padding: 14px 40px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(24, 100, 255, 0.2);
+}
+
+.book-btn:hover {
+    background-color: #0050e0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(24, 100, 255, 0.3);
+}
+
+.back-btn {
+    display: inline-block;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 14px;
+    margin-left: 20px;
+}
+
+.back-btn:hover {
+    color: #1864FF;
+    text-decoration: underline;
+}
+
+/* --- Statistics --- */
+.stats-highlight {
+    color: #1864FF;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .photo-gallery img {
+        width: calc(50% - 8px);
+        height: 200px;
+    }
+}
+
+@media (max-width: 600px) {
+    .nav-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .photo-gallery img {
+        width: 100%;
+        height: 200px;
+    }
+
+    table[border="1"] th {
+        width: 120px;
+        font-size: 10px;
+    }
+
+    .details-card {
+        padding: 20px;
+    }
+
+    .book-btn {
+        width: 100%;
+    }
+
+    .back-btn {
+        display: block;
+        margin: 20px 0 0 0;
+        text-align: center;
+    }
+}

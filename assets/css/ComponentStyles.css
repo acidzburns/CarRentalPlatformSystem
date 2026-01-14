@@ -1,0 +1,165 @@
+/* Filename: assets/css/sys_components.css
+   Description: Reusable UI elements (Buttons, Tables, Forms, Cards).
+*/
+
+/* --- Cards --- */
+.card {
+    background: var(--sys-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--sys-border);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--sys-border);
+    padding-bottom: 1rem;
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* --- Stats Boxes --- */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-box {
+    background: var(--sys-surface);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--sys-primary);
+}
+
+.stat-label {
+    color: var(--sys-text-muted);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--sys-text-main);
+    margin-top: 0.5rem;
+}
+
+/* --- Tables --- */
+.table-wrapper {
+    overflow-x: auto;
+    background: var(--sys-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--sys-border);
+}
+
+.sys-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.sys-table th {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--sys-text-muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--sys-border);
+}
+
+.sys-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--sys-border);
+    color: var(--sys-text-main);
+    vertical-align: middle;
+}
+
+.sys-table tr:hover {
+    background-color: #f8fafc;
+}
+
+/* --- Buttons --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    gap: 0.5rem;
+}
+
+.btn-primary { background-color: var(--sys-primary); color: #fff; }
+.btn-primary:hover { background-color: var(--sys-primary-dark); }
+
+.btn-danger { background-color: var(--sys-danger); color: #fff; }
+.btn-danger:hover { background-color: #dc2626; }
+
+.btn-success { background-color: var(--sys-success); color: #fff; }
+.btn-success:hover { background-color: #059669; }
+
+.btn-secondary { background-color: #fff; border: 1px solid var(--sys-border); color: var(--sys-text-main); }
+.btn-secondary:hover { background-color: #f1f5f9; }
+
+/* --- Forms --- */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--sys-text-main);
+    font-size: 0.9rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--sys-border);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--sys-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* --- Badges --- */
+.badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-primary { background: #e0e7ff; color: #3730a3; }

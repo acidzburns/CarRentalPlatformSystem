@@ -86,8 +86,7 @@ $stats = db_fetch_one($stats_sql, ['id' => $lessorid]);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Support Tickets - Lessor Portal</title>
-    <link rel="stylesheet" href="../assets/css/support_ticket.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../assets/css/lessor-dashboard.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../assets/css/submit-ticket-lessor.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
@@ -153,7 +152,7 @@ $stats = db_fetch_one($stats_sql, ['id' => $lessorid]);
                 <div class="sidebar-stats" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
                     <div style="background:#f8fafc; padding:15px; border-radius:8px; text-align:center; border:1px solid #eef2f6;">
                         <span style="display:block; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Open Tickets</span>
-                        <strong style="font-size:20px; color:#b45309;"><?php echo $stats['OPEN_COUNT']; ?></strong>
+                        <strong style="font-size:20px; color:#c2410c;"><?php echo $stats['OPEN_COUNT']; ?></strong>
                     </div>
                     <div style="background:#f8fafc; padding:15px; border-radius:8px; text-align:center; border:1px solid #eef2f6;">
                         <span style="display:block; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Resolved</span>
@@ -176,11 +175,11 @@ $stats = db_fetch_one($stats_sql, ['id' => $lessorid]);
 
     <section class="ticket-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0;">📋 Your Ticket History</h2>
-            <div class="filters" style="font-size:14px;">
-                <a href="?status=all" style="color:<?php echo $status_filter === 'ALL' ? '#1864FF' : '#64748b'; ?>; font-weight:<?php echo $status_filter === 'ALL' ? '700' : '400'; ?>;">All</a> |
-                <a href="?status=open" style="color:<?php echo $status_filter === 'OPEN' ? '#1864FF' : '#64748b'; ?>; font-weight:<?php echo $status_filter === 'OPEN' ? '700' : '400'; ?>;">Open</a> |
-                <a href="?status=resolved" style="color:<?php echo $status_filter === 'RESOLVED' ? '#1864FF' : '#64748b'; ?>; font-weight:<?php echo $status_filter === 'RESOLVED' ? '700' : '400'; ?>;">Resolved</a>
+            <h2 style="margin:0; border:none; padding:0;">📋 Your Ticket History</h2>
+            <div class="filters">
+                <a href="?status=all" class="<?php echo $status_filter === 'ALL' ? 'active' : ''; ?>">All Tickets</a>
+                <a href="?status=open" class="<?php echo $status_filter === 'OPEN' ? 'active' : ''; ?>">Open</a>
+                <a href="?status=resolved" class="<?php echo $status_filter === 'RESOLVED' ? 'active' : ''; ?>">Resolved</a>
             </div>
         </div>
 

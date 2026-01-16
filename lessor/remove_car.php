@@ -154,150 +154,159 @@ $can_schedule_removal = $has_active_bookings;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remove Car - Car Rental</title>
+    <link rel="stylesheet" href="../assets/css/remove-car.css?v=<?php echo time(); ?>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <nav>
-        <h2>Car Rental System - Lessor Panel</h2>
-        <p>Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</p>
-        <a href="dashboard.php">Dashboard</a>
-        <a href="my_cars.php">My Cars</a>
-        <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2>Car Rental System <span style="font-size:14px; font-weight:400; opacity:0.8;">| Lessor Panel</span></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="my_cars.php">My Cars</a>
+                <a href="bookings.php">Bookings</a>
+                <a href="earnings.php">Earnings</a>
+                <a href="submit_ticket.php">Support</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
+        </div>
     </nav>
     
-    <main>
+    <div class="page-header">
         <h1>Remove Car</h1>
-        
-        <!-- Step 3: Display removal options -->
-        <h2>Car Details:</h2>
-        <p><strong>Brand:</strong> <?php echo htmlspecialchars($car['BRAND']); ?></p>
-        <p><strong>Model:</strong> <?php echo htmlspecialchars($car['MODEL']); ?></p>
-        <p><strong>Year:</strong> <?php echo htmlspecialchars($car['YEAR']); ?></p>
-        <p><strong>License Plate:</strong> <?php echo htmlspecialchars($car['LICENSE_PLATE']); ?></p>
-        <p><strong>Current Status:</strong> <?php echo htmlspecialchars($car['AVAILABILITY_STATUS']); ?></p>
-        
-        <?php if ($error): ?>
-            <div class="error"><?php echo $error; ?></div>
-        <?php endif; ?>
-        
-        <?php if ($success): ?>
-            <div class="success">
-                <?php echo $success; ?>
-                <p><a href="my_cars.php">Back to My Cars</a></p>
+        <p>Manage removal or deactivation of your vehicle listing</p>
+    </div>
+    
+    <main>
+        <div class="card-content">
+            <!-- Step 3: Display removal options -->
+            <h2>Car Details</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <p><strong>Brand:</strong> <?php echo htmlspecialchars($car['BRAND']); ?></p>
+                <p><strong>Model:</strong> <?php echo htmlspecialchars($car['MODEL']); ?></p>
+                <p><strong>Year:</strong> <?php echo htmlspecialchars($car['YEAR']); ?></p>
+                <p><strong>License Plate:</strong> <?php echo htmlspecialchars($car['LICENSE_PLATE']); ?></p>
+                <p><strong>Current Status:</strong> 
+                    <span style="font-weight: 700; color: <?php echo $car['AVAILABILITY_STATUS'] == 'AVAILABLE' ? '#10b981' : ($car['AVAILABILITY_STATUS'] == 'INACTIVE' ? '#f59e0b' : '#333'); ?>">
+                        <?php echo htmlspecialchars($car['AVAILABILITY_STATUS']); ?>
+                    </span>
+                </p>
             </div>
-        <?php else: ?>
-        
-        <!-- Step 2: Check for active bookings -->
-        <?php if ($has_active_bookings): ?>
-            <div class="warning">
-                <h3>⚠️ Warning: Active Bookings Exist</h3>
-                <p>This car has active or upcoming bookings until <strong><?php echo date('d M Y', strtotime($last_booking_date)); ?></strong>.</p>
-                <p>You cannot remove this car until all bookings are completed.</p>
+            
+            <?php if ($error): ?>
+                <div class="error"><?php echo $error; ?></div>
+            <?php endif; ?>
+            
+            <?php if ($success): ?>
+                <div class="success">
+                    <?php echo $success; ?>
+                    <p><a href="my_cars.php">Back to My Cars</a></p>
+                </div>
+            <?php else: ?>
+            
+            <!-- Step 2: Check for active bookings -->
+            <?php if ($has_active_bookings): ?>
+                <div class="warning">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Warning: Active Bookings Exist</h3>
+                    <p>This car has active or upcoming bookings until <strong><?php echo date('d M Y', strtotime($last_booking_date)); ?></strong>.</p>
+                    <p>You cannot remove this car until all bookings are completed.</p>
+                    
+                    <!-- Alternative Flow 1: Schedule removal -->
+                    <?php if ($can_schedule_removal): ?>
+                        <p style="margin-top:10px; font-size: 0.9em; opacity: 0.8;"><em>Alternative: You can schedule removal for after <?php echo date('d M Y', strtotime($last_booking_date)); ?> (future feature)</em></p>
+                    <?php endif; ?>
+                    
+                    <p style="margin-top: 15px;"><a href="my_cars.php">Back to My Cars</a></p>
+                </div>
+            
+            <!-- Exception 2: Check for pending payments -->
+            <?php elseif ($has_pending_payments): ?>
+                <div class="warning">
+                    <h3><i class="fas fa-exclamation-circle"></i> Warning: Pending Payments</h3>
+                    <p>This car has pending payments that need to be resolved first.</p>
+                    <p>Please contact customers or wait for payment completion before removing.</p>
+                    <p style="margin-top: 15px;"><a href="my_cars.php">Back to My Cars</a></p>
+                </div>
+            
+            <?php else: ?>
+            
+            <!-- Step 3: Display removal options -->
+            <h2>Removal Options</h2>
+            
+            <form method="POST" action="">
                 
-                <!-- Alternative Flow 1: Schedule removal -->
-                <?php if ($can_schedule_removal): ?>
-                    <p><em>Alternative: You can schedule removal for after <?php echo date('d M Y', strtotime($last_booking_date)); ?> (future feature)</em></p>
-                <?php endif; ?>
+                <!-- Step 4: Confirmation dialog -->
+                <p style="margin-bottom: 15px;">Choose Removal Type:</p>
                 
-                <p><a href="my_cars.php">Back to My Cars</a></p>
-            </div>
-        
-        <!-- Exception 2: Check for pending payments -->
-        <?php elseif ($has_pending_payments): ?>
-            <div class="warning">
-                <h3>⚠️ Warning: Pending Payments</h3>
-                <p>This car has pending payments that need to be resolved first.</p>
-                <p>Please contact customers or wait for payment completion before removing.</p>
-                <p><a href="my_cars.php">Back to My Cars</a></p>
-            </div>
-        
-        <?php else: ?>
-        
-        <!-- Step 3: Display removal options -->
-        <h2>Removal Options:</h2>
-        
-        <form method="POST" action="" onsubmit="return confirm('Are you sure you want to proceed with this action?');">
-            
-            <!-- Step 4: Confirmation dialog -->
-            <h3>Choose Removal Type:</h3>
-            
-            <!-- Option 1: Deactivate temporarily -->
-            <div>
-                <input type="radio" id="deactivate" name="removal_type" value="deactivate" checked>
-                <label for="deactivate">
-                    <strong>Deactivate Temporarily</strong><br>
-                    Car will be hidden from customers but you can reactivate it later.
-                </label>
-            </div>
-            
-            <br>
-            
-            <!-- Option 2: Delete permanently -->
-            <div>
-                <input type="radio" id="delete" name="removal_type" value="delete">
-                <label for="delete">
-                    <strong>Delete Permanently</strong><br>
-                    Car will be completely removed from the system. This action cannot be undone.
-                </label>
-            </div>
-            
-            <br>
-            
-            <!-- Step 7: Deletion reason (required for permanent delete) -->
-            <div id="deletion_reason_container" style="display: none;">
-                <label for="deletion_reason"><strong>Reason for Deletion: *</strong></label>
-                <textarea id="deletion_reason" name="deletion_reason" rows="3" placeholder="Please provide a reason for deleting this car..."></textarea>
-                <p><em>This helps us improve our service.</em></p>
-            </div>
-            
-            <script>
-                // Show/hide deletion reason based on selection
-                document.querySelectorAll('input[name="removal_type"]').forEach(radio => {
-                    radio.addEventListener('change', function() {
-                        const reasonContainer = document.getElementById('deletion_reason_container');
-                        if (this.value === 'delete') {
-                            reasonContainer.style.display = 'block';
-                            document.getElementById('deletion_reason').required = true;
-                        } else {
-                            reasonContainer.style.display = 'none';
-                            document.getElementById('deletion_reason').required = false;
-                        }
+                <!-- Option 1: Deactivate temporarily -->
+                <div class="radio-group">
+                    <input type="radio" id="deactivate" name="removal_type" value="deactivate" checked>
+                    <label for="deactivate"><strong>Deactivate Temporarily</strong></label>
+                    <span class="radio-description">Car will be hidden from new customers but you can reactivate it later.</span>
+                </div>
+                
+                <!-- Option 2: Delete permanently -->
+                <div class="radio-group" style="border-color: #fecaca; background-color: #fef2f2;">
+                    <input type="radio" id="delete" name="removal_type" value="delete">
+                    <label for="delete"><strong style="color: #dc2626;">Delete Permanently</strong></label>
+                    <span class="radio-description">Car will be completely removed from the system. This action <strong style="color: #dc2626;">cannot be undone</strong>.</span>
+                </div>
+                
+                <!-- Step 7: Deletion reason (required for permanent delete) -->
+                <div id="deletion_reason_container" style="display: none; margin-top: 20px;">
+                    <label for="deletion_reason"><strong>Reason for Deletion: *</strong></label>
+                    <textarea id="deletion_reason" name="deletion_reason" rows="3" placeholder="Please provide a reason for deleting this car..."></textarea>
+                    <p style="font-size: 0.85rem; margin-top: 5px;"><em>This helps us improve our service.</em></p>
+                </div>
+                
+                <script>
+                    // Show/hide deletion reason based on selection
+                    document.querySelectorAll('input[name="removal_type"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const reasonContainer = document.getElementById('deletion_reason_container');
+                            if (this.value === 'delete') {
+                                reasonContainer.style.display = 'block';
+                                document.getElementById('deletion_reason').required = true;
+                            } else {
+                                reasonContainer.style.display = 'none';
+                                document.getElementById('deletion_reason').required = false;
+                            }
+                        });
                     });
-                });
-            </script>
-            
-            <br>
-            
-            <!-- Step 5: Final confirmation -->
-            <div>
-                <input type="checkbox" id="confirm" name="confirm" value="yes" required>
-                <label for="confirm">I understand this action and want to proceed</label>
-            </div>
-            
-            <br>
-            
-            <button type="submit">Proceed with Removal</button>
-            
-            <!-- Alternative Flow 3: Cancel removal -->
-            <a href="my_cars.php">Cancel</a>
-        </form>
-        
-        <!-- Alternative Flow 2: Reactivate option (if already deactivated) -->
-        <?php if ($car['AVAILABILITY_STATUS'] === 'INACTIVE'): ?>
-            <hr>
-            <h3>Alternative: Reactivate This Car</h3>
-            <p>This car is currently deactivated. You can reactivate it anytime.</p>
-            <form method="POST" action="my_cars.php">
-                <input type="hidden" name="carid" value="<?php echo $car_id; ?>">
-                <input type="hidden" name="new_status" value="AVAILABLE">
-                <input type="hidden" name="toggle_status" value="1">
-                <button type="submit">Reactivate Car</button>
+                </script>
+                
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0;">
+                
+                <!-- Step 5: Final confirmation -->
+                <div style="margin-bottom: 25px;">
+                    <input type="checkbox" id="confirm" name="confirm" value="yes" required>
+                    <label for="confirm">I understand this action and want to proceed</label>
+                </div>
+                
+                <button type="submit">Proceed with Removal</button>
+                
+                <!-- Alternative Flow 3: Cancel removal -->
+                <a href="my_cars.php">Cancel</a>
             </form>
-        <?php endif; ?>
-        
-        <?php endif; ?>
-        
-        <?php endif; ?>
-        
+            
+            <!-- Alternative Flow 2: Reactivate option (if already deactivated) -->
+            <?php if ($car['AVAILABILITY_STATUS'] === 'INACTIVE'): ?>
+                <div style="margin-top: 40px; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
+                    <h3>Alternative: Reactivate This Car</h3>
+                    <p>This car is currently deactivated. You can reactivate it here.</p>
+                    <form method="POST" action="my_cars.php" style="border: none; padding: 0; box-shadow: none;">
+                        <input type="hidden" name="carid" value="<?php echo $car_id; ?>">
+                        <input type="hidden" name="new_status" value="AVAILABLE">
+                        <input type="hidden" name="toggle_status" value="1">
+                        <button type="submit" class="reactivate-btn" style="width: auto;">Reactivate Car Instead</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+            
+            <?php endif; ?>
+            <?php endif; ?>
+        </div>
     </main>
 </body>
 </html>

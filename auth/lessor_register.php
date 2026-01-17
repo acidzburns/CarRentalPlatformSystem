@@ -242,6 +242,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Owner Registration - Car Rental</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/lessor_register.css?v=<?php echo time(); ?>">
     <script>
         function clearFile(inputId, displayId) {
             document.getElementById(inputId).value = '';
@@ -263,106 +265,109 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </head>
 <body>
-    <div>
-        <h1>Car Owner Registration</h1>
-        <p>Register to list your vehicles and start earning</p>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>Car Owner Registration</h1>
+            <p>Register to list your vehicles and start earning</p>
         
-        <?php if ($error): ?>
-            <div class="error"><?php echo $error; ?></div>
-        <?php endif; ?>
+            <?php if ($error): ?>
+                <div class="error"><?php echo $error; ?></div>
+            <?php endif; ?>
+            
+            <?php if ($success): ?>
+                <div class="success">
+                    <?php echo $success; ?>
+                    <p style="margin-top: 10px;"><a href="lessor_login.php">Click here to login</a></p>
+                </div>
+            <?php else: ?>
         
-        <?php if ($success): ?>
-            <div class="success"><?php echo $success; ?></div>
-            <p><a href="lessor_login.php">Click here to login</a></p>
-        <?php else: ?>
-        
-        <form method="POST" action="" enctype="multipart/form-data">
-            <h2>Personal Information</h2>
+            <form method="POST" action="" enctype="multipart/form-data">
+                <h2>Personal Information</h2>
+                
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($name); ?>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" value="<?php echo htmlspecialchars($phone); ?>" required>
+                </div>
+                
+                <h2>Business Details (Optional)</h2>
+                
+                <div class="form-group">
+                    <label for="business_name">Business Name</label>
+                    <input type="text" id="business_name" name="business_name" value="<?php echo htmlspecialchars($business_name); ?>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bank_account">Bank Account Number</label>
+                    <input type="text" id="bank_account" name="bank_account" value="<?php echo htmlspecialchars($bank_account); ?>">
+                    <small>For receiving payments</small>
+                </div>
+                
+                <h2>Required Documents</h2>
+                <p>Please upload clear copies of the following documents (PDF, JPG, or PNG, max 5MB each):</p>
+                
+                <div class="form-group">
+                    <label for="driver_license">Driver's License *</label>
+                    <input type="file" id="driver_license" name="driver_license" accept=".pdf,.jpg,.jpeg,.png" required onchange="displayFileName('driver_license', 'driver_license_display')">
+                    <span id="driver_license_display"></span>
+                    <button type="button" onclick="clearFile('driver_license', 'driver_license_display')">Clear</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vehicle_ownership">Vehicle Ownership Proof *</label>
+                    <input type="file" id="vehicle_ownership" name="vehicle_ownership" accept=".pdf,.jpg,.jpeg,.png" required onchange="displayFileName('vehicle_ownership', 'vehicle_ownership_display')">
+                    <span id="vehicle_ownership_display"></span>
+                    <button type="button" onclick="clearFile('vehicle_ownership', 'vehicle_ownership_display')">Clear</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="insurance">Insurance Document *</label>
+                    <input type="file" id="insurance" name="insurance" accept=".pdf,.jpg,.jpeg,.png" required onchange="displayFileName('insurance', 'insurance_display')">
+                    <span id="insurance_display"></span>
+                    <button type="button" onclick="clearFile('insurance', 'insurance_display')">Clear</button>
+                </div>
+                
+                <h2>Account Security</h2>
+                
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" name="password" required>
+                    <small>Must be at least 8 characters with letters, numbers, and special characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="terms" required>
+                        I agree to the Terms and Conditions *
+                    </label>
+                </div>
+                
+                <button type="submit">Register</button>
+            </form>
             
-            <div>
-                <label for="name">Full Name *</label>
-                <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($name); ?>" required>
+            <?php endif; ?>
+            
+            <div class="auth-links">
+                <p>Already have an account? <a href="lessor_login.php">Login here</a></p>
+                <p>
+                    <a href="renter_login.php">Login as Customer</a> | 
+                    <a href="../index.php">Back to Home</a>
+                </p>
             </div>
-            
-            <div>
-                <label for="email">Email Address *</label>
-                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
-            </div>
-            
-            <div>
-                <label for="phone">Phone Number *</label>
-                <input type="tel" id="phone" name="phone" value="<?php echo htmlspecialchars($phone); ?>" required>
-            </div>
-            
-            <h2>Business Details (Optional)</h2>
-            
-            <div>
-                <label for="business_name">Business Name</label>
-                <input type="text" id="business_name" name="business_name" value="<?php echo htmlspecialchars($business_name); ?>">
-            </div>
-            
-            <div>
-                <label for="bank_account">Bank Account Number</label>
-                <input type="text" id="bank_account" name="bank_account" value="<?php echo htmlspecialchars($bank_account); ?>">
-                <small>For receiving payments</small>
-            </div>
-            
-            <h2>Required Documents</h2>
-            <p>Please upload clear copies of the following documents (PDF, JPG, or PNG, max 5MB each):</p>
-            
-            <div>
-                <label for="driver_license">Driver's License *</label>
-                <input type="file" id="driver_license" name="driver_license" accept=".pdf,.jpg,.jpeg,.png" required onchange="displayFileName('driver_license', 'driver_license_display')">
-                <span id="driver_license_display"></span>
-                <button type="button" onclick="clearFile('driver_license', 'driver_license_display')">Clear</button>
-            </div>
-            
-            <div>
-                <label for="vehicle_ownership">Vehicle Ownership Proof *</label>
-                <input type="file" id="vehicle_ownership" name="vehicle_ownership" accept=".pdf,.jpg,.jpeg,.png" required onchange="displayFileName('vehicle_ownership', 'vehicle_ownership_display')">
-                <span id="vehicle_ownership_display"></span>
-                <button type="button" onclick="clearFile('vehicle_ownership', 'vehicle_ownership_display')">Clear</button>
-            </div>
-            
-            <div>
-                <label for="insurance">Insurance Document *</label>
-                <input type="file" id="insurance" name="insurance" accept=".pdf,.jpg,.jpeg,.png" required onchange="displayFileName('insurance', 'insurance_display')">
-                <span id="insurance_display"></span>
-                <button type="button" onclick="clearFile('insurance', 'insurance_display')">Clear</button>
-            </div>
-            
-            <h2>Account Security</h2>
-            
-            <div>
-                <label for="password">Password *</label>
-                <input type="password" id="password" name="password" required>
-                <small>Must be at least 8 characters with letters, numbers, and special characters</small>
-            </div>
-            
-            <div>
-                <label for="confirm_password">Confirm Password *</label>
-                <input type="password" id="confirm_password" name="confirm_password" required>
-            </div>
-            
-            <div>
-                <label>
-                    <input type="checkbox" name="terms" required>
-                    I agree to the Terms and Conditions *
-                </label>
-            </div>
-            
-            <button type="submit">Register</button>
-        </form>
-        
-        <?php endif; ?>
-        
-        <div>
-            Already have an account? <a href="lessor_login.php">Login here</a>
-        </div>
-        
-        <div>
-            <a href="renter_login.php">Login as Customer</a> | 
-            <a href="../index.php">Back to Home</a>
         </div>
     </div>
 </body>

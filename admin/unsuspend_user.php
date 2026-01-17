@@ -116,95 +116,148 @@ send_email($user['EMAIL'], $subject, $message);
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reactivate User - Admin</title>
+    <title>Reactivate User | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/unsuspend_user.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>✅ Reactivate Suspended Account</h1>
-    
-    <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="manage_users.php">Manage Users</a> |
-        <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>">← Back to User Details</a> |
-        <a href="../auth/logout.php">Logout</a>
-    </nav>
-    
-    <hr>
-    
-    <?php display_flash_message(); ?>
-    
-    <!-- Display errors -->
-    <?php if (!empty($errors)): ?>
-        <div style="background: #ffebee; padding: 10px; margin: 10px 0; border: 1px solid #f44336;">
-            <strong>Error:</strong>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
+        
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
+        
+        <a href="manage_users.php" class="active">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Page Header -->
+        <header class="page-header">
+            <h2><i class="fas fa-check-circle"></i> Reactivate Suspended Account</h2>
+            <p>Restore user access to the platform</p>
+        </header>
+
+        <!-- Flash Messages -->
+        <?php display_flash_message(); ?>
+        
+        <!-- Display errors -->
+        <?php if (!empty($errors)): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <div>
+                    <strong>Error:</strong>
+                    <ul style="margin-left: 20px; margin-top: 5px;">
+                        <?php foreach ($errors as $error): ?>
+                            <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+        <?php endif; ?>
+        
+        <!-- User Type Badge -->
+        <span class="user-type-badge <?php echo $user_type; ?>">
+            <?php echo strtoupper($user_type); ?> #<?php echo $user['USER_ID']; ?>
+        </span>
+        
+        <!-- Success Card -->
+        <div class="success-card">
+            <h2><i class="fas fa-user-check"></i> User Account Details</h2>
+            
+            <div class="user-details">
+                <ul>
+                    <li><strong>Type:</strong> <span><?php echo strtoupper($user_type); ?></span></li>
+                    <li><strong>ID:</strong> <span><?php echo $user['USER_ID']; ?></span></li>
+                    <li><strong>Name:</strong> <span><?php echo htmlspecialchars($user['NAME']); ?></span></li>
+                    <li><strong>Email:</strong> <span><?php echo htmlspecialchars($user['EMAIL']); ?></span></li>
+                    <li><strong>Current Status:</strong> <span class="status-suspended">SUSPENDED</span></li>
+                </ul>
+            </div>
+            
+            <h3>What happens when you reactivate this account?</h3>
             <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?php echo htmlspecialchars($error); ?></li>
-                <?php endforeach; ?>
+                <li>✅ Account status will be changed to <strong><?php echo $user_type == 'lessor' ? 'VERIFIED' : 'ACTIVE'; ?></strong></li>
+                <li>✅ User can <strong>login immediately</strong></li>
+                <li>✅ All features will be <strong>restored</strong></li>
+                <?php if ($user_type == 'lessor'): ?>
+                    <li>✅ Car listings will be <strong>reactivated</strong></li>
+                    <li>✅ Can receive new bookings</li>
+                <?php else: ?>
+                    <li>✅ Can make new bookings</li>
+                    <li>✅ Can access booking history</li>
+                <?php endif; ?>
+                <li>✅ User will receive <strong>reactivation notification</strong> via email</li>
             </ul>
         </div>
-    <?php endif; ?>
-    
-    <!-- User Details -->
-    <div style="background: #e8f5e9; padding: 20px; margin: 20px 0; border-left: 4px solid #4CAF50;">
-        <h2 style="color: #2e7d32; margin-top: 0;">👤 User Account Details</h2>
-        <ul>
-            <li><strong>Type:</strong> <?php echo strtoupper($user_type); ?></li>
-            <li><strong>ID:</strong> <?php echo $user['USER_ID']; ?></li>
-            <li><strong>Name:</strong> <?php echo htmlspecialchars($user['NAME']); ?></li>
-            <li><strong>Email:</strong> <?php echo htmlspecialchars($user['EMAIL']); ?></li>
-            <li><strong>Current Status:</strong> <span style="color: #d32f2f; font-weight: bold;">SUSPENDED</span></li>
-        </ul>
         
-        <h3>What happens when you reactivate this account?</h3>
-        <ul>
-            <li>✅ Account status will be changed to <strong><?php echo $user_type == 'lessor' ? 'VERIFIED' : 'ACTIVE'; ?></strong></li>
-            <li>✅ User can <strong>login immediately</strong></li>
-            <li>✅ All features will be <strong>restored</strong></li>
-            <?php if ($user_type == 'lessor'): ?>
-                <li>✅ Car listings will be <strong>reactivated</strong></li>
-                <li>✅ Can receive new bookings</li>
-            <?php else: ?>
-                <li>✅ Can make new bookings</li>
-                <li>✅ Can access booking history</li>
-            <?php endif; ?>
-            <li>✅ User will receive <strong>reactivation notification</strong> via email</li>
-        </ul>
-    </div>
-    
-    <!-- Reactivation Form -->
-    <h2>📝 Reactivation Form</h2>
-    
-    <form method="POST" action="">
-        <div style="margin: 15px 0;">
-            <label><strong>Reactivation Note: *</strong></label><br>
-            <textarea name="note" required rows="5" 
-                      placeholder="e.g., Issue resolved after investigation. User can resume normal activities."
-                      style="width: 100%; max-width: 600px; padding: 10px;"></textarea>
-            <p style="font-size: 12px; color: #666;">
-                This note will be logged. Explain why the suspension is being lifted.
-            </p>
+        <!-- Reactivation Form -->
+        <div class="form-card">
+            <h2><i class="fas fa-edit"></i> Reactivation Form</h2>
+            
+            <form method="POST" action="">
+                <div class="form-group">
+                    <label>
+                        Reactivation Note <span class="required">*</span>
+                    </label>
+                    <textarea name="note" required rows="5" 
+                              placeholder="e.g., Issue resolved after investigation. User can resume normal activities."></textarea>
+                    <p class="form-help">
+                        <i class="fas fa-info-circle"></i> This note will be logged. Explain why the suspension is being lifted.
+                    </p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success"
+                            onclick="return confirm('Are you sure you want to reactivate this account? User will be able to login immediately.')">
+                        <i class="fas fa-check-circle"></i> Confirm Reactivation
+                    </button>
+                    <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
         </div>
         
-        <div style="margin: 20px 0;">
-            <button type="submit" 
-                    onclick="return confirm('Are you sure you want to reactivate this account? User will be able to login immediately.')"
-                    style="background: #4CAF50; color: white; padding: 12px 30px; border: none; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 5px;">
-                ✅ Confirm Reactivation
-            </button>
-            <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>" 
-               style="display: inline-block; padding: 12px 30px; background: #ccc; color: #333; text-decoration: none; border-radius: 5px; margin-left: 10px;">
-                Cancel
+        <div style="margin-top: 30px;">
+            <a href="manage_users.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Manage Users
             </a>
         </div>
-    </form>
-    
-    <hr>
-    
-    <p><a href="manage_users.php">← Back to Manage Users</a></p>
+    </main>
+
 </body>
 </html>

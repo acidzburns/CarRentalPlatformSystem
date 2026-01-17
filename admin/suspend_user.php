@@ -86,22 +86,22 @@ if ($user_type == 'lessor') {
     $active_result = oci_fetch_assoc($stmt_active);
     
     if ($active_result['TOTAL'] > 0) {
-        //log_message("Error: Renter $user_id has {$active_result['TOTAL']} active bookings.");
+
         set_flash_message("Cannot suspend user. User has active bookings. Please wait until bookings are completed or contact user to cancel.", "error");
         header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
         exit();
     }
 }
-//log_message("No active bookings found for user $user_id.");
+
 
 // Handle suspension
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $reason = trim($_POST['reason']);
-    //log_message("Suspension triggered. Reason: $reason");
+
     
     // Exception 3: Missing suspension reason
     if (empty($reason)) {
-        //log_message("Error: Missing reason for suspension.");
+
         set_flash_message("Please provide a reason for suspension.", "error");
         header("Location: suspend_user.php?type=" . $user_type . "&id=" . $user_id);
         exit();
@@ -110,13 +110,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // UC23 Step 11-13: Suspend account
         if ($user_type == 'lessor') {
-            //log_message("Suspending Lessor $user_id.");
+
             // For lessor: Change verification status to SUSPENDED
             $suspend_sql = "UPDATE LESSOR 
                            SET VERIFICATION_STATUS = 'SUSPENDED' 
                            WHERE LESSORID = :userid";
         } else {
-            //log_message("Suspending Renter $user_id.");
+
             // ✅ NEW: For renter - add STATUS column handling
             // Check if STATUS column exists
             $check_column_sql = "SELECT COLUMN_NAME FROM USER_TAB_COLUMNS 
@@ -126,17 +126,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $column_exists = oci_fetch_assoc($stmt_check);
             
             if (!$column_exists) {
-                //log_message("Adding STATUS column to RENTER table.");
+
                 // Add STATUS column to RENTER table
                 $add_column_sql = "ALTER TABLE RENTER ADD STATUS VARCHAR2(20) DEFAULT 'ACTIVE'";
                 $stmt_add = oci_parse($conn, $add_column_sql);
                 if (!oci_execute($stmt_add)) {
                     $e = oci_error($stmt_add);
-                    //log_message("Failed to add STATUS column: " . $e['message']);
+
                     // Decide if this should be a fatal error or just logged. For now, log and continue.
                 } else {
                     oci_commit($conn);
-                    //log_message("STATUS column added to RENTER table.");
+
                 }
             }
             
@@ -151,12 +151,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (oci_execute($stmt_suspend)) {
             oci_commit($conn);
-            //log_message("Database update successful. User $user_id STATUS set to SUSPENDED.");
+
             
             try {
                 // Check if email file exists
                 if (file_exists("../config/email_test.php")) {
-                    //log_message("Attempting to send suspension email to " . $user['EMAIL'] . ".");
+
                     require_once "../config/email_test.php";
 
                     $admin_email = "carrentalplatformsystem@gmail.com"; 
@@ -172,15 +172,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     if (function_exists('send_email')) {
                         send_email($user['EMAIL'], $subject, $message);
-                        //log_message("Suspension email sent successfully to " . $user['EMAIL'] . ".");
+
                     } else {
-                        //log_message("Error: send_email function not found in email_test.php.");
+
                     }
                 } else {
-                    //log_message("Warning: ../config/email_test.php not found. Email not sent.");
+
                 }
             } catch (Exception $e) {
-                //log_message("Email sending error (ignored): " . $e->getMessage());
+                log_message("Email sending error (ignored): " . $e->getMessage());
                 // Silently fail email or log it, but don't stop the suspension
                 // verify_lessors.php does something similar
             }
@@ -189,18 +189,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // UC23: System sends suspension notification to user (simulated)
             
             set_flash_message("User account suspended successfully. Reason: " . htmlspecialchars($reason), "success");
-            //log_message("User $user_id suspended successfully. Redirecting to manage_users.php.");
+
             header("Location: manage_users.php");
             exit();
         } else {
             $e = oci_error($stmt_suspend);
-            //log_message("Database update FAILED for user $user_id: " . $e['message']);
+
             set_flash_message("Failed to suspend user: " . $e['message'], "error");
             header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
             exit();
         }
     } catch (Exception $e) {
-        //log_message("An unexpected exception occurred during suspension for user $user_id: " . $e->getMessage());
+        log_message("An unexpected exception occurred during suspension for user $user_id: " . $e->getMessage());
         set_flash_message("An error occurred: " . $e->getMessage(), "error");
         header("Location: view_user.php?type=" . $user_type . "&id=" . $user_id);
         exit();
@@ -208,94 +208,144 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suspend User - Admin</title>
+    <title>Suspend User | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/suspend_user.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>🚫 Suspend User Account</h1>
-    
-    <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="manage_users.php">Manage Users</a> |
-        <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>">← Back to User Details</a> |
-        <a href="../auth/logout.php">Logout</a>
-    </nav>
-    
-    <hr>
-    
-    <?php display_flash_message(); ?>
-    
-    <!-- Warning Message -->
-    <div style="background: #ffebee; padding: 20px; margin: 20px 0; border-left: 4px solid #f44336;">
-        <h2 style="color: #c62828; margin-top: 0;">⚠️ Warning: Account Suspension</h2>
-        <p><strong>You are about to suspend the following user account:</strong></p>
-        <ul>
-            <li><strong>Type:</strong> <?php echo strtoupper($user_type); ?></li>
-            <li><strong>ID:</strong> <?php echo $user['USER_ID']; ?></li>
-            <li><strong>Name:</strong> <?php echo htmlspecialchars($user['NAME']); ?></li>
-            <li><strong>Email:</strong> <?php echo htmlspecialchars($user['EMAIL']); ?></li>
-        </ul>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
         
-        <h3>What happens when you suspend this account?</h3>
-        <ul>
-            <li>User will be <strong>immediately locked out</strong> of the platform</li>
-            <li>Cannot login or access any features</li>
-            <?php if ($user_type == 'lessor'): ?>
-                <li>All car listings will be <strong>deactivated</strong></li>
-                <li>Cannot receive new bookings</li>
-            <?php else: ?>
-                <li>Cannot make new bookings</li>
-                <li>Cannot access booking history</li>
-            <?php endif; ?>
-            <li>User will receive <strong>suspension notification</strong> via email</li>
-            <li>Can be reactivated later by admin</li>
-        </ul>
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
         
-        <p style="color: #c62828;"><strong>This action should only be taken for:</strong></p>
-        <ul>
-            <li>Terms of service violations</li>
-            <li>Fraudulent activity</li>
-            <li>User disputes requiring investigation</li>
-            <li>Repeated complaints from other users</li>
-        </ul>
-    </div>
-    
-    <!-- Suspension Form -->
-    <h2>📝 Suspension Details</h2>
-    
-    <form method="POST" action="">
-        <input type="hidden" name="type" value="<?php echo htmlspecialchars($user_type); ?>">
-        <input type="hidden" name="id" value="<?php echo $user_id; ?>">
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
         
-        <div style="margin: 15px 0;">
-            <label><strong>Reason for Suspension: *</strong></label><br>
-            <textarea name="reason" required rows="5" 
-                      placeholder="Please provide a detailed reason for suspending this account..."
-                      style="width: 100%; max-width: 600px; padding: 10px;"></textarea>
-            <p style="font-size: 12px; color: #666;">
-                This reason will be logged and may be shown to the user. Be professional and specific.
-            </p>
+        <a href="manage_users.php" class="active">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Page Header -->
+        <header class="page-header">
+            <h2><i class="fas fa-ban"></i> Suspend User Account</h2>
+            <p>Temporarily block user access to the platform</p>
+        </header>
+
+        <!-- Flash Messages -->
+        <?php display_flash_message(); ?>
+        
+        <!-- User Type Badge -->
+        <span class="user-type-badge <?php echo $user_type; ?>">
+            <?php echo strtoupper($user_type); ?> #<?php echo $user['USER_ID']; ?>
+        </span>
+        
+        <!-- Warning Card -->
+        <div class="warning-card">
+            <h2><i class="fas fa-exclamation-triangle"></i> Warning: Account Suspension</h2>
+            <p><strong>You are about to suspend the following user account:</strong></p>
+            
+            <div class="user-details">
+                <ul>
+                    <li><strong>Type:</strong> <span><?php echo strtoupper($user_type); ?></span></li>
+                    <li><strong>ID:</strong> <span><?php echo $user['USER_ID']; ?></span></li>
+                    <li><strong>Name:</strong> <span><?php echo htmlspecialchars($user['NAME']); ?></span></li>
+                    <li><strong>Email:</strong> <span><?php echo htmlspecialchars($user['EMAIL']); ?></span></li>
+                </ul>
+            </div>
+            
+            <h3>What happens when you suspend this account?</h3>
+            <ul>
+                <li>User will be <strong>immediately locked out</strong> of the platform</li>
+                <li>Cannot login or access any features</li>
+                <?php if ($user_type == 'lessor'): ?>
+                    <li>All car listings will be <strong>deactivated</strong></li>
+                    <li>Cannot receive new bookings</li>
+                <?php else: ?>
+                    <li>Cannot make new bookings</li>
+                    <li>Cannot access booking history</li>
+                <?php endif; ?>
+                <li>User will receive <strong>suspension notification</strong> via email</li>
+                <li>Can be reactivated later by admin</li>
+            </ul>
+            
+            <p style="color: #dc2626; font-weight: 600; margin-top: 15px;"><strong>This action should only be taken for:</strong></p>
+            <ul>
+                <li>Terms of service violations</li>
+                <li>Fraudulent activity</li>
+                <li>User disputes requiring investigation</li>
+                <li>Repeated complaints from other users</li>
+            </ul>
         </div>
         
-        <div style="margin: 20px 0;">
-            <button type="submit" 
-                    onclick="return confirm('Are you absolutely sure you want to suspend this user account? This action will immediately lock them out of the platform.')"
-                    style="background: #f44336; color: white; padding: 12px 30px; border: none; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 5px;">
-                🚫 Confirm Suspension
-            </button>
-            <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>" 
-               style="display: inline-block; padding: 12px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin-left: 10px;">
-                ✓ Cancel - Keep Account Active
+        <!-- Suspension Form -->
+        <div class="form-card">
+            <h2><i class="fas fa-edit"></i> Suspension Details</h2>
+            
+            <form method="POST" action="">
+                <input type="hidden" name="type" value="<?php echo htmlspecialchars($user_type); ?>">
+                <input type="hidden" name="id" value="<?php echo $user_id; ?>">
+                
+                <div class="form-group">
+                    <label>
+                        Reason for Suspension <span class="required">*</span>
+                    </label>
+                    <textarea name="reason" required rows="5" 
+                              placeholder="Please provide a detailed reason for suspending this account (e.g., violation of terms, fraudulent activity, etc.)..."></textarea>
+                    <p class="form-help">
+                        <i class="fas fa-info-circle"></i> This reason will be logged and may be shown to the user. Be professional and specific.
+                    </p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger"
+                            onclick="return confirm('Are you absolutely sure you want to suspend this user account? This action will immediately lock them out of the platform.')">
+                        <i class="fas fa-ban"></i> Confirm Suspension
+                    </button>
+                    <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>" class="btn btn-success">
+                        <i class="fas fa-check"></i> Cancel - Keep Account Active
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="manage_users.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Manage Users
             </a>
         </div>
-    </form>
-    
-    <hr>
-    
-    <p><a href="manage_users.php">← Back to Manage Users</a></p>
+    </main>
+
 </body>
 </html>

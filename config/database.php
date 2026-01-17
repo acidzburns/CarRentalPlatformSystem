@@ -2,9 +2,9 @@
 // Database Configuration for Oracle 23ai
 define('DB_HOST', 'localhost');
 define('DB_PORT', '1521');
-define('DB_SERVICE_NAME', 'freepdb1');
-define('DB_USERNAME', 'CAR');
-define('DB_PASSWORD', 'carRental');
+define('DB_SERVICE_NAME', 'FREEPDB1');
+define('DB_USERNAME', 'car');
+define('DB_PASSWORD', 'car');
 
 // Connection String
 $tns = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=" . DB_HOST . ")(PORT=" . DB_PORT . "))(CONNECT_DATA=(SERVICE_NAME=" . DB_SERVICE_NAME . ")))";

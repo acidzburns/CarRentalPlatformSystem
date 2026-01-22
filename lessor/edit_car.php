@@ -309,6 +309,7 @@ $current_features = !empty($car['FEATURES']) ? explode(', ', $car['FEATURES']) :
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Car - Car Rental</title>
+    <link rel="stylesheet" href="../assets/css/edit-car.css">
     <script>
         let selectedFiles = [];
         
@@ -389,20 +390,31 @@ $current_features = !empty($car['FEATURES']) ? explode(', ', $car['FEATURES']) :
             return true;
         }
     </script>
+   
 </head>
 <body>
     <nav>
-        <h2>Car Rental System - Lessor Panel</h2>
-        <p>Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</p>
-        <a href="dashboard.php">Dashboard</a>
-        <a href="my_cars.php">My Cars</a>
-        <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2>Car Rental System <span style="font-size:14px; font-weight:400; opacity:0.8;">| Lessor Panel</span></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="my_cars.php">My Cars</a>
+                <a href="bookings.php">Bookings</a>
+                <a href="earnings.php">Earnings</a>
+                <a href="profile.php">Profile</a>
+                <a href="submit_ticket.php">Support</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
+        </div>
     </nav>
     
-    <main>
+    <div class="page-header">
         <h1>Edit Car Details</h1>
         <p>Update information for: <?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL']); ?></p>
-        
+    </div>
+    
+    <main>
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
@@ -458,19 +470,21 @@ $current_features = !empty($car['FEATURES']) ? explode(', ', $car['FEATURES']) :
             <input type="number" id="mileage" name="mileage" value="<?php echo htmlspecialchars($car['MILEAGE']); ?>">
             
             <h2>Features</h2>
-            <p>Select all features that apply:</p>
+            <p style="margin-bottom: 10px; color: #64748b;">Select all features that apply:</p>
             
-            <label><input type="checkbox" name="features[]" value="GPS" <?php echo in_array('GPS', $current_features) ? 'checked' : ''; ?>> GPS Navigation</label>
-            <label><input type="checkbox" name="features[]" value="Bluetooth" <?php echo in_array('Bluetooth', $current_features) ? 'checked' : ''; ?>> Bluetooth</label>
-            <label><input type="checkbox" name="features[]" value="Air Conditioning" <?php echo in_array('Air Conditioning', $current_features) ? 'checked' : ''; ?>> Air Conditioning</label>
-            <label><input type="checkbox" name="features[]" value="Sunroof" <?php echo in_array('Sunroof', $current_features) ? 'checked' : ''; ?>> Sunroof</label>
-            <label><input type="checkbox" name="features[]" value="Parking Sensors" <?php echo in_array('Parking Sensors', $current_features) ? 'checked' : ''; ?>> Parking Sensors</label>
-            <label><input type="checkbox" name="features[]" value="Reverse Camera" <?php echo in_array('Reverse Camera', $current_features) ? 'checked' : ''; ?>> Reverse Camera</label>
-            <label><input type="checkbox" name="features[]" value="USB Port" <?php echo in_array('USB Port', $current_features) ? 'checked' : ''; ?>> USB Port</label>
-            <label><input type="checkbox" name="features[]" value="Child Seat" <?php echo in_array('Child Seat', $current_features) ? 'checked' : ''; ?>> Child Seat Available</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 5px;">
+                <label><input type="checkbox" name="features[]" value="GPS" <?php echo in_array('GPS', $current_features) ? 'checked' : ''; ?>> GPS Navigation</label>
+                <label><input type="checkbox" name="features[]" value="Bluetooth" <?php echo in_array('Bluetooth', $current_features) ? 'checked' : ''; ?>> Bluetooth</label>
+                <label><input type="checkbox" name="features[]" value="Air Conditioning" <?php echo in_array('Air Conditioning', $current_features) ? 'checked' : ''; ?>> Air Conditioning</label>
+                <label><input type="checkbox" name="features[]" value="Sunroof" <?php echo in_array('Sunroof', $current_features) ? 'checked' : ''; ?>> Sunroof</label>
+                <label><input type="checkbox" name="features[]" value="Parking Sensors" <?php echo in_array('Parking Sensors', $current_features) ? 'checked' : ''; ?>> Parking Sensors</label>
+                <label><input type="checkbox" name="features[]" value="Reverse Camera" <?php echo in_array('Reverse Camera', $current_features) ? 'checked' : ''; ?>> Reverse Camera</label>
+                <label><input type="checkbox" name="features[]" value="USB Port" <?php echo in_array('USB Port', $current_features) ? 'checked' : ''; ?>> USB Port</label>
+                <label><input type="checkbox" name="features[]" value="Child Seat" <?php echo in_array('Child Seat', $current_features) ? 'checked' : ''; ?>> Child Seat Available</label>
+            </div>
             
             <h2>Current Photos</h2>
-            <p>You can remove existing photos individually. (Minimum 1 photo required)</p>
+            <p style="margin-bottom: 15px; color: #64748b;">You can remove existing photos individually. (Minimum 1 photo required)</p>
             <div id="current_photos_container">
                 <?php 
                 $total_current_photos = 0;
@@ -561,13 +575,13 @@ $current_features = !empty($car['FEATURES']) ? explode(', ', $car['FEATURES']) :
             </script>
             
             <h2>Add New Photos (Optional)</h2>
-            <p>Upload new photos (JPG or PNG, max 5MB each, up to 10 photos total)</p>
+            <p style="margin-bottom: 10px; color: #64748b;">Upload new photos (JPG or PNG, max 5MB each, up to 10 photos total)</p>
             
             <input type="file" id="photos_selector" accept=".jpg,.jpeg,.png" multiple onchange="handlePhotoSelect(event)">
             <input type="file" id="photos_actual" name="photos[]" accept=".jpg,.jpeg,.png" multiple style="display: none;">
             
-            <div id="photo_count">No new photos selected. Current photos will remain unchanged.</div>
-            <button type="button" onclick="clearAllPhotos()">Clear All New Photos</button>
+            <div id="photo_count" style="margin: 10px 0;">No new photos selected. Current photos will remain unchanged.</div>
+            <button type="button" onclick="clearAllPhotos()" style="width: auto; padding: 5px 15px; margin-bottom: 10px;">Clear All New Photos</button>
             
             <div id="photo_preview_grid"></div>
             
@@ -598,8 +612,10 @@ $current_features = !empty($car['FEATURES']) ? explode(', ', $car['FEATURES']) :
             <label for="description">Car Description</label>
             <textarea id="description" name="description" rows="4"><?php echo htmlspecialchars($car['DESCRIPTION']); ?></textarea>
             
-            <button type="submit">Update Car Details</button>
-            <a href="my_cars.php">Cancel</a>
+            <div class="button-group">
+                <button type="submit">Update Car Details</button>
+                <a href="my_cars.php">Cancel</a>
+            </div>
         </form>
     </main>
 </body>

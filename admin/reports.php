@@ -64,26 +64,6 @@ function generateBookingReport($conn, $date_from, $date_to) {
     oci_execute($stmt);
     $data['summary'] = oci_fetch_assoc($stmt);
     
-    // Bookings by date (for trend chart)
-    $daily_sql = "SELECT TO_CHAR(CREATED_AT, 'DD-MON') as DATE_LABEL, 
-                  COUNT(*) as BOOKING_COUNT,
-                  NVL(SUM(TOTAL_AMOUNT), 0) as DAILY_REVENUE
-                  FROM BOOKING
-                  WHERE CREATED_AT BETWEEN TO_DATE(:date_from, 'YYYY-MM-DD') 
-                  AND TO_DATE(:date_to, 'YYYY-MM-DD') + 1
-                  GROUP BY TO_CHAR(CREATED_AT, 'DD-MON'), TRUNC(CREATED_AT)
-                  ORDER BY TRUNC(CREATED_AT)";
-    
-    $stmt = oci_parse($conn, $daily_sql);
-    oci_bind_by_name($stmt, ':date_from', $date_from);
-    oci_bind_by_name($stmt, ':date_to', $date_to);
-    oci_execute($stmt);
-    
-    $data['daily_bookings'] = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $data['daily_bookings'][] = $row;
-    }
-    
     // Detailed booking list (BOOKING, RENTER, CAR, LESSOR)
     $detail_sql = "SELECT b.BOOKINGID, b.START_DATE, b.END_DATE, b.BOOKING_STATUS, b.TOTAL_AMOUNT,
                    r.NAME as RENTER_NAME, r.EMAIL as RENTER_EMAIL, r.PHONE as RENTER_PHONE,
@@ -106,29 +86,6 @@ function generateBookingReport($conn, $date_from, $date_to) {
     $data['bookings'] = [];
     while ($row = oci_fetch_assoc($stmt)) {
         $data['bookings'][] = $row;
-    }
-    
-    // Most booked cars (BOOKING, CAR)
-    $popular_cars_sql = "SELECT c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE,
-                         COUNT(b.BOOKINGID) as TOTAL_BOOKINGS,
-                         NVL(SUM(b.TOTAL_AMOUNT), 0) as TOTAL_REVENUE
-                         FROM CAR c
-                         LEFT JOIN BOOKING b ON c.CARID = b.CARID
-                         AND b.CREATED_AT BETWEEN TO_DATE(:date_from, 'YYYY-MM-DD') 
-                         AND TO_DATE(:date_to, 'YYYY-MM-DD') + 1
-                         WHERE b.BOOKINGID IS NOT NULL
-                         GROUP BY c.CARID, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE
-                         ORDER BY TOTAL_BOOKINGS DESC
-                         FETCH FIRST 10 ROWS ONLY";
-    
-    $stmt = oci_parse($conn, $popular_cars_sql);
-    oci_bind_by_name($stmt, ':date_from', $date_from);
-    oci_bind_by_name($stmt, ':date_to', $date_to);
-    oci_execute($stmt);
-    
-    $data['popular_cars'] = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $data['popular_cars'][] = $row;
     }
     
     return $data;
@@ -154,71 +111,6 @@ function generateFinancialReport($conn, $date_from, $date_to) {
     oci_bind_by_name($stmt, ':date_to', $date_to);
     oci_execute($stmt);
     $data['revenue'] = oci_fetch_assoc($stmt);
-    
-    // Payment methods breakdown (PAYMENT table)
-    $payment_method_sql = "SELECT p.PAYMENT_METHOD, 
-                           COUNT(*) as TRANSACTION_COUNT,
-                           NVL(SUM(p.AMOUNT), 0) as TOTAL_AMOUNT
-                           FROM PAYMENT p
-                           WHERE p.PAYMENT_STATUS = 'SUCCESS'
-                           AND p.PAYMENT_DATE BETWEEN TO_DATE(:date_from, 'YYYY-MM-DD') 
-                           AND TO_DATE(:date_to, 'YYYY-MM-DD') + 1
-                           GROUP BY p.PAYMENT_METHOD
-                           ORDER BY TOTAL_AMOUNT DESC";
-    
-    $stmt = oci_parse($conn, $payment_method_sql);
-    oci_bind_by_name($stmt, ':date_from', $date_from);
-    oci_bind_by_name($stmt, ':date_to', $date_to);
-    oci_execute($stmt);
-    
-    $data['payment_methods'] = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $data['payment_methods'][] = $row;
-    }
-    
-    // Daily revenue trend (BOOKING table)
-    $daily_revenue_sql = "SELECT TO_CHAR(CREATED_AT, 'DD-MON') as DATE_LABEL,
-                          NVL(SUM(TOTAL_AMOUNT), 0) as REVENUE,
-                          NVL(SUM(TOTAL_AMOUNT * 0.10), 0) as COMMISSION,
-                          NVL(SUM(TOTAL_AMOUNT * 0.90), 0) as LESSOR_SHARE
-                          FROM BOOKING
-                          WHERE BOOKING_STATUS IN ('CONFIRMED', 'COMPLETED')
-                          AND CREATED_AT BETWEEN TO_DATE(:date_from, 'YYYY-MM-DD') 
-                          AND TO_DATE(:date_to, 'YYYY-MM-DD') + 1
-                          GROUP BY TO_CHAR(CREATED_AT, 'DD-MON'), TRUNC(CREATED_AT)
-                          ORDER BY TRUNC(CREATED_AT)";
-    
-    $stmt = oci_parse($conn, $daily_revenue_sql);
-    oci_bind_by_name($stmt, ':date_from', $date_from);
-    oci_bind_by_name($stmt, ':date_to', $date_to);
-    oci_execute($stmt);
-    
-    $data['daily_revenue'] = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $data['daily_revenue'][] = $row;
-    }
-    
-    // Transaction details (PAYMENT, BOOKING)
-    $transactions_sql = "SELECT p.PAYMENTID, p.PAYMENT_METHOD, p.AMOUNT, p.PAYMENT_STATUS,
-                         TO_CHAR(p.PAYMENT_DATE, 'DD-MON-YYYY HH24:MI') as PAYMENT_DATE_FMT,
-                         b.BOOKINGID, b.TOTAL_AMOUNT as BOOKING_AMOUNT,
-                         r.NAME as RENTER_NAME
-                         FROM PAYMENT p
-                         JOIN BOOKING b ON p.BOOKINGID = b.BOOKINGID
-                         JOIN RENTER r ON p.RENTERID = r.RENTERID
-                         WHERE p.PAYMENT_DATE BETWEEN TO_DATE(:date_from, 'YYYY-MM-DD') 
-                         AND TO_DATE(:date_to, 'YYYY-MM-DD') + 1
-                         ORDER BY p.PAYMENT_DATE DESC";
-    
-    $stmt = oci_parse($conn, $transactions_sql);
-    oci_bind_by_name($stmt, ':date_from', $date_from);
-    oci_bind_by_name($stmt, ':date_to', $date_to);
-    oci_execute($stmt);
-    
-    $data['transactions'] = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $data['transactions'][] = $row;
-    }
     
     // Top earning lessors (BOOKING, CAR, LESSOR)
     $top_lessors_sql = "SELECT l.NAME, l.EMAIL, l.BUSINESS_NAME,
@@ -285,61 +177,6 @@ function generatePerformanceReport($conn, $date_from, $date_to) {
         $data['lessor_performance'][] = $row;
     }
     
-    // Car performance by lessor (CAR, BOOKING)
-    $car_performance_sql = "SELECT c.CARID, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE,
-                            l.NAME as OWNER_NAME,
-                            c.DAILY_RATE,
-                            COUNT(b.BOOKINGID) as TOTAL_BOOKINGS,
-                            NVL(SUM(b.TOTAL_AMOUNT), 0) as TOTAL_REVENUE
-                            FROM CAR c
-                            JOIN LESSOR l ON c.LESSORID = l.LESSORID
-                            LEFT JOIN BOOKING b ON c.CARID = b.CARID
-                            AND b.CREATED_AT BETWEEN TO_DATE(:date_from, 'YYYY-MM-DD') 
-                            AND TO_DATE(:date_to, 'YYYY-MM-DD') + 1
-                            WHERE l.VERIFICATION_STATUS = 'VERIFIED'
-                            GROUP BY c.CARID, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE, l.NAME, c.DAILY_RATE
-                            ORDER BY TOTAL_REVENUE DESC";
-    
-    $stmt = oci_parse($conn, $car_performance_sql);
-    oci_bind_by_name($stmt, ':date_from', $date_from);
-    oci_bind_by_name($stmt, ':date_to', $date_to);
-    oci_execute($stmt);
-    
-    $data['car_performance'] = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $data['car_performance'][] = $row;
-    }
-    
-    // Review statistics (REVIEW, BOOKING, LESSOR, CAR)
-    $review_stats_sql = "SELECT l.LESSORID, l.NAME,
-                         COUNT(r.REVIEWID) as REVIEW_COUNT,
-                         NVL(AVG(r.RATING), 0) as AVG_RATING,
-                         COUNT(CASE WHEN r.RATING = 5 THEN 1 END) as FIVE_STAR,
-                         COUNT(CASE WHEN r.RATING = 4 THEN 1 END) as FOUR_STAR,
-                         COUNT(CASE WHEN r.RATING = 3 THEN 1 END) as THREE_STAR,
-                         COUNT(CASE WHEN r.RATING = 2 THEN 1 END) as TWO_STAR,
-                         COUNT(CASE WHEN r.RATING = 1 THEN 1 END) as ONE_STAR
-                         FROM LESSOR l
-                         JOIN CAR c ON l.LESSORID = c.LESSORID
-                         JOIN BOOKING b ON c.CARID = b.CARID
-                         LEFT JOIN REVIEW r ON b.BOOKINGID = r.BOOKINGID
-                         AND r.REVIEW_DATE BETWEEN TO_DATE(:date_from, 'YYYY-MM-DD') 
-                         AND TO_DATE(:date_to, 'YYYY-MM-DD') + 1
-                         WHERE l.VERIFICATION_STATUS = 'VERIFIED'
-                         AND r.REVIEWID IS NOT NULL
-                         GROUP BY l.LESSORID, l.NAME
-                         ORDER BY AVG_RATING DESC, REVIEW_COUNT DESC";
-    
-    $stmt = oci_parse($conn, $review_stats_sql);
-    oci_bind_by_name($stmt, ':date_from', $date_from);
-    oci_bind_by_name($stmt, ':date_to', $date_to);
-    oci_execute($stmt);
-    
-    $data['review_stats'] = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $data['review_stats'][] = $row;
-    }
-    
     return $data;
 }
 
@@ -350,80 +187,338 @@ function generatePerformanceReport($conn, $date_from, $date_to) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports - Admin</title>
+    <title>Reports | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/reports.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>📊 System Reports</h1>
-    
-    <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="verify_lessors.php">Verify Lessors</a> |
-        <a href="manage_users.php">Manage Users</a> |
-        <a href="manage_tickets.php">Support Tickets</a> |
-        <a href="reports.php">Reports</a> |
-        <a href="../auth/logout.php">Logout</a>
-    </nav>
-    
-    <hr>
-    
-    <?php display_flash_message(); ?>
-    
-    <!-- UC24 Step 1: Report Type Selection -->
-    <h2>🔍 Select Report Type</h2>
-    
-    <form method="GET" action="">
-        <div style="margin: 15px 0;">
-            <label><strong>Report Type:</strong></label><br>
-            <select name="type" style="padding: 8px; width: 400px; font-size: 16px;">
-                <option value="booking" <?php echo $report_type == 'booking' ? 'selected' : ''; ?>>
-                    📅 Booking Report (Bookings, Cars, Renters, Lessors)
-                </option>
-                <option value="financial" <?php echo $report_type == 'financial' ? 'selected' : ''; ?>>
-                    💰 Financial Report (Payments, Transactions, Revenue)
-                </option>
-                <option value="performance" <?php echo $report_type == 'performance' ? 'selected' : ''; ?>>
-                    📈 Lessor Performance Report (Lessors, Bookings, Cars, Reviews)
-                </option>
-            </select>
-        </div>
+
+    <aside class="sidebar no-print">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
         
-        <div style="margin: 15px 0;">
-            <label><strong>Date Range:</strong></label><br>
-            <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>" style="padding: 8px; font-size: 14px;">
-            <span style="margin: 0 10px;">to</span>
-            <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>" style="padding: 8px; font-size: 14px;">
-            <button type="submit" style="padding: 10px 25px; background: #2196F3; color: white; border: none; cursor: pointer; border-radius: 5px; margin-left: 10px; font-size: 16px; font-weight: bold;">
-                📊 Generate Report
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
+        
+        <a href="manage_users.php">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php" class="active">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Page Header -->
+        <header class="page-header no-print">
+            <div>
+                <h2>📊 System Reports</h2>
+                <p>Generate comprehensive reports for bookings, finances, and performance</p>
+            </div>
+        </header>
+
+        <!-- Report Selection -->
+        <div class="report-selection no-print">
+            <h2>🔍 Select Report Type & Date Range</h2>
+            
+            <form method="GET" action="">
+                <div class="report-type-cards">
+                    <label class="report-type-card booking <?php echo $report_type == 'booking' ? 'active' : ''; ?>">
+                        <input type="radio" name="type" value="booking" <?php echo $report_type == 'booking' ? 'checked' : ''; ?> style="display: none;">
+                        <div class="report-icon">📅</div>
+                        <div class="report-card-title">Booking Report</div>
+                        <div class="report-card-desc">Overview of all bookings, cars, renters, and lessors</div>
+                    </label>
+                    
+                    <label class="report-type-card financial <?php echo $report_type == 'financial' ? 'active' : ''; ?>">
+                        <input type="radio" name="type" value="financial" <?php echo $report_type == 'financial' ? 'checked' : ''; ?> style="display: none;">
+                        <div class="report-icon">💰</div>
+                        <div class="report-card-title">Financial Report</div>
+                        <div class="report-card-desc">Revenue, payments, transactions, and earnings</div>
+                    </label>
+                    
+                    <label class="report-type-card performance <?php echo $report_type == 'performance' ? 'active' : ''; ?>">
+                        <input type="radio" name="type" value="performance" <?php echo $report_type == 'performance' ? 'checked' : ''; ?> style="display: none;">
+                        <div class="report-icon">📈</div>
+                        <div class="report-card-title">Performance Report</div>
+                        <div class="report-card-desc">Lessor performance, bookings, cars, and reviews</div>
+                    </label>
+                </div>
+                
+                <div class="date-range-section">
+                    <h3>📆 Date Range</h3>
+                    <div class="date-inputs">
+                        <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>" required>
+                        <span class="date-separator">to</span>
+                        <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>" required>
+                        <button type="submit" class="btn-generate">
+                            📊 Generate Report
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Report Display -->
+        <?php if ($report_type == 'booking'): ?>
+            <!-- BOOKING REPORT -->
+            <div class="report-container">
+                <div class="report-header">
+                    <h2>📅 Booking Report</h2>
+                    <div class="report-meta">
+                        <span>📆 Period: <?php echo date('d M Y', strtotime($date_from)); ?> - <?php echo date('d M Y', strtotime($date_to)); ?></span>
+                        <span>🕐 Generated: <?php echo date('d M Y, H:i'); ?></span>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="summary-grid">
+                    <div class="summary-card primary">
+                        <div class="summary-value"><?php echo $report_data['summary']['TOTAL']; ?></div>
+                        <div class="summary-label">Total Bookings</div>
+                    </div>
+                    <div class="summary-card success">
+                        <div class="summary-value"><?php echo $report_data['summary']['CONFIRMED']; ?></div>
+                        <div class="summary-label">Confirmed</div>
+                    </div>
+                    <div class="summary-card info">
+                        <div class="summary-value"><?php echo $report_data['summary']['COMPLETED']; ?></div>
+                        <div class="summary-label">Completed</div>
+                    </div>
+                    <div class="summary-card warning">
+                        <div class="summary-value"><?php echo $report_data['summary']['PENDING']; ?></div>
+                        <div class="summary-label">Pending</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">RM <?php echo number_format($report_data['summary']['TOTAL_REVENUE'], 2); ?></div>
+                        <div class="summary-label">Total Revenue</div>
+                    </div>
+                </div>
+
+                <!-- Bookings Table -->
+                <div class="report-section">
+                    <h3>📋 Booking Details</h3>
+                    <?php if (!empty($report_data['bookings'])): ?>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Renter</th>
+                                        <th>Car</th>
+                                        <th>Lessor</th>
+                                        <th>Period</th>
+                                        <th>Status</th>
+                                        <th>Amount</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($report_data['bookings'] as $booking): ?>
+                                    <tr>
+                                        <td><strong>#<?php echo $booking['BOOKINGID']; ?></strong></td>
+                                        <td>
+                                            <?php echo htmlspecialchars($booking['RENTER_NAME']); ?><br>
+                                            <small style="color: #718096;"><?php echo htmlspecialchars($booking['RENTER_EMAIL']); ?></small>
+                                        </td>
+                                        <td>
+                                            <?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL']); ?><br>
+                                            <small style="color: #718096;"><?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></small>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></td>
+                                        <td>
+                                            <small><?php echo date('d M', strtotime($booking['START_DATE'])); ?> - <?php echo date('d M', strtotime($booking['END_DATE'])); ?></small>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge <?php echo strtolower($booking['BOOKING_STATUS']); ?>">
+                                                <?php echo $booking['BOOKING_STATUS']; ?>
+                                            </span>
+                                        </td>
+                                        <td><strong>RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></strong></td>
+                                        <td><small><?php echo $booking['CREATED_FMT']; ?></small></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <p>No bookings found for this period.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+        <?php elseif ($report_type == 'financial'): ?>
+            <!-- FINANCIAL REPORT -->
+            <div class="report-container">
+                <div class="report-header">
+                    <h2>💰 Financial Report</h2>
+                    <div class="report-meta">
+                        <span>📆 Period: <?php echo date('d M Y', strtotime($date_from)); ?> - <?php echo date('d M Y', strtotime($date_to)); ?></span>
+                        <span>🕐 Generated: <?php echo date('d M Y, H:i'); ?></span>
+                    </div>
+                </div>
+
+                <!-- Revenue Summary -->
+                <div class="summary-grid">
+                    <div class="summary-card primary">
+                        <div class="summary-value">RM <?php echo number_format($report_data['revenue']['TOTAL_REVENUE'], 2); ?></div>
+                        <div class="summary-label">Total Revenue</div>
+                    </div>
+                    <div class="summary-card success">
+                        <div class="summary-value">RM <?php echo number_format($report_data['revenue']['PLATFORM_COMMISSION'], 2); ?></div>
+                        <div class="summary-label">Platform Commission (10%)</div>
+                    </div>
+                    <div class="summary-card info">
+                        <div class="summary-value">RM <?php echo number_format($report_data['revenue']['LESSOR_EARNINGS'], 2); ?></div>
+                        <div class="summary-label">Lessor Earnings (90%)</div>
+                    </div>
+                    <div class="summary-card warning">
+                        <div class="summary-value"><?php echo $report_data['revenue']['TOTAL_TRANSACTIONS']; ?></div>
+                        <div class="summary-label">Total Transactions</div>
+                    </div>
+                </div>
+
+                <!-- Top Earning Lessors -->
+                <div class="report-section">
+                    <h3>🏆 Top Earning Lessors</h3>
+                    <?php if (!empty($report_data['top_lessors'])): ?>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Lessor Name</th>
+                                        <th>Business Name</th>
+                                        <th>Bookings</th>
+                                        <th>Total Revenue</th>
+                                        <th>Lessor Earnings</th>
+                                        <th>Commission</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($report_data['top_lessors'] as $lessor): ?>
+                                    <tr>
+                                        <td>
+                                            <?php echo htmlspecialchars($lessor['NAME']); ?><br>
+                                            <small style="color: #718096;"><?php echo htmlspecialchars($lessor['EMAIL']); ?></small>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($lessor['BUSINESS_NAME'] ?? 'N/A'); ?></td>
+                                        <td><?php echo $lessor['TOTAL_BOOKINGS']; ?></td>
+                                        <td><strong>RM <?php echo number_format($lessor['TOTAL_REVENUE'], 2); ?></strong></td>
+                                        <td style="color: #48bb78;">RM <?php echo number_format($lessor['LESSOR_EARNINGS'], 2); ?></td>
+                                        <td style="color: #667eea;">RM <?php echo number_format($lessor['COMMISSION_EARNED'], 2); ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <p>No financial data found for this period.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+        <?php elseif ($report_type == 'performance'): ?>
+            <!-- PERFORMANCE REPORT -->
+            <div class="report-container">
+                <div class="report-header">
+                    <h2>📈 Lessor Performance Report</h2>
+                    <div class="report-meta">
+                        <span>📆 Period: <?php echo date('d M Y', strtotime($date_from)); ?> - <?php echo date('d M Y', strtotime($date_to)); ?></span>
+                        <span>🕐 Generated: <?php echo date('d M Y, H:i'); ?></span>
+                    </div>
+                </div>
+
+                <!-- Performance Table -->
+                <div class="report-section">
+                    <h3>📊 Lessor Performance Metrics</h3>
+                    <?php if (!empty($report_data['lessor_performance'])): ?>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Lessor</th>
+                                        <th>Business</th>
+                                        <th>Cars</th>
+                                        <th>Bookings</th>
+                                        <th>Revenue</th>
+                                        <th>Avg Rating</th>
+                                        <th>Reviews</th>
+                                        <th>Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($report_data['lessor_performance'] as $perf): ?>
+                                    <tr>
+                                        <td>
+                                            <?php echo htmlspecialchars($perf['NAME']); ?><br>
+                                            <small style="color: #718096;"><?php echo htmlspecialchars($perf['EMAIL']); ?></small>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($perf['BUSINESS_NAME'] ?? 'N/A'); ?></td>
+                                        <td><?php echo $perf['TOTAL_CARS']; ?></td>
+                                        <td><?php echo $perf['TOTAL_BOOKINGS']; ?></td>
+                                        <td><strong>RM <?php echo number_format($perf['TOTAL_REVENUE'], 2); ?></strong></td>
+                                        <td>⭐ <?php echo number_format($perf['AVG_RATING'], 1); ?></td>
+                                        <td><?php echo $perf['TOTAL_REVIEWS']; ?></td>
+                                        <td><small><?php echo $perf['JOINED_DATE']; ?></small></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <p>No performance data found for this period.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Print Button -->
+        <div class="print-actions no-print">
+            <button onclick="window.print()" class="btn-print">
+                🖨️ Print Report
             </button>
         </div>
-    </form>
-    
-    <hr>
-    
-    <!-- UC24 Step 6: Display Report Results -->
-    <?php if ($report_type == 'booking'): ?>
-        <?php include 'report_views/booking.php'; ?>
-    <?php elseif ($report_type == 'financial'): ?>
-        <?php include 'report_views/financial.php'; ?>
-    <?php elseif ($report_type == 'performance'): ?>
-        <?php include 'report_views/performance.php'; ?>
-    <?php endif; ?>
-    
-    <hr>
-    
-    <div style="text-align: center; margin: 30px 0;" class="no-print">
-        <button onclick="window.print()" style="padding: 12px 30px; background: #4CAF50; color: white; border: none; cursor: pointer; font-size: 16px; border-radius: 5px; font-weight: bold;">
-            🖨️ Print Report
-        </button>
-    </div>
-    
-    <style>
-        @media print {
-            .no-print { display: none; }
-            nav { display: none; }
-        }
-    </style>
-    
-    <p><a href="dashboard.php">← Back to Dashboard</a></p>
+
+    </main>
+
+    <script>
+        // Auto-submit form when report type is changed
+        document.querySelectorAll('input[name="type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Update active card styling
+                document.querySelectorAll('.report-type-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                this.closest('.report-type-card').classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

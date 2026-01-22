@@ -45,8 +45,8 @@ $total_bookings = $bookings_count ? $bookings_count['TOTAL'] : 0;
 
 // Pending bookings (waiting for approval)
 $sql_pending = "SELECT COUNT(*) as total FROM BOOKING 
-                WHERE CARID IN (SELECT CARID FROM CAR WHERE LESSORID = :lessorid) 
-                AND BOOKING_STATUS = 'PENDING'";
+                 WHERE CARID IN (SELECT CARID FROM CAR WHERE LESSORID = :lessorid) 
+                 AND BOOKING_STATUS = 'PENDING'";
 $pending_count = db_fetch_one($sql_pending, ['lessorid' => $lessor_id]);
 $total_pending = $pending_count ? $pending_count['TOTAL'] : 0;
 
@@ -59,7 +59,7 @@ $total_earnings = $earnings_result && $earnings_result['TOTAL'] ? $earnings_resu
 
 // Get open support tickets count
 $sql_tickets = "SELECT COUNT(*) as total FROM TICKET 
-                WHERE LESSORID = :lessorid AND STATUS = 'OPEN'";
+                 WHERE LESSORID = :lessorid AND STATUS = 'OPEN'";
 $tickets_count = db_fetch_one($sql_tickets, ['lessorid' => $lessor_id]);
 $open_tickets = $tickets_count ? $tickets_count['TOTAL'] : 0;
 
@@ -71,144 +71,124 @@ $open_tickets = $tickets_count ? $tickets_count['TOTAL'] : 0;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lessor Dashboard - Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    
+    <link href="../assets/css/lessor-dashboard.css?v=<?php echo time(); ?>" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation Bar -->
     <nav>
-        <h2>Car Rental System - Lessor Panel</h2>
-        <div>
-            <span>Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</span>
-            <a href="dashboard.php">Dashboard</a>
-            <a href="my_cars.php">My Cars</a>
-            <a href="bookings.php">Bookings</a>
-            <a href="earnings.php">Earnings</a>
-            <a href="submit_ticket.php">Support</a>
-            <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2>Car Rental System <span style="font-size:14px; opacity:0.8; font-weight:400;">| Lessor Panel</span></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($lessor_name); ?>!</span>
+                <a href="dashboard.php" class="active">Dashboard</a>
+                <a href="my_cars.php">My Cars</a>
+                <a href="bookings.php">Bookings</a>
+                <a href="earnings.php">Earnings</a>
+                <a href="profile.php">Profile</a>
+                <a href="submit_ticket.php">Support</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
         </div>
     </nav>
     
-    <!-- Main Content -->
     <main>
-        <div>
+        <div class="hero">
             <h1>Welcome to Your Dashboard!</h1>
             <p>Manage your car listings, bookings, and earnings</p>
         </div>
         
-        <!-- Statistics Overview -->
-        <div>
+        <div class="content-wrapper">
             <h2>Your Statistics</h2>
             
-            <div>
-                <div>
+            <div class="stats-grid">
+                <div class="stat-card">
                     <h3>Total Cars Listed</h3>
-                    <div><?php echo $total_cars; ?></div>
+                    <div class="stat-number"><?php echo $total_cars; ?></div>
                     <p>All your vehicles</p>
                 </div>
                 
-                <div>
+                <div class="stat-card">
                     <h3>Active Listings</h3>
-                    <div><?php echo $total_active; ?></div>
+                    <div class="stat-number"><?php echo $total_active; ?></div>
                     <p>Available for booking</p>
                 </div>
                 
-                <div>
+                <div class="stat-card">
                     <h3>Total Bookings</h3>
-                    <div><?php echo $total_bookings; ?></div>
+                    <div class="stat-number"><?php echo $total_bookings; ?></div>
                     <p>All-time bookings</p>
                 </div>
                 
-                <div>
+                <div class="stat-card">
                     <h3>Pending Bookings</h3>
-                    <div><?php echo $total_pending; ?></div>
+                    <div class="stat-number" style="color: #f59e0b;"><?php echo $total_pending; ?></div>
                     <p>Awaiting your approval</p>
                     <?php if ($total_pending > 0): ?>
-                        <a href="bookings.php">Review Now</a>
+                        <a href="bookings.php" class="card-link">Review Now</a>
                     <?php endif; ?>
                 </div>
                 
-                <div>
+                <div class="stat-card">
                     <h3>Total Earnings</h3>
-                    <div>RM <?php echo number_format($total_earnings, 2); ?></div>
+                    <div class="stat-number" style="color: #10b981;">RM <?php echo number_format($total_earnings, 2); ?></div>
                     <p>After 10% platform fee</p>
                 </div>
                 
-                <div>
+                <div class="stat-card">
                     <h3>Support Tickets</h3>
-                    <div><?php echo $open_tickets; ?></div>
+                    <div class="stat-number"><?php echo $open_tickets; ?></div>
                     <p>Open tickets</p>
                     <?php if ($open_tickets > 0): ?>
-                        <a href="submit_ticket.php">View Tickets</a>
+                        <a href="submit_ticket.php" class="card-link">View Tickets</a>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
         
-        <!-- Quick Actions -->
-        <div>
+        <div class="content-wrapper">
             <h2>Quick Actions</h2>
             
-            <div>
-                <a href="add_car.php">
+            <div class="actions-grid">
+                <a href="add_car.php" class="action-card">
                     <h3>Add New Car</h3>
                     <p>List a new vehicle for rent</p>
                 </a>
                 
-                <a href="my_cars.php">
+                <a href="my_cars.php" class="action-card">
                     <h3>My Car Listings</h3>
                     <p>View and manage your vehicles</p>
-                    <?php if ($total_cars > 0): ?>
-                        <span><?php echo $total_cars; ?> cars</span>
-                    <?php endif; ?>
                 </a>
                 
-                <a href="bookings.php">
+                <a href="bookings.php" class="action-card">
                     <h3>Manage Bookings</h3>
-                    <p>View and respond to booking requests</p>
-                    <?php if ($total_pending > 0): ?>
-                        <span><?php echo $total_pending; ?> pending</span>
-                    <?php endif; ?>
+                    <p>Respond to requests</p>
                 </a>
                 
-                <a href="earnings.php">
+                <a href="earnings.php" class="action-card">
                     <h3>Track Earnings</h3>
-                    <p>View your revenue and payouts</p>
+                    <p>View revenue and payouts</p>
                 </a>
                 
-                <a href="submit_ticket.php">
+                <a href="submit_ticket.php" class="action-card">
                     <h3>Support Tickets</h3>
-                    <p>Get help from our support team</p>
-                    <?php if ($open_tickets > 0): ?>
-                        <span><?php echo $open_tickets; ?> open</span>
-                    <?php endif; ?>
+                    <p>Get help from support</p>
                 </a>
             </div>
         </div>
         
-        <!-- Getting Started Guide (if no cars) -->
         <?php if ($total_cars == 0): ?>
-        <div style="background: #e7f3ff; padding: 20px; border-left: 4px solid #007bff; margin-top: 30px;">
-            <h2 style="margin-top: 0; color: #004085;">🚗 Get Started</h2>
+        <div class="alert-box info">
+            <h3>🚗 Get Started</h3>
             <p>You haven't listed any cars yet. Here's how to get started:</p>
             <ol>
                 <li>Click "Add New Car" to list your first vehicle</li>
                 <li>Upload photos and set your rental rates</li>
                 <li>Wait for booking requests from renters</li>
-                <li>Manage bookings and track your earnings</li>
             </ol>
-            <a href="add_car.php" style="display: inline-block; padding: 12px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">
-                📝 List Your First Car Now
-            </a>
+            <a href="add_car.php" class="btn-primary">List Your First Car Now</a>
         </div>
         <?php endif; ?>
-        
-        <!-- Need Help Section -->
-        <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #ffc107; margin-top: 30px;">
-            <h3 style="margin-top: 0;">💬 Need Help?</h3>
-            <p>Have questions or facing issues? Our support team is here to help!</p>
-            <a href="submit_ticket.php" style="display: inline-block; padding: 10px 20px; background: #ffc107; color: #000; text-decoration: none; border-radius: 5px; margin-top: 10px;">
-                🎫 Submit a Support Ticket
-            </a>
-        </div>
         
     </main>
 </body>

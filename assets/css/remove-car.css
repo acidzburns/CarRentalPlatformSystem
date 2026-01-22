@@ -1,0 +1,348 @@
+/* ===================================
+   Royal Blue Remove Car Styles
+   Fixed Structure & Modern UI
+   =================================== */
+
+/* --- Reset --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- NAVIGATION (Royal Blue) --- */
+nav {
+    background-color: #1864FF;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+nav h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    border: none;
+    padding-bottom: 0;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.welcome-text {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 15px;
+    margin-right: 15px;
+}
+
+/* Nav Links */
+.nav-links a:not(.logout-btn) {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-links a:not(.logout-btn):hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.nav-links a.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+/* Logout */
+.logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ffffff;
+    color: #1864FF;
+}
+
+/* --- HERO SECTION --- */
+.page-header {
+    background-color: #1864FF;
+    color: white;
+    text-align: center;
+    padding: 40px 20px 100px 20px;
+    margin-bottom: 0;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.page-header p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+}
+
+/* --- CONTENT CONTAINER --- */
+main {
+    max-width: 800px;
+    margin: -60px auto 40px auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+}
+
+/* --- CARD CONTAINER --- */
+.card-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+}
+
+/* --- SECTION HEADERS --- */
+h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 1.5rem 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+h2:first-of-type {
+    margin-top: 0;
+}
+
+p {
+    margin-bottom: 0.75rem;
+    color: #475569;
+}
+
+strong {
+    color: #1e293b;
+}
+
+/* --- ALERT MESSAGES --- */
+.error,
+.success,
+.warning {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.error {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+.success {
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #059669;
+}
+
+.success a {
+    color: #059669;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.warning {
+    background-color: #fffbeb;
+    border: 1px solid #fcd34d;
+    color: #b45309;
+}
+
+.warning h3 {
+    margin-bottom: 0.5rem;
+    color: #92400e;
+    font-size: 1.1rem;
+}
+
+.warning a {
+    color: #b45309;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* --- FORM ELEMENTS --- */
+form>div {
+    margin-bottom: 1rem;
+}
+
+input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.5rem;
+    cursor: pointer;
+    vertical-align: middle;
+    accent-color: #1864FF;
+}
+
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.75rem;
+    cursor: pointer;
+    vertical-align: middle;
+    accent-color: #1864FF;
+}
+
+label {
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    resize: vertical;
+    margin-top: 0.5rem;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #1864FF;
+    box-shadow: 0 0 0 3px rgba(24, 100, 255, 0.1);
+}
+
+/* --- BUTTONS --- */
+button[type="submit"] {
+    background-color: #ef4444;
+    /* Red for destructive action */
+    color: white;
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+button[type="submit"]:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+}
+
+/* Alternative Flow Reactivate Button */
+button.reactivate-btn {
+    background-color: #10b981;
+}
+
+button.reactivate-btn:hover {
+    background-color: #059669;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+form>a {
+    display: inline-block;
+    padding: 0.875rem 2rem;
+    color: #64748b;
+    text-decoration: none;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-left: 1rem;
+    background: transparent;
+}
+
+form>a:hover {
+    background-color: #f1f5f9;
+    color: #333;
+    border-color: #94a3b8;
+}
+
+/* Radio Group Styling */
+.radio-group {
+    background-color: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 1rem;
+    transition: all 0.2s;
+}
+
+.radio-group:hover {
+    border-color: #1864FF;
+}
+
+.radio-description {
+    display: block;
+    margin-left: 28px;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .card-content {
+        padding: 1.5rem;
+    }
+
+    button[type="submit"],
+    form>a {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0.5rem;
+        text-align: center;
+    }
+}

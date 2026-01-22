@@ -1,0 +1,589 @@
+/* ===================================
+   Booking Management - Royal Blue Theme
+   Matches my-car.css styling
+   =================================== */
+
+/* --- Reset --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- NAVIGATION (Royal Blue) --- */
+nav {
+    background-color: #1864FF;
+    /* Royal Blue */
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+nav h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.welcome-text {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 15px;
+    margin-right: 15px;
+}
+
+/* Nav Links */
+.nav-links a:not(.logout-btn) {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    background: transparent;
+    /* Ensure no background by default */
+    border: none;
+    /* No border/frame on regular nav links */
+}
+
+.nav-links a:not(.logout-btn):hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Active page indicator - only for links with .active class */
+.nav-links a.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+/* Logout */
+.logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ffffff;
+    color: #1864FF;
+}
+
+/* --- HERO SECTION --- */
+.page-header {
+    background-color: #1864FF;
+    color: white;
+    text-align: center;
+    padding: 40px 20px 100px 20px;
+    margin-bottom: 0;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: #ffffff;
+    /* White text on blue background */
+}
+
+.page-header p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+}
+
+/* --- CONTENT CONTAINER --- */
+.content-container {
+    max-width: 1200px;
+    margin: -60px auto 40px auto;
+    /* Overlap effect */
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+}
+
+/* --- Page Headings --- */
+h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 30px 0 20px 0;
+}
+
+h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 25px 0 15px 0;
+}
+
+h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 10px;
+}
+
+/* --- HR --- */
+hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 25px 0;
+}
+
+/* --- Alerts --- */
+.flash-message,
+.alert {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.flash-message.success,
+.alert.success {
+    background-color: #d1fae5;
+    border: 2px solid #a7f3d0;
+    color: #065f46;
+}
+
+.flash-message.error,
+.alert.error {
+    background-color: #fee2e2;
+    border: 2px solid #fecaca;
+    color: #991b1b;
+}
+
+.flash-message.warning,
+.alert.warning {
+    background-color: #fffbeb;
+    border: 2px solid #fde68a;
+    color: #d97706;
+}
+
+/* --- Statistics Table --- */
+table[border="1"] {
+    width: 100%;
+    background-color: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin: 20px 0;
+}
+
+table[border="1"] th {
+    background-color: #1864FF;
+    /* Royal Blue */
+    color: #ffffff;
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: none;
+}
+
+table.stats-table th,
+table.stats-table td {
+    text-align: center !important;
+}
+
+/* --- Booking Card Tables --- */
+.booking-card table {
+    border-collapse: collapse;
+    border: none;
+    margin-bottom: 20px;
+}
+
+.booking-card th.section-header {
+    background-color: #1864FF;
+    color: #ffffff;
+    text-align: left;
+    padding: 12px 15px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: none;
+}
+
+.booking-card td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+table[border="1"] td:last-child {
+    font-weight: 600;
+    color: #1864FF;
+    /* Royal Blue */
+}
+
+/* --- Filter Links --- */
+.filter-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-bar a {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #64748b;
+    background: #f1f5f9;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.filter-bar a.active,
+.filter-bar a:hover {
+    background: #1864FF;
+    color: white;
+}
+
+/* --- Booking Cards --- */
+.booking-card {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.booking-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: #1864FF;
+}
+
+/* --- Status Badges --- */
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-left: 8px;
+}
+
+.status-pending {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.status-confirmed {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.status-ongoing {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #10b981;
+}
+
+.status-cancelled,
+.status-rejected {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+/* --- Action Buttons --- */
+.actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+button[type="submit"] {
+    background-color: #1864FF;
+    /* Royal Blue */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #0050e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(24, 100, 255, 0.2);
+}
+
+/* Approve Button */
+button[onclick*="Approve"] {
+    background-color: #10b981;
+}
+
+button[onclick*="Approve"]:hover {
+    background-color: #059669;
+}
+
+/* Complete Button */
+button[onclick*="Complete"] {
+    background-color: #10b981;
+}
+
+button[onclick*="Complete"]:hover {
+    background-color: #059669;
+}
+
+/* Reject/Cancel Button */
+button[onclick*="Reject"],
+button[onclick*="Cancel"] {
+    background-color: #ef4444;
+}
+
+button[onclick*="Reject"]:hover,
+button[onclick*="Cancel"]:hover {
+    background-color: #dc2626;
+}
+
+/* --- Forms --- */
+form {
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+form input[type="text"],
+form input[type="number"] {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-right: 8px;
+    min-width: 200px;
+}
+
+form input[type="text"]:focus,
+form input[type="number"]:focus {
+    outline: none;
+    border-color: #1864FF;
+    box-shadow: 0 0 0 3px rgba(24, 100, 255, 0.1);
+}
+
+form label {
+    font-weight: 600;
+    color: #374151;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* --- Links --- */
+a[href*="booking_details"] {
+    display: inline-block;
+    color: #1864FF;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border: 1px solid #1864FF;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+a[href*="booking_details"]:hover {
+    background-color: #1864FF;
+    color: white;
+}
+
+a[href*="dashboard"] {
+    display: inline-block;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 10px 20px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+}
+
+a[href*="dashboard"]:hover {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+/* --- Empty State --- */
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    color: #64748b;
+    font-size: 16px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .page-header {
+        padding: 30px 15px 80px 15px;
+    }
+
+    .content-container {
+        margin: -50px auto 30px auto;
+        padding: 0 15px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .booking-card {
+        padding: 20px;
+    }
+
+    table[border="1"] {
+        font-size: 13px;
+    }
+
+    table[border="1"] th,
+    table[border="1"] td {
+        padding: 12px 15px;
+    }
+
+    form input[type="text"],
+    form input[type="number"] {
+        width: 100%;
+        margin: 8px 0;
+    }
+
+    button[type="submit"] {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    form {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+}
+
+/* --- Accessibility --- */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid #1864FF;
+    outline-offset: 2px;
+}
+
+/* --- Pagination --- */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+.page-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.page-link:hover:not(.disabled):not(.active) {
+    background: #f8fafc;
+    border-color: #1864FF;
+    color: #1864FF;
+}
+
+.page-link.active {
+    background: #1864FF;
+    border-color: #1864FF;
+    color: white;
+    cursor: default;
+}
+
+.page-link.disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+}

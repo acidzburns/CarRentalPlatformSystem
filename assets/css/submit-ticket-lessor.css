@@ -1,0 +1,392 @@
+/* ===================================
+   Royal Blue Submit Ticket Styles
+   Fixed Structure & Modern UI
+   =================================== */
+
+/* --- Reset --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- NAVIGATION (Royal Blue) --- */
+nav {
+    background-color: #1864FF;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+nav h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    border: none;
+    padding-bottom: 0;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.welcome-text {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 15px;
+    margin-right: 15px;
+}
+
+/* Nav Links */
+.nav-links a:not(.logout-btn) {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-links a:not(.logout-btn):hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.nav-links a.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+/* Logout */
+.logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ffffff;
+    color: #1864FF;
+}
+
+/* --- HERO SECTION --- */
+.hero {
+    background-color: #1864FF;
+    color: white;
+    text-align: center;
+    padding: 40px 20px 100px 20px;
+    margin-bottom: 0;
+}
+
+.hero h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.hero p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+}
+
+/* --- MAIN LAYOUT --- */
+.details-container {
+    max-width: 1200px;
+    margin: -60px auto 40px auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+}
+
+/* --- CARDS --- */
+.details-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    height: 100%;
+}
+
+h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+/* --- FORMS --- */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+input[type="text"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+input[type="text"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #1864FF;
+    box-shadow: 0 0 0 3px rgba(24, 100, 255, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.btn-primary {
+    background-color: #1864FF;
+    color: white;
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background-color: #0056e0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(24, 100, 255, 0.2);
+}
+
+/* --- STATS & SIDEBAR --- */
+.sidebar-stats div {
+    transition: transform 0.2s ease;
+}
+
+.sidebar-stats div:hover {
+    transform: translateY(-2px);
+    border-color: #1864FF !important;
+}
+
+.guidelines-box {
+    margin-top: 25px;
+    background-color: #eff6ff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #dbeafe;
+}
+
+.guidelines-box h4 {
+    color: #1e40af;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.guidelines-box ul li {
+    margin-bottom: 5px;
+}
+
+/* --- TICKET HISTORY SECTION --- */
+.ticket-section {
+    max-width: 1200px;
+    margin: 0 auto 40px auto;
+    padding: 0 20px;
+}
+
+/* --- FILTERS (New Pill Style) --- */
+.filters {
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 5px;
+    border-radius: 50px;
+    gap: 5px;
+}
+
+.filters a {
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.filters a:hover {
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.filters a.active {
+    background-color: #1864FF;
+    color: white;
+    box-shadow: 0 2px 5px rgba(24, 100, 255, 0.3);
+}
+
+/* --- TICKET CARDS --- */
+.ticket-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+}
+
+.ticket-card:hover {
+    border-color: #1864FF;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.ticket-id {
+    font-weight: 700;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-open {
+    background-color: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #ffedd5;
+}
+
+.status-resolved {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #d1fae5;
+}
+
+.ticket-body .subject {
+    display: block;
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin-bottom: 5px;
+}
+
+.ticket-body .meta {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 15px;
+}
+
+.ticket-desc {
+    background-color: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* --- ALERTS --- */
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.alert.success {
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #059669;
+}
+
+.alert.error {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 900px) {
+    .details-container {
+        grid-template-columns: 1fr;
+    }
+
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .filters {
+        width: 100%;
+        justify-content: center;
+    }
+}

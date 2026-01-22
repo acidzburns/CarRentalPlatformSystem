@@ -212,6 +212,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-top: 5px;
         }
     </style>
+    <link rel="stylesheet" href="../assets/css/sys_globals.css">
+<link rel="stylesheet" href="../assets/css/sys_components.css">
+<link rel="stylesheet" href="../assets/css/sys_auth.css">
+<!-- Important: Add class="auth-page" to your <body> tag -->
+<body class="auth-page"></body>
 </head>
 <body>
     <div class="container">
@@ -259,6 +264,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <div class="login-link">
             Already have an account? <a href="renter_login.php">Login here</a>
+            <p>
+                <a href="lessor_login.php">Login as Car Owner</a> | 
+                <a href="../index.php">Back to Home</a>
+            </p>
         </div>
     </div>
 </body>

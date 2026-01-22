@@ -215,91 +215,122 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit User - Admin</title>
+    <title>Edit User | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/edit_user.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>✏️ Edit User Information</h1>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
+        
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
+        
+        <a href="manage_users.php" class="active">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+
+    <div class="main-content">
+        <header class="page-header">
+            <h2><i class="fas fa-user-edit"></i> Edit User Information</h2>
+        </header>
+
+        <?php display_flash_message(); ?>
     
-    <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="manage_users.php">Manage Users</a> |
-        <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>">← Back to User Details</a> |
-        <a href="../auth/logout.php">Logout</a>
-    </nav>
-    
-    <hr>
-    
-    <?php display_flash_message(); ?>
-    
-    <!-- Display errors -->
-    <?php if (!empty($errors)): ?>
-        <div style="background: #ffebee; padding: 10px; margin: 10px 0; border: 1px solid #f44336;">
-            <strong>Error:</strong>
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?php echo htmlspecialchars($error); ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
-    
-    <!-- User Type Badge -->
-    <div style="margin: 20px 0;">
-        <span style="padding: 8px 16px; border-radius: 5px; font-weight: bold; font-size: 18px;
-            <?php echo $user_type == 'renter' ? 'background: #e3f2fd; color: #0277bd;' : 'background: #f3e5f5; color: #7b1fa2;'; ?>">
+        <!-- Display errors -->
+        <?php if (!empty($errors)): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <div>
+                    <strong>Correction Needed:</strong>
+                    <ul style="margin-top: 5px; margin-left: 20px;">
+                        <?php foreach ($errors as $error): ?>
+                            <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+        <?php endif; ?>
+        
+        <!-- User Type Badge -->
+        <span class="user-type-badge badge-<?php echo $user_type; ?>">
             Editing <?php echo strtoupper($user_type); ?> #<?php echo $user['USER_ID']; ?>
         </span>
+        
+        <div class="alert alert-important">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <strong>Important Note</strong>
+                <p style="margin-top: 5px; font-weight: normal;">You can only edit contact information. Password changes must be requested by the user. Email and phone number must be unique across all users.</p>
+            </div>
+        </div>
+        
+        <!-- Edit Form Card -->
+        <div class="form-card">
+            <h3><i class="fas fa-list-alt"></i> Edit Contact Information</h3>
+            
+            <form method="POST" action="">
+                <div class="form-group">
+                    <label>Full Name <span style="color: red;">*</span></label>
+                    <input type="text" name="name" required 
+                           value="<?php echo htmlspecialchars($user['NAME']); ?>"
+                           placeholder="Enter full name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email Address <span style="color: red;">*</span></label>
+                    <input type="email" name="email" required 
+                           value="<?php echo htmlspecialchars($user['EMAIL']); ?>"
+                           placeholder="Enter email address">
+                    <div class="form-help"><i class="fas fa-check-circle"></i> Must be unique across all users</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone" 
+                           value="<?php echo htmlspecialchars($user['PHONE'] ?? ''); ?>"
+                           placeholder="0123456789" maxlength="15">
+                    <div class="form-help"><i class="fas fa-check-circle"></i> 10-15 digits only, must be unique across all users</div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
-    
-    <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-left: 4px solid #ffc107;">
-        <h3>⚠️ Important</h3>
-        <p>You can only edit contact information. Password changes must be requested by the user.</p>
-        <p>User will be notified of any changes to their account.</p>
-        <p><strong>Note:</strong> Email and phone number must be unique across all users (renters and lessors).</p>
-    </div>
-    
-    <!-- UC23 Step 7: Edit form -->
-    <h2>📋 Edit Contact Information</h2>
-    
-    <form method="POST" action="">
-        <div style="margin: 15px 0;">
-            <label><strong>Name: *</strong></label><br>
-            <input type="text" name="name" required 
-                   value="<?php echo htmlspecialchars($user['NAME']); ?>"
-                   style="width: 400px; padding: 8px;">
-        </div>
-        
-        <div style="margin: 15px 0;">
-            <label><strong>Email: *</strong></label><br>
-            <input type="email" name="email" required 
-                   value="<?php echo htmlspecialchars($user['EMAIL']); ?>"
-                   style="width: 400px; padding: 8px;">
-            <p style="font-size: 12px; color: #666;">✅ Must be unique across all users</p>
-        </div>
-        
-        <div style="margin: 15px 0;">
-            <label><strong>Phone:</strong></label><br>
-            <input type="text" name="phone" 
-                   value="<?php echo htmlspecialchars($user['PHONE'] ?? ''); ?>"
-                   placeholder="0123456789" maxlength="15"
-                   style="width: 400px; padding: 8px;">
-            <p style="font-size: 12px; color: #666;">✅ 10-15 digits only, must be unique across all users</p>
-        </div>
-        
-        <div style="margin: 20px 0;">
-            <button type="submit" 
-                    style="background: #4CAF50; color: white; padding: 12px 30px; border: none; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 5px;">
-                💾 Save Changes
-            </button>
-            <a href="view_user.php?type=<?php echo $user_type; ?>&id=<?php echo $user_id; ?>" 
-               style="display: inline-block; padding: 12px 30px; background: #ccc; color: #333; text-decoration: none; border-radius: 5px; margin-left: 10px;">
-                Cancel
-            </a>
-        </div>
-    </form>
-    
-    <hr>
-    
-    <p><a href="manage_users.php">← Back to Manage Users</a></p>
 </body>
 </html>

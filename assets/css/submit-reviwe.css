@@ -1,0 +1,371 @@
+/* ===================================
+   Submit Review - Royal Blue Theme
+   Aligned with create-booking.css design
+   =================================== */
+
+/* --- Reset & Base --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* --- NAVIGATION BAR (FIXED) --- */
+nav {
+    background-color: #1864FF;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+nav h2 a {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.welcome-text {
+    color: #ffffff !important;
+    font-weight: 500;
+    font-size: 15px;
+    margin-right: 10px;
+}
+
+.nav-links a:not(.logout-btn) {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-links a:not(.logout-btn):hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ffffff;
+    color: #1864FF;
+}
+
+/* --- HERO SECTION --- */
+.hero {
+    background-color: #1864FF;
+    color: white;
+    text-align: center;
+    padding: 40px 20px 100px 20px;
+}
+
+.hero h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.hero p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+}
+
+/* --- CONTENT SECTION --- */
+.details-container {
+    max-width: 1200px;
+    margin: -60px auto 40px auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 30px;
+    align-items: start;
+}
+
+.details-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eef2f6;
+    margin-bottom: 30px;
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+/* --- Form Groups --- */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.2s;
+    min-height: 180px;
+    font-family: inherit;
+}
+
+.form-group textarea:focus {
+    border-color: #1864FF;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 100, 255, 0.1);
+}
+
+/* --- Star Rating --- */
+.rating-container {
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1.5px solid #eef2f6;
+    margin-bottom: 10px;
+}
+
+.star-rating {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+
+.star-rating .star {
+    cursor: pointer;
+    color: #e2e8f0;
+    font-size: 80px;
+    /* Increased to 80px for ease of use */
+    line-height: 1;
+    display: inline-block;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.star:hover,
+.star.active {
+    color: #ffd700;
+    transform: scale(1.15);
+}
+
+.rating-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+    min-height: 22px;
+}
+
+/* --- Guidelines & Info --- */
+.guidelines-card {
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+}
+
+.guidelines-card h4 {
+    color: #1e40af;
+    font-size: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.guidelines-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.guidelines-card li {
+    font-size: 13px;
+    color: #1e40af;
+    margin-bottom: 6px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.guidelines-card li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-top: 5px;
+}
+
+/* --- Sidebar Summary --- */
+.summary-card {
+    position: sticky;
+    top: 100px;
+}
+
+.car-summary-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.summary-details p {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.summary-details span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-row {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #f1f5f9;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* --- Buttons --- */
+.btn-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.btn-primary {
+    flex: 2;
+    background-color: #1864FF;
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(24, 100, 255, 0.2);
+}
+
+.btn-primary:hover {
+    background-color: #0050e0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(24, 100, 255, 0.3);
+}
+
+.btn-outline {
+    flex: 1;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.btn-outline:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+    .details-container {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-card {
+        position: static;
+        order: -1;
+    }
+}

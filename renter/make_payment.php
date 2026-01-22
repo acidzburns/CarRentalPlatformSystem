@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['process_payment'])) {
                 $payment_result = db_execute($sql_insert_payment, [
                     'bookingid' => $booking_id,
                     'renterid' => $renter_id,
-                    'method' => $payment_method,
+                    'method' => 'CARD',
                     'amount' => $booking['TOTAL_AMOUNT']
                 ]);
                 
@@ -220,6 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['process_payment'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Make Payment - Car Rental</title>
+    <link rel="stylesheet" href="../assets/css/make-payment.css">
     <script>
         function showPaymentForm(method) {
             // Hide all forms
@@ -236,200 +237,233 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['process_payment'])) {
 </head>
 <body>
     <nav>
-        <h2>Car Rental System</h2>
-        <p>Welcome, <?php echo htmlspecialchars($renter_name); ?>!</p>
-        <a href="dashboard.php">Dashboard</a>
-        <a href="booking_history.php">My Bookings</a>
-        <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2><a href="dashboard.php" style="color:white; text-decoration:none;">Car Rental System</a></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($renter_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="search_cars.php">Search Cars</a>
+                <a href="booking_history.php">My Bookings</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
+        </div>
     </nav>
-    
-    <main>
-        <h1>Complete Payment</h1>
-        <p>Booking ID: #<?php echo htmlspecialchars($booking_id); ?></p>
-        
-        <?php if ($error): ?>
-            <div class="error"><?php echo htmlspecialchars($error); ?></div>
-        <?php endif; ?>
-        
-        <!-- Step 1: Display payment summary -->
-        <div class="payment-summary">
-            <h2>Payment Summary</h2>
-            
-            <?php if ($booking['PHOTO1_PATH']): ?>
-            <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
-                 alt="Car" width="200">
+
+    <header class="page-header">
+        <h1>Complete Your Payment</h1>
+        <p>Booking Reference: #<?php echo htmlspecialchars($booking_id); ?></p>
+    </header>
+
+    <main class="details-container">
+        <!-- Left Column: Payment Methods & Forms -->
+        <div class="payment-main-col">
+            <?php if ($error): ?>
+                <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
-            
-            <h3><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h3>
-            <p><strong>License Plate:</strong> <?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></p>
-            <p><strong>Car Owner:</strong> <?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></p>
-            
-            <hr>
-            
-            <p><strong>Rental Period:</strong><br>
-               <?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' to ' . $booking['END_DATE_FMT']); ?></p>
-            <p><strong>Duration:</strong> <?php echo htmlspecialchars($booking['RENTAL_DAYS']); ?> day(s)</p>
-            
-            <hr>
-            
-            <h3>Amount to Pay:</h3>
-            <p style="font-size: 24px;"><strong>RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></strong></p>
+
+            <!-- Step 2: Selection -->
+            <?php if (empty($selected_method)): ?>
+            <div class="details-card">
+                <h2>Select Payment Method</h2>
+                <p class="section-desc">Choose your preferred payment method:</p>
+                
+                <form method="POST" action="">
+                    <input type="hidden" name="select_method" value="1">
+                    
+                    <div class="method-option">
+                        <input type="radio" id="credit_card" name="payment_method" value="CREDIT_CARD" required>
+                        <label for="credit_card">
+                            <i class="fa fa-credit-card"></i>
+                            <div class="method-info">
+                                <strong>Credit Card</strong>
+                                <span>Visa, Mastercard</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="method-option">
+                        <input type="radio" id="online_banking" name="payment_method" value="ONLINE_BANKING">
+                        <label for="online_banking">
+                            <i class="fa fa-university"></i>
+                            <div class="method-info">
+                                <strong>Online Banking</strong>
+                                <span>FPX (Maybank, CIMB, RHB, etc.)</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="method-option">
+                        <input type="radio" id="e_wallet" name="payment_method" value="E_WALLET">
+                        <label for="e_wallet">
+                            <i class="fa fa-mobile-alt"></i>
+                            <div class="method-info">
+                                <strong>E-Wallet</strong>
+                                <span>TNG, GrabPay, Boost</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">Continue to Payment</button>
+                </form>
+            </div>
+
+            <?php else: ?>
+            <!-- Step 3: Enter Details -->
+            <div class="details-card">
+                <h2>Enter Payment Details</h2>
+                <p class="section-desc">Method: <strong><?php echo htmlspecialchars(str_replace('_', ' ', $selected_method)); ?></strong></p>
+                
+                <!-- Credit Card Form -->
+                <?php if ($selected_method === 'CREDIT_CARD' || $selected_method === 'DEBIT_CARD'): ?>
+                <div id="<?php echo $selected_method; ?>_form" class="payment-detail-form">
+                    <form method="POST" action="">
+                        <input type="hidden" name="payment_method" value="<?php echo htmlspecialchars($selected_method); ?>">
+                        <input type="hidden" name="process_payment" value="1">
+                        
+                        <div class="form-group">
+                            <label for="card_number">Card Number *</label>
+                            <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" 
+                                   maxlength="16" pattern="\d{16}" required>
+                            <small class="form-hint">Test cards: 4111111111111111 (Visa)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="card_name">Cardholder Name *</label>
+                            <input type="text" id="card_name" name="card_name" placeholder="JOHN DOE" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Expiry Date *</label>
+                                <div class="expiry-inputs">
+                                    <select name="expiry_month" required>
+                                        <option value="">MM</option>
+                                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                                        <option value="<?php echo sprintf('%02d', $m); ?>"><?php echo sprintf('%02d', $m); ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <select name="expiry_year" required>
+                                        <option value="">YYYY</option>
+                                        <?php for ($y = date('Y'); $y <= date('Y') + 10; $y++): ?>
+                                        <option value="<?php echo $y; ?>"><?php echo $y; ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV *</label>
+                                <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" pattern="\d{3,4}" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Pay RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></button>
+                        <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>" class="back-link">Change Method</a>
+                    </form>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Online Banking Form -->
+                <?php if ($selected_method === 'ONLINE_BANKING'): ?>
+                <div id="ONLINE_BANKING_form" class="payment-detail-form">
+                    <form method="POST" action="">
+                        <input type="hidden" name="payment_method" value="ONLINE_BANKING">
+                        <input type="hidden" name="process_payment" value="1">
+                        
+                        <div class="form-group">
+                            <label>Select Your Bank</label>
+                            <select name="bank" required>
+                                <option value="">-- Choose Bank --</option>
+                                <option value="Maybank">Maybank</option>
+                                <option value="CIMB Bank">CIMB Bank</option>
+                                <option value="Public Bank">Public Bank</option>
+                                <option value="RHB Bank">RHB Bank</option>
+                                <option value="Hong Leong Bank">Hong Leong Bank</option>
+                                <option value="AmBank">AmBank</option>
+                                <option value="Bank Islam">Bank Islam</option>
+                                <option value="Bank Rakyat">Bank Rakyat</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Proceed to Bank</button>
+                        <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>" class="back-link">Change Method</a>
+                    </form>
+                </div>
+                <?php endif; ?>
+                
+                <!-- E-Wallet Form -->
+                <?php if ($selected_method === 'E_WALLET'): ?>
+                <div id="E_WALLET_form" class="payment-detail-form">
+                    <form method="POST" action="">
+                        <input type="hidden" name="payment_method" value="E_WALLET">
+                        <input type="hidden" name="process_payment" value="1">
+                        
+                        <div class="form-group">
+                            <label for="wallet_type">Select E-Wallet *</label>
+                            <select id="wallet_type" name="wallet_type" required>
+                                <option value="">-- Choose Wallet --</option>
+                                <option value="Touch 'n Go eWallet">Touch 'n Go eWallet</option>
+                                <option value="GrabPay">GrabPay</option>
+                                <option value="Boost">Boost</option>
+                                <option value="ShopeePay">ShopeePay</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="wallet_phone">Phone Number *</label>
+                            <input type="tel" id="wallet_phone" name="wallet_phone" placeholder="0123456789" 
+                                   pattern="01\d{8,9}" required>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Pay with E-Wallet</button>
+                        <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>" class="back-link">Change Method</a>
+                    </form>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
         </div>
-        
-        <hr>
-        
-        <!-- Step 2: Customer selects payment method -->
-        <?php if (empty($selected_method)): ?>
-        
-        <h2>Select Payment Method</h2>
-        <p>Choose your preferred payment method:</p>
-        
-        <form method="POST" action="">
-            <input type="hidden" name="select_method" value="1">
-            
-            <div>
-                <input type="radio" id="credit_card" name="payment_method" value="CREDIT_CARD" required>
-                <label for="credit_card"><strong>Credit Card</strong> (Visa, Mastercard)</label>
+
+        <!-- Right Column: Summary -->
+        <aside class="summary-col">
+            <div class="booking-card">
+                <h3>Booking Summary</h3>
+                
+                <?php if ($booking['PHOTO1_PATH']): ?>
+                <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
+                     class="car-summary-img" alt="Car">
+                <?php endif; ?>
+                
+                <h4 class="car-title"><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h4>
+                <div class="summary-details">
+                    <p><span>License Plate</span> <?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></p>
+                    <p><span>Car Owner</span> <?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></p>
+                </div>
+                
+                <hr>
+                
+                <div class="period-display">
+                    <label>Rental Period</label>
+                    <p><?php echo htmlspecialchars($booking['START_DATE_FMT'] . ' - ' . $booking['END_DATE_FMT']); ?></p>
+                    <small><?php echo htmlspecialchars($booking['RENTAL_DAYS']); ?> Day(s)</small>
+                </div>
+                
+                <hr>
+                
+                <div class="amount-display">
+                    <span>Total Amount</span>
+                    <strong>RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></strong>
+                </div>
             </div>
             
-            <div>
-                <input type="radio" id="debit_card" name="payment_method" value="DEBIT_CARD">
-                <label for="debit_card"><strong>Debit Card</strong> (Visa Debit, Mastercard Debit)</label>
+            <div class="security-card">
+                <i class="fas fa-shield-alt"></i>
+                <div class="security-text">
+                    <strong>Secure Payment</strong>
+                    <p>SSL Encrypted Transaction</p>
+                </div>
             </div>
-            
-            <div>
-                <input type="radio" id="online_banking" name="payment_method" value="ONLINE_BANKING">
-                <label for="online_banking"><strong>Online Banking</strong> (FPX - All Malaysian Banks)</label>
-            </div>
-            
-            <div>
-                <input type="radio" id="e_wallet" name="payment_method" value="E_WALLET">
-                <label for="e_wallet"><strong>E-Wallet</strong> (Touch 'n Go, GrabPay, Boost, ShopeePay)</label>
-            </div>
-            
-            <br>
-            <button type="submit">Continue to Payment</button>
-            <a href="booking_history.php">Cancel</a>
-        </form>
-        
-        <?php else: ?>
-        
-        <!-- Step 3: Customer enters payment details -->
-        <h2>Enter Payment Details</h2>
-        <p>Selected Method: <strong><?php echo htmlspecialchars(str_replace('_', ' ', $selected_method)); ?></strong></p>
-        
-        <!-- Credit Card Form -->
-        <?php if ($selected_method === 'CREDIT_CARD' || $selected_method === 'DEBIT_CARD'): ?>
-        <div id="<?php echo $selected_method; ?>_form" class="payment-form">
-            <form method="POST" action="">
-                <input type="hidden" name="payment_method" value="<?php echo htmlspecialchars($selected_method); ?>">
-                <input type="hidden" name="process_payment" value="1">
-                
-                <h3><?php echo $selected_method === 'CREDIT_CARD' ? 'Credit Card' : 'Debit Card'; ?> Details</h3>
-                
-                <label for="card_number">Card Number *</label>
-                <input type="text" id="card_number" name="card_number" placeholder="1234 5678 9012 3456" 
-                       maxlength="16" pattern="\d{16}" required>
-                <p><em>Test cards: 4111111111111111 (Visa), 5555555555554444 (Mastercard)</em></p>
-                
-                <label for="card_name">Cardholder Name *</label>
-                <input type="text" id="card_name" name="card_name" placeholder="JOHN DOE" required>
-                
-                <label for="expiry">Expiry Date *</label>
-                <select id="expiry_month" name="expiry_month" required>
-                    <option value="">Month</option>
-                    <?php for ($m = 1; $m <= 12; $m++): ?>
-                    <option value="<?php echo sprintf('%02d', $m); ?>"><?php echo sprintf('%02d', $m); ?></option>
-                    <?php endfor; ?>
-                </select>
-                <select id="expiry_year" name="expiry_year" required>
-                    <option value="">Year</option>
-                    <?php for ($y = date('Y'); $y <= date('Y') + 10; $y++): ?>
-                    <option value="<?php echo $y; ?>"><?php echo $y; ?></option>
-                    <?php endfor; ?>
-                </select>
-                
-                <label for="cvv">CVV/CVC *</label>
-                <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" pattern="\d{3,4}" required>
-                <p><em>3 or 4 digit security code on back of card</em></p>
-                
-                <br>
-                <button type="submit">Pay RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></button>
-                <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>">Change Payment Method</a>
-            </form>
-        </div>
-        <?php endif; ?>
-        
-        <!-- Online Banking Form -->
-        <?php if ($selected_method === 'ONLINE_BANKING'): ?>
-        <div id="ONLINE_BANKING_form" class="payment-form">
-            <form method="POST" action="">
-                <input type="hidden" name="payment_method" value="ONLINE_BANKING">
-                <input type="hidden" name="process_payment" value="1">
-                
-                <h3>Select Your Bank</h3>
-                <p>You will be redirected to your bank's secure payment page (FPX)</p>
-                
-                <select name="bank" required>
-                    <option value="">-- Select Bank --</option>
-                    <option value="Maybank">Maybank</option>
-                    <option value="CIMB Bank">CIMB Bank</option>
-                    <option value="Public Bank">Public Bank</option>
-                    <option value="RHB Bank">RHB Bank</option>
-                    <option value="Hong Leong Bank">Hong Leong Bank</option>
-                    <option value="AmBank">AmBank</option>
-                    <option value="Bank Islam">Bank Islam</option>
-                    <option value="Bank Rakyat">Bank Rakyat</option>
-                    <option value="OCBC Bank">OCBC Bank</option>
-                    <option value="HSBC Bank">HSBC Bank</option>
-                    <option value="Standard Chartered">Standard Chartered</option>
-                    <option value="UOB Bank">UOB Bank</option>
-                </select>
-                
-                <br><br>
-                <button type="submit">Continue to Bank</button>
-                <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>">Change Payment Method</a>
-            </form>
-        </div>
-        <?php endif; ?>
-        
-        <!-- E-Wallet Form -->
-        <?php if ($selected_method === 'E_WALLET'): ?>
-        <div id="E_WALLET_form" class="payment-form">
-            <form method="POST" action="">
-                <input type="hidden" name="payment_method" value="E_WALLET">
-                <input type="hidden" name="process_payment" value="1">
-                
-                <h3>E-Wallet Payment</h3>
-                
-                <label for="wallet_type">Select E-Wallet *</label>
-                <select id="wallet_type" name="wallet_type" required>
-                    <option value="">-- Select Wallet --</option>
-                    <option value="Touch 'n Go eWallet">Touch 'n Go eWallet</option>
-                    <option value="GrabPay">GrabPay</option>
-                    <option value="Boost">Boost</option>
-                    <option value="ShopeePay">ShopeePay</option>
-                </select>
-                
-                <label for="wallet_phone">Phone Number (Registered with E-Wallet) *</label>
-                <input type="tel" id="wallet_phone" name="wallet_phone" placeholder="0123456789" 
-                       pattern="01\d{8,9}" required>
-                <p><em>Enter the phone number registered with your e-wallet</em></p>
-                
-                <br>
-                <button type="submit">Pay RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></button>
-                <a href="make_payment.php?bookingid=<?php echo $booking_id; ?>">Change Payment Method</a>
-            </form>
-        </div>
-        <?php endif; ?>
-        
-        <?php endif; ?>
-        
-        <!-- Security Notice -->
-        <div class="security-notice">
-            <h3>🔒 Secure Payment</h3>
-            <p>Your payment information is encrypted and secure. We do not store your card details.</p>
-        </div>
+        </aside>
+    </main>
         
     </main>
 </body>

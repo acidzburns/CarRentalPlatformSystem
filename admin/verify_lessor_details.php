@@ -118,9 +118,12 @@ if ($lessor_id > 0) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lessor Details - Admin Panel</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lessor Details | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/verify-lessor-details.css?v=<?php echo time(); ?>" />
     <script>
         function showRejectModal() {
             document.getElementById('reject_modal').style.display = 'block';
@@ -137,24 +140,52 @@ if ($lessor_id > 0) {
     </script>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav>
-        <h2>Car Rental System - Admin Panel</h2>
-        <div>
-            <span>Welcome, <?php echo htmlspecialchars($admin_name); ?>!</span>
-            <a href="dashboard.php">Dashboard</a>
-            <a href="verify_lessors.php">Back to Verifications</a>
-            <a href="../auth/logout.php">Logout</a>
-        </div>
-    </nav>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
+        
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php" class="active">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
+        
+        <a href="manage_users.php">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
     
-    <!-- Main Content -->
-    <main>
+<!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Lessor Verification Details</h1>
+            <p>Review all information and documents before making a decision</p>
+        </div>
+        
         <?php if ($success): ?>
-            <div class="success">
-                <?php echo $success; ?>
-                <p><a href="verify_lessors.php">Back to Verification List</a></p>
-            </div>
+            <div class="success"><?php echo $success; ?></div>
         <?php endif; ?>
         
         <?php if ($error && !$lessor): ?>
@@ -165,68 +196,63 @@ if ($lessor_id > 0) {
         <?php endif; ?>
         
         <?php if ($lessor): ?>
-            <div>
-                <h1>Lessor Verification Details</h1>
-                <p>Review all information and documents before making a decision</p>
-            </div>
-            
-            <?php if ($error): ?>
-                <div class="error"><?php echo $error; ?></div>
-            <?php endif; ?>
-            
             <!-- Personal Information -->
-            <div>
-                <h2>Personal Information</h2>
-                <table border="1">
+            <div class="details-card">
+                <h2><i class="fas fa-user"></i> Personal Information</h2>
+                <table>
                     <tr>
-                        <th>Lessor ID:</th>
+                        <th>Lessor ID</th>
                         <td><?php echo htmlspecialchars($lessor['LESSORID']); ?></td>
                     </tr>
                     <tr>
-                        <th>Full Name:</th>
+                        <th>Full Name</th>
                         <td><?php echo htmlspecialchars($lessor['NAME']); ?></td>
                     </tr>
                     <tr>
-                        <th>Email:</th>
+                        <th>Email</th>
                         <td><?php echo htmlspecialchars($lessor['EMAIL']); ?></td>
                     </tr>
                     <tr>
-                        <th>Phone:</th>
+                        <th>Phone</th>
                         <td><?php echo htmlspecialchars($lessor['PHONE'] ?? 'Not provided'); ?></td>
                     </tr>
                     <tr>
-                        <th>Registration Date:</th>
+                        <th>Registration Date</th>
                         <td><?php echo date('F j, Y, g:i a', strtotime($lessor['CREATED_AT'])); ?></td>
                     </tr>
                     <tr>
-                        <th>Current Status:</th>
-                        <td><strong><?php echo htmlspecialchars($lessor['VERIFICATION_STATUS']); ?></strong></td>
+                        <th>Current Status</th>
+                        <td>
+                            <span class="status-badge status-<?php echo strtolower($lessor['VERIFICATION_STATUS']); ?>">
+                                <?php echo htmlspecialchars($lessor['VERIFICATION_STATUS']); ?>
+                            </span>
+                        </td>
                     </tr>
                 </table>
             </div>
             
             <!-- Business Details -->
-            <div>
-                <h2>Business Details</h2>
-                <table border="1">
+            <div class="details-card">
+                <h2><i class="fas fa-briefcase"></i> Business Details</h2>
+                <table>
                     <tr>
-                        <th>Business Name:</th>
+                        <th>Business Name</th>
                         <td><?php echo htmlspecialchars($lessor['BUSINESS_NAME'] ?? 'Not provided'); ?></td>
                     </tr>
                     <tr>
-                        <th>Bank Account:</th>
+                        <th>Bank Account</th>
                         <td><?php echo htmlspecialchars($lessor['BANK_ACCOUNT'] ?? 'Not provided'); ?></td>
                     </tr>
                 </table>
             </div>
             
             <!-- Uploaded Documents -->
-            <div>
-                <h2>Uploaded Documents</h2>
+            <div class="details-card">
+                <h2><i class="fas fa-file-alt"></i> Uploaded Documents</h2>
                 
                 <!-- Driver's License -->
                 <div>
-                    <h3>Driver's License</h3>
+                    <h3><i class="fas fa-id-card"></i> Driver's License</h3>
                     <?php if (!empty($lessor['DRIVER_LICENSE_PATH'])): ?>
                         <?php 
                         $file_path = '../uploads/documents/' . $lessor['DRIVER_LICENSE_PATH'];
@@ -245,7 +271,7 @@ if ($lessor_id > 0) {
                 
                 <!-- Vehicle Ownership Proof -->
                 <div>
-                    <h3>Vehicle Ownership Proof</h3>
+                    <h3><i class="fas fa-car"></i> Vehicle Ownership Proof</h3>
                     <?php if (!empty($lessor['VEHICLE_OWNERSHIP_PATH'])): ?>
                         <?php 
                         $file_path = '../uploads/documents/' . $lessor['VEHICLE_OWNERSHIP_PATH'];
@@ -264,7 +290,7 @@ if ($lessor_id > 0) {
                 
                 <!-- Insurance Document -->
                 <div>
-                    <h3>Insurance Document</h3>
+                    <h3><i class="fas fa-shield-alt"></i> Insurance Document</h3>
                     <?php if (!empty($lessor['INSURANCE_PATH'])): ?>
                         <?php 
                         $file_path = '../uploads/documents/' . $lessor['INSURANCE_PATH'];
@@ -282,25 +308,42 @@ if ($lessor_id > 0) {
                 </div>
             </div>
             
-            <!-- Action Buttons -->
+            <!-- Verification Actions -->
             <?php if ($lessor['VERIFICATION_STATUS'] === 'PENDING'): ?>
-                <div>
-                    <h2>Verification Actions</h2>
+                <div class="details-card">
+                    <h2><i class="fas fa-check-circle"></i> Verification Actions</h2>
+                    <p style="color: #64748b; margin-bottom: 20px;">Review all documents carefully before approving or rejecting this lessor.</p>
                     
-                    <form method="POST" style="display:inline;" onsubmit="return confirmApprove('<?php echo htmlspecialchars($lessor['NAME']); ?>')">
-                        <input type="hidden" name="action" value="approve">
-                        <input type="hidden" name="lessor_id" value="<?php echo $lessor['LESSORID']; ?>">
-                        <button type="submit">✓ Approve Lessor</button>
-                    </form>
-                    
-                    <button type="button" onclick="showRejectModal()">✗ Reject Lessor</button>
-                    
-                    <a href="verify_lessors.php">Cancel</a>
+                    <div class="action-buttons">
+                        <form method="POST" style="display:inline;" onsubmit="return confirmApprove('<?php echo htmlspecialchars($lessor['NAME']); ?>')">
+                            <input type="hidden" name="action" value="approve" />
+                            <input type="hidden" name="lessor_id" value="<?php echo $lessor['LESSORID']; ?>" />
+                            <button type="submit" class="btn btn-approve">
+                                <i class="fas fa-check"></i> Approve Lessor
+                            </button>
+                        </form>
+                        
+                        <button type="button" class="btn btn-reject" onclick="showRejectModal()">
+                            <i class="fas fa-times"></i> Reject Lessor
+                        </button>
+                        
+                        <a href="verify_lessors.php" class="btn btn-back">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
                 </div>
             <?php else: ?>
-                <div>
-                    <p>This lessor has already been <?php echo strtolower($lessor['VERIFICATION_STATUS']); ?>.</p>
-                    <a href="verify_lessors.php">Back to Verification List</a>
+                <div class="details-card">
+                    <h2><i class="fas fa-info-circle"></i> Verification Status</h2>
+                    <p style="color: #64748b; margin-bottom: 15px;">
+                        This lessor has already been 
+                        <span class="status-badge status-<?php echo strtolower($lessor['VERIFICATION_STATUS']); ?>">
+                            <?php echo strtolower($lessor['VERIFICATION_STATUS']); ?>
+                        </span>
+                    </p>
+                    <a href="verify_lessors.php" class="btn btn-back">
+                        <i class="fas fa-arrow-left"></i> Back to Verification List
+                    </a>
                 </div>
             <?php endif; ?>
         <?php endif; ?>
@@ -313,15 +356,15 @@ if ($lessor_id > 0) {
             <p>You are about to reject: <strong><?php echo isset($lessor) ? htmlspecialchars($lessor['NAME']) : ''; ?></strong></p>
             
             <form method="POST">
-                <input type="hidden" name="action" value="reject">
-                <input type="hidden" name="lessor_id" value="<?php echo isset($lessor) ? $lessor['LESSORID'] : ''; ?>">
+                <input type="hidden" name="action" value="reject" />
+                <input type="hidden" name="lessor_id" value="<?php echo isset($lessor) ? $lessor['LESSORID'] : ''; ?>" />
                 
                 <div>
                     <label for="rejection_reason">Reason for Rejection *</label>
                     <textarea id="rejection_reason" name="rejection_reason" rows="4" required placeholder="Please provide a clear reason for rejection (e.g., unclear documents, invalid information)..."></textarea>
                 </div>
                 
-                <div>
+                <div style="margin-top: 15px;">
                     <button type="submit">Confirm Rejection</button>
                     <button type="button" onclick="closeRejectModal()">Cancel</button>
                 </div>

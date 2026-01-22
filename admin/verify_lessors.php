@@ -113,150 +113,216 @@ $recent_lessors = db_fetch_all($sql_verified);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Lessors - Admin Panel</title>
+    <title>Verify Lessors | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/verify-lessors.css?v=<?php echo time(); ?>">
     <script>
         function showRejectModal(lessorId, lessorName) {
-            document.getElementById('reject_modal').style.display = 'block';
+            document.getElementById('reject_modal').classList.add('active');
             document.getElementById('reject_lessor_id').value = lessorId;
             document.getElementById('reject_lessor_name').textContent = lessorName;
         }
         
         function closeRejectModal() {
-            document.getElementById('reject_modal').style.display = 'none';
+            document.getElementById('reject_modal').classList.remove('active');
             document.getElementById('rejection_reason').value = '';
         }
         
         function confirmApprove(lessorId, lessorName) {
-            return confirm('Are you sure you want to APPROVE ' + lessorName + '?\n\nThis will allow them to login and list cars on the platform.');
+            return confirm('Approve ' + lessorName + '?\n\nThis will grant them access to list cars on the platform.');
         }
     </script>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav>
-        <h2>Car Rental System - Admin Panel</h2>
-        <div>
-            <span>Welcome, <?php echo htmlspecialchars($admin_name); ?>!</span>
-            <a href="dashboard.php">Dashboard</a>
-            <a href="../auth/logout.php">Logout</a>
-        </div>
-    </nav>
-    
-    <!-- Main Content -->
-    <main>
-        <div>
-            <h1>Verify Car Owner Registrations</h1>
-            <p>Review and approve or reject lessor accounts</p>
-        </div>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
         
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php" class="active">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+            <?php if (count($pending_lessors) > 0): ?>
+                <span class="sidebar-badge"><?php echo count($pending_lessors); ?></span>
+            <?php endif; ?>
+        </a>
+        
+        <a href="manage_users.php">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Header -->
+        <header class="page-header">
+            <div>
+                <h2>🏪 Lessor Verification</h2>
+                <p>Review and approve car owner registrations</p>
+            </div>
+            <div class="pending-count">
+                <?php echo count($pending_lessors); ?> Pending
+            </div>
+        </header>
+
+        <!-- Alert Messages -->
         <?php if ($success): ?>
-            <div class="success"><?php echo $success; ?></div>
+            <div style="background: #ecfdf5; color: #059669; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #d1fae5;">
+                <i class="fas fa-check-circle"></i> <?php echo $success; ?>
+            </div>
         <?php endif; ?>
         
         <?php if ($error): ?>
-            <div class="error"><?php echo $error; ?></div>
+            <div style="background: #fef2f2; color: #dc2626; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #fee2e2;">
+                <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
+            </div>
         <?php endif; ?>
-        
+
         <!-- Pending Verifications -->
-        <div>
-            <h2>Pending Verifications (<?php echo count($pending_lessors); ?>)</h2>
+        <section>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 25px; color: #1e293b;">
+                <i class="fas fa-clock"></i> Pending Verifications
+            </h3>
             
             <?php if (empty($pending_lessors)): ?>
-                <p>No pending verifications at this time.</p>
+                <div class="empty-state">
+                    <i class="fas fa-check-double"></i>
+                    <p>All caught up! No pending verifications at this time.</p>
+                </div>
             <?php else: ?>
-                <table border="1">
-                    <thead>
-                        <tr>
-                            <th>Lessor ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Registration Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($pending_lessors as $lessor): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($lessor['LESSORID']); ?></td>
-                            <td><?php echo htmlspecialchars($lessor['NAME']); ?></td>
-                            <td><?php echo htmlspecialchars($lessor['EMAIL']); ?></td>
-                            <td><?php echo htmlspecialchars($lessor['PHONE'] ?? 'N/A'); ?></td>
-                            <td><?php echo date('Y-m-d H:i', strtotime($lessor['CREATED_AT'])); ?></td>
-                            <td>
-                                <a href="verify_lessor_details.php?id=<?php echo $lessor['LESSORID']; ?>">View Details</a>
-                                
-                                <form method="POST" style="display:inline;" onsubmit="return confirmApprove(<?php echo $lessor['LESSORID']; ?>, '<?php echo htmlspecialchars($lessor['NAME']); ?>')">
-                                    <input type="hidden" name="action" value="approve">
-                                    <input type="hidden" name="lessor_id" value="<?php echo $lessor['LESSORID']; ?>">
-                                    <button type="submit">Approve</button>
-                                </form>
-                                
-                                <button type="button" onclick="showRejectModal(<?php echo $lessor['LESSORID']; ?>, '<?php echo htmlspecialchars($lessor['NAME']); ?>')">Reject</button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                <div class="lessor-grid">
+                    <?php foreach ($pending_lessors as $lessor): ?>
+                    <div class="lessor-card">
+                        <div class="lessor-header">
+                            <div>
+                                <div class="lessor-id">ID: <?php echo htmlspecialchars($lessor['LESSORID']); ?></div>
+                                <h4 class="lessor-name"><?php echo htmlspecialchars($lessor['NAME']); ?></h4>
+                            </div>
+                        </div>
+                        
+                        <div class="lessor-info">
+                            <div class="info-row">
+                                <i class="fas fa-envelope"></i>
+                                <span><?php echo htmlspecialchars($lessor['EMAIL']); ?></span>
+                            </div>
+                            <div class="info-row">
+                                <i class="fas fa-phone"></i>
+                                <span><?php echo htmlspecialchars($lessor['PHONE'] ?? 'Not provided'); ?></span>
+                            </div>
+                            <div class="info-row">
+                                <i class="fas fa-calendar"></i>
+                                <span>Registered: <?php echo date('M d, Y', strtotime($lessor['CREATED_AT'])); ?></span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <a href="verify_lessor_details.php?id=<?php echo $lessor['LESSORID']; ?>" class="btn btn-view">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                            
+                            <form method="POST" style="flex: 1;" onsubmit="return confirmApprove(<?php echo $lessor['LESSORID']; ?>, '<?php echo htmlspecialchars($lessor['NAME']); ?>')">
+                                <input type="hidden" name="action" value="approve">
+                                <input type="hidden" name="lessor_id" value="<?php echo $lessor['LESSORID']; ?>">
+                                <button type="submit" class="btn btn-approve" style="width: 100%;">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            
+                            <button type="button" onclick="showRejectModal(<?php echo $lessor['LESSORID']; ?>, '<?php echo htmlspecialchars($lessor['NAME']); ?>')" class="btn btn-reject">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
-        </div>
-        
+        </section>
+
         <!-- Recent Verifications -->
-        <div>
-            <h2>Recent Verifications</h2>
+        <section class="recent-section">
+            <h3><i class="fas fa-history"></i> Recent Verifications</h3>
             
             <?php if (empty($recent_lessors)): ?>
-                <p>No recent verifications.</p>
+                <p style="color: #64748b;">No recent verifications.</p>
             <?php else: ?>
-                <table border="1">
-                    <thead>
-                        <tr>
-                            <th>Lessor ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($recent_lessors as $lessor): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($lessor['LESSORID']); ?></td>
-                            <td><?php echo htmlspecialchars($lessor['NAME']); ?></td>
-                            <td><?php echo htmlspecialchars($lessor['EMAIL']); ?></td>
-                            <td>
-                                <?php 
-                                $status = $lessor['VERIFICATION_STATUS'];
-                                echo $status === 'VERIFIED' ? '✓ Verified' : '✗ Rejected';
-                                ?>
-                            </td>
-                            <td><?php echo date('Y-m-d H:i', strtotime($lessor['CREATED_AT'])); ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                <div class="recent-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lessor ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($recent_lessors as $lessor): ?>
+                            <tr>
+                                <td style="font-weight: 700; color: #64748b;">#<?php echo htmlspecialchars($lessor['LESSORID']); ?></td>
+                                <td style="font-weight: 600;"><?php echo htmlspecialchars($lessor['NAME']); ?></td>
+                                <td style="color: #64748b; font-size: 13px;"><?php echo htmlspecialchars($lessor['EMAIL']); ?></td>
+                                <td>
+                                    <?php 
+                                    $status = $lessor['VERIFICATION_STATUS'];
+                                    $statusClass = $status === 'VERIFIED' ? 'status-verified' : 'status-rejected';
+                                    $statusText = $status === 'VERIFIED' ? 'Verified' : 'Rejected';
+                                    ?>
+                                    <span class="status-badge <?php echo $statusClass; ?>">
+                                        <?php echo $statusText; ?>
+                                    </span>
+                                </td>
+                                <td style="color: #64748b;"><?php echo date('M d, Y', strtotime($lessor['CREATED_AT'])); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
-        </div>
+        </section>
     </main>
     
     <!-- Rejection Modal -->
-    <div id="reject_modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-        <div style="background:white; width:500px; margin:100px auto; padding:30px; border-radius:10px;">
-            <h2>Reject Lessor Account</h2>
+    <div id="reject_modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Reject Lessor Account</h3>
             <p>You are about to reject: <strong id="reject_lessor_name"></strong></p>
             
             <form method="POST">
                 <input type="hidden" name="action" value="reject">
                 <input type="hidden" name="lessor_id" id="reject_lessor_id">
                 
-                <div>
-                    <label for="rejection_reason">Reason for Rejection *</label>
-                    <textarea id="rejection_reason" name="rejection_reason" rows="4" required placeholder="Please provide a clear reason for rejection..."></textarea>
-                </div>
+                <label for="rejection_reason">Reason for Rejection *</label>
+                <textarea id="rejection_reason" name="rejection_reason" rows="4" required placeholder="Provide a clear reason for rejection..."></textarea>
                 
-                <div>
-                    <button type="submit">Confirm Rejection</button>
-                    <button type="button" onclick="closeRejectModal()">Cancel</button>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-reject" style="flex: 1;">
+                        <i class="fas fa-times"></i> Confirm Rejection
+                    </button>
+                    <button type="button" onclick="closeRejectModal()" class="btn btn-view" style="flex: 1;">
+                        Cancel
+                    </button>
                 </div>
             </form>
         </div>

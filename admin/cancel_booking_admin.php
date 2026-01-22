@@ -153,70 +153,146 @@ send_email($booking['LESSOR_EMAIL'], $lessor_subject, $lessor_body);
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cancel Booking - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancel Booking | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/cancel_booking_admin.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>Cancel Booking (Admin Override)</h1>
-    
-    <p><a href="booking_details_admin.php?id=<?php echo $booking_id; ?>">← Back to Booking Details</a></p>
-    
-    <?php display_flash_message(); ?>
-    
-    <h2>⚠️ Warning: Admin Override Action</h2>
-    <p>You are about to cancel this booking using admin privileges. This action cannot be undone.</p>
-    
-    <h3>Booking Information</h3>
-    <table border="1">
-        <tr>
-            <th>Booking ID:</th>
-            <td><?php echo htmlspecialchars($booking['BOOKINGID']); ?></td>
-        </tr>
-        <tr>
-            <th>Car:</th>
-            <td><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL']); ?></td>
-        </tr>
-        <tr>
-            <th>Renter:</th>
-            <td><?php echo htmlspecialchars($booking['RENTER_NAME']); ?></td>
-        </tr>
-        <tr>
-            <th>Lessor:</th>
-            <td><?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></td>
-        </tr>
-        <tr>
-            <th>Rental Period:</th>
-            <td>
-                <?php 
-                echo date('M d, Y', strtotime($booking['START_DATE'])) . ' - ' . 
-                     date('M d, Y', strtotime($booking['END_DATE'])); 
-                ?>
-            </td>
-        </tr>
-        <tr>
-            <th>Total Price:</th>
-            <td>RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></td>
-        </tr>
-        <tr>
-            <th>Current Status:</th>
-            <td><?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?></td>
-        </tr>
-    </table>
-    
-    <hr>
-    
-    <form method="POST">
-        <label for="reason"><strong>Cancellation Reason (Required): *</strong></label><br>
-        <textarea id="reason" name="reason" rows="5" cols="60" required 
-                  placeholder="Enter the reason for cancelling this booking (e.g., system issue, payment dispute, user request, etc.)"></textarea>
-        <br><br>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
         
-        <button type="submit" onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');">
-            Confirm Cancellation
-        </button>
-        <a href="booking_details_admin.php?id=<?php echo $booking_id; ?>">Cancel</a>
-    </form>
-    
-    <hr>
-    <p><a href="manage_bookings.php">← Back to Manage Bookings</a></p>
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+        </a>
+        
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+        </a>
+        
+        <a href="manage_users.php">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php" class="active">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Page Header -->
+        <header class="page-header">
+            <h2><i class="fas fa-times-circle"></i> Cancel Booking (Admin Override)</h2>
+            <p>Cancel this booking using administrative privileges</p>
+        </header>
+
+        <!-- Flash Messages -->
+        <?php display_flash_message(); ?>
+        
+        <!-- Booking Badge -->
+        <span class="booking-badge">
+            Booking #<?php echo $booking['BOOKINGID']; ?>
+        </span>
+        
+        <!-- Warning Card -->
+        <div class="warning-card">
+            <h2><i class="fas fa-exclamation-triangle"></i> Warning: Admin Override Action</h2>
+            <p>You are about to cancel this booking using admin privileges. This action cannot be undone and will:</p>
+            <ul>
+                <li>Set booking status to CANCELLED</li>
+                <li>Make the car available again</li>
+                <li>Notify both renter and lessor via email</li>
+                <li>Initiate refund process if payment was made</li>
+            </ul>
+        </div>
+        
+        <!-- Booking Details Card -->
+        <div class="booking-details-card">
+            <h3><i class="fas fa-info-circle"></i> Booking Information</h3>
+            <table class="details-table">
+                <tr>
+                    <th>Booking ID</th>
+                    <td>#<?php echo htmlspecialchars($booking['BOOKINGID']); ?></td>
+                </tr>
+                <tr>
+                    <th>Car</th>
+                    <td><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL']); ?></td>
+                </tr>
+                <tr>
+                    <th>Renter</th>
+                    <td><?php echo htmlspecialchars($booking['RENTER_NAME']); ?></td>
+                </tr>
+                <tr>
+                    <th>Lessor</th>
+                    <td><?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></td>
+                </tr>
+                <tr>
+                    <th>Rental Period</th>
+                    <td>
+                        <?php 
+                        echo date('M d, Y', strtotime($booking['START_DATE'])) . ' - ' . 
+                             date('M d, Y', strtotime($booking['END_DATE'])); 
+                        ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Total Price</th>
+                    <td>RM <?php echo number_format($booking['TOTAL_AMOUNT'], 2); ?></td>
+                </tr>
+                <tr>
+                    <th>Current Status</th>
+                    <td><span class="status-badge status-<?php echo strtolower($booking['BOOKING_STATUS']); ?>"><?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?></span></td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Cancellation Form -->
+        <div class="form-card">
+            <h2><i class="fas fa-edit"></i> Cancellation Details</h2>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label>
+                        Cancellation Reason <span class="required">*</span>
+                    </label>
+                    <textarea id="reason" name="reason" rows="5" required 
+                              placeholder="Enter the reason for cancelling this booking (e.g., system issue, payment dispute, user request, etc.)"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
+                        <i class="fas fa-times-circle"></i> Confirm Cancellation
+                    </button>
+                    <a href="booking_details_admin.php?id=<?php echo $booking_id; ?>" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Booking Details
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="manage_bookings.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Manage Bookings
+            </a>
+        </div>
+    </main>
 </body>
 </html>

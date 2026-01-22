@@ -63,33 +63,43 @@ $duration = $start->diff($end)->days;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking Details #<?php echo $booking['BOOKINGID']; ?></title>
+    <link rel="stylesheet" href="../assets/css/booking-details.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>Booking Details #<?php echo $booking['BOOKINGID']; ?></h1>
-    
     <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="bookings.php">← Back to Bookings</a> |
-        <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2>Car Rental System <span style="font-size:14px; font-weight:400; opacity:0.8;">| Lessor Panel</span></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars(get_user_name()); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="my_cars.php">My Cars</a>
+                <a href="bookings.php" class="active">Bookings</a>
+                <a href="earnings.php">Earnings</a>
+                <a href="submit_ticket.php">Support</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
+        </div>
     </nav>
     
-    <hr>
+    <div class="page-header">
+        <h1>Booking Details #<?php echo $booking['BOOKINGID']; ?></h1>
+        <p>Complete information about this booking</p>
+    </div>
     
-    <?php display_flash_message(); ?>
-    
-    <!-- Booking Status -->
-    <h2>Status: 
-        <span style="color: 
-            <?php 
-            echo $booking['BOOKING_STATUS'] == 'CONFIRMED' ? 'blue' : 
-                 ($booking['BOOKING_STATUS'] == 'COMPLETED' ? 'green' : 
-                 ($booking['BOOKING_STATUS'] == 'PENDING' ? 'orange' : 'red')); 
-            ?>">
-            <?php echo $booking['BOOKING_STATUS']; ?>
-        </span>
-    </h2>
-    
-    <hr>
+    <div class="content-container">
+        <?php display_flash_message(); ?>
+        
+        <!-- Booking Status Card -->
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+            <h2 style="margin-top: 0;">Status: 
+                <?php 
+                $status_class = 'status-' . strtolower($booking['BOOKING_STATUS']);
+                ?>
+                <span class="status-badge <?php echo $status_class; ?>">
+                    <?php echo $booking['BOOKING_STATUS']; ?>
+                </span>
+            </h2>
+        </div>
     
     <!-- Car Details -->
     <h2>Car Information</h2>
@@ -268,8 +278,7 @@ $duration = $start->diff($end)->days;
         <p><strong>Status: <?php echo $booking['BOOKING_STATUS']; ?></strong></p>
     <?php endif; ?>
     
-    <hr>
-    
-    <p><a href="bookings.php">← Back to All Bookings</a></p>
+    <p style="margin-top: 30px;"><a href="bookings.php">← Back to All Bookings</a></p>
+    </div>
 </body>
 </html>

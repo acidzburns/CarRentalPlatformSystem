@@ -1,0 +1,361 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f5f7fa;
+    color: #1a1a1a;
+    line-height: 1.6;
+}
+
+/* Navigation Bar - Admin Style */
+nav {
+    background-color: #ffffff;
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid #6366f1;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* Logo/Title */
+nav h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #6366f1;
+    padding: 1rem 2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+nav h2::before {
+    content: '🛡️';
+    font-size: 1.25rem;
+}
+
+/* Navigation Links Container */
+nav div {
+    display: flex;
+    align-items: center;
+}
+
+/* Welcome Text */
+nav div span {
+    font-size: 0.9rem;
+    color: #4b5563;
+    padding: 0 1.5rem;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    height: 3rem;
+}
+
+/* Nav Links */
+nav div a {
+    text-decoration: none;
+    color: #4b5563;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 1rem 1.5rem;
+    transition: all 0.2s ease;
+    display: block;
+}
+
+nav div a:hover {
+    color: #6366f1;
+    background-color: #f3f4f6;
+}
+
+/* Logout Button */
+nav div a[href*="logout"] {
+    color: #dc2626;
+    font-weight: 600;
+    background-color: #fef2f2;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    margin-right: 1.5rem;
+    margin-left: 1rem;
+    border: 1px solid #fee2e2;
+}
+
+nav div a[href*="logout"]:hover {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+/* Main Content Wrapper */
+main {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* Main Container Div (The white card) */
+main > div {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 2.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+/* Page Title (h1) inside the first div */
+main > div:first-child h1 {
+    font-size: 1.875rem;
+    color: #111827;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+main > div:first-child h1::before {
+    content: '📋';
+    font-size: 2rem;
+}
+
+/* Subtitle/Description (p tag after h1) */
+main > div:first-child p {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Verification Details Table */
+table[border="1"] {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+    margin-top: 1.5rem;
+}
+
+table[border="1"] tr {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+table[border="1"] tr:last-child {
+    border-bottom: none;
+}
+
+table[border="1"] th {
+    text-align: left;
+    padding: 1rem;
+    width: 30%;
+    color: #4b5563;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background-color: #f9fafb;
+    border: none;
+}
+
+table[border="1"] td {
+    padding: 1rem;
+    color: #111827;
+    font-size: 1rem;
+    border: none;
+}
+
+/* Image handling in table */
+table[border="1"] td img {
+    max-width: 300px;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    margin-top: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+table[border="1"] td a {
+    display: inline-block;
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+table[border="1"] td a:hover {
+    text-decoration: underline;
+}
+
+/* Verify Actions Section (Targeting the container form/buttons) */
+/* The layout likely nests forms inside the table or a separate div */
+/* Assuming the buttons are "Approve" and "Reject" submit buttons */
+
+/* Generic Button Reset */
+button, input[type="submit"] {
+    cursor: pointer;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+/* Specific styling for Approve/Reject buttons usually found in the last row or specific section */
+/* We target based on context or common names if classes aren't explicitly provided in PHP */
+
+/* Approve Button Style */
+button[name="approve"], 
+input[name="approve"],
+form[action*="approve"] button,
+button.approve-btn {
+    background-color: #22c55e; /* Green */
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+}
+
+/* Reject Button Style */
+button[name="reject"], 
+input[name="reject"],
+form[action*="reject"] button,
+button.reject-btn {
+    background-color: #ef4444; /* Red */
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    margin-left: 1rem; /* Spacing between buttons */
+}
+
+/* Hover Animation for Both Buttons */
+button[name="approve"]:hover, 
+input[name="approve"]:hover,
+form[action*="approve"] button:hover,
+button.approve-btn:hover {
+    background-color: #16a34a;
+    transform: scale(1.05); /* Slight zoom */
+    box-shadow: 0 4px 6px rgba(34, 197, 94, 0.3);
+}
+
+button[name="reject"]:hover, 
+input[name="reject"]:hover,
+form[action*="reject"] button:hover,
+button.reject-btn:hover {
+    background-color: #dc2626;
+    transform: scale(1.05); /* Slight zoom */
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+}
+
+/* Back Link styling */
+a[href*="verify_lessors.php"] {
+    display: inline-block;
+    margin-top: 2rem;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+}
+
+a[href*="verify_lessors.php"]::before {
+    content: '←';
+}
+
+a[href*="verify_lessors.php"]:hover {
+    color: #111827;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0.5rem 0;
+    }
+
+    nav > div {
+        flex-direction: column;
+        width: 100%;
+        padding: 0;
+    }
+
+    nav div span {
+        border-right: none;
+        border-bottom: 1px solid #f3f4f6;
+        width: 100%;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    main > div {
+        padding: 1.5rem;
+    }
+
+    main > div:first-child h1 {
+        font-size: 1.5rem;
+    }
+
+    nav h2 {
+        font-size: 1rem;
+        padding: 0.875rem 1rem;
+    }
+
+    nav div a {
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    nav div a[href*="logout"] {
+        width: calc(100% - 2rem);
+        text-align: center;
+        margin: 0.5rem 1rem;
+    }
+
+    table[border="1"] {
+        display: block;
+        overflow-x: auto;
+    }
+
+    table[border="1"] th,
+    table[border="1"] td {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    table[border="1"] td form,
+    table[border="1"] td button,
+    table[border="1"] td a {
+        display: block;
+        width: 100%;
+        margin: 0.25rem 0;
+    }
+
+    /* Stack buttons on mobile */
+    button[name="reject"], 
+    input[name="reject"],
+    form[action*="reject"] button,
+    button.reject-btn {
+        margin-left: 0;
+        margin-top: 1rem;
+    }
+}

@@ -1,0 +1,65 @@
+/* Filename: assets/css/sys_globals.css
+   Description: Core variables, reset, and typography for the system.
+*/
+
+:root {
+    /* --- Modern Color Palette --- */
+    --sys-primary: #4f46e5;       /* Indigo */
+    --sys-primary-dark: #4338ca;
+    --sys-secondary: #64748b;     /* Slate */
+    --sys-success: #10b981;       /* Emerald */
+    --sys-danger: #ef4444;        /* Red */
+    --sys-warning: #f59e0b;       /* Amber */
+    
+    /* --- Backgrounds & Surfaces --- */
+    --sys-background: #f1f5f9;    /* Light Gray BG */
+    --sys-surface: #ffffff;       /* White Cards */
+    
+    /* --- Text Colors --- */
+    --sys-text-main: #0f172a;     /* Dark Blue-Gray */
+    --sys-text-muted: #64748b;
+    --sys-border: #e2e8f0;
+
+    /* --- Dimensions & Effects --- */
+    --sidebar-width: 260px;
+    --header-height: 64px;
+    --radius: 8px;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+}
+
+/* --- Base Reset --- */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--sys-background);
+    color: var(--sys-text-main);
+    line-height: 1.5;
+    font-size: 15px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+    color: var(--sys-primary);
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--sys-primary-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0 0 1rem 0;
+    font-weight: 700;
+    color: var(--sys-text-main);
+    line-height: 1.2;
+}
+
+p {
+    margin-bottom: 1rem;
+    color: var(--sys-text-muted);
+}

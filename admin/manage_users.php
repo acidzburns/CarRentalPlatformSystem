@@ -37,19 +37,36 @@ if ($user_type_filter == 'all') {
 
 // Fetch Renters
 if ($fetch_renters) {
+    // Check if STATUS column exists
+    $check_status_sql = "SELECT count(*) as COUNT FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'RENTER' AND COLUMN_NAME = 'STATUS'";
+    $stmt_check = oci_parse($conn, $check_status_sql);
+    oci_execute($stmt_check);
+    $row_check = oci_fetch_assoc($stmt_check);
+    $has_status_col = ($row_check['COUNT'] > 0);
+
+    if ($has_status_col) {
+        $status_select = "NVL(STATUS, 'ACTIVE')";
+        $status_condition_active = " AND (STATUS IS NULL OR STATUS = 'ACTIVE')";
+        $status_condition_suspended = " AND STATUS = 'SUSPENDED'";
+    } else {
+        $status_select = "'ACTIVE'";
+        $status_condition_active = ""; // Always active if column doesn't exist
+        $status_condition_suspended = " AND 1=0"; // Impossible to be suspended
+    }
+
     $renter_sql = "SELECT RENTERID as USER_ID, NAME, EMAIL, PHONE, CREATED_AT, 
-                   'RENTER' as USER_TYPE, NVL(STATUS, 'ACTIVE') as STATUS,
+                   'RENTER' as USER_TYPE, " . $status_select . " as STATUS,
                    TO_CHAR(CREATED_AT, 'DD-MON-YYYY') as CREATED_FMT
                    FROM RENTER
                    WHERE 1=1";
     
-    // ✅ NEW: Apply status filter to renters too
+    // Apply status filter
     if ($status_filter == 'active') {
-        $renter_sql .= " AND NVL(STATUS, 'ACTIVE') = 'ACTIVE'";
+        $renter_sql .= $status_condition_active;
     } elseif ($status_filter == 'suspended') {
-        $renter_sql .= " AND STATUS = 'SUSPENDED'";
+        $renter_sql .= $status_condition_suspended;
     }
-    // Skip renters if filtering by lessor-specific statuses
+    // Skip renters if filtering by lessor-specific statuses (verified, pending, rejected)
     elseif (in_array($status_filter, ['verified', 'pending', 'rejected'])) {
         $fetch_renters = false;
     }
@@ -66,6 +83,11 @@ if ($fetch_renters) {
         
         $stmt_renter = oci_parse($conn, $renter_sql);
         
+        if (!$stmt_renter) {
+            $e = oci_error($conn);
+            error_log("RENTER PARSE ERROR: " . print_r($e, true));
+        }
+        
         if (!empty($search_query)) {
             $search_param = '%' . $search_query . '%';
             oci_bind_by_name($stmt_renter, ':search', $search_param);
@@ -73,10 +95,17 @@ if ($fetch_renters) {
             oci_bind_by_name($stmt_renter, ':search3', $search_param);
         }
         
-        oci_execute($stmt_renter);
+        $result = oci_execute($stmt_renter);
         
-        while ($row = oci_fetch_assoc($stmt_renter)) {
-            $users[] = $row;
+        if (!$result) {
+            $e = oci_error($stmt_renter);
+            error_log("RENTER EXECUTE ERROR: " . print_r($e, true));
+            // Show error to admin for debugging
+            set_flash_message("Database error fetching renters: " . $e['message'], "error");
+        } else {
+            while ($row = oci_fetch_assoc($stmt_renter)) {
+                $users[] = $row;
+            }
         }
     }
 }
@@ -144,11 +173,30 @@ $stats = [
 ];
 
 // Count renters by status
-$renter_count_sql = "SELECT 
-                     COUNT(*) as TOTAL,
-                     COUNT(CASE WHEN NVL(STATUS, 'ACTIVE') = 'ACTIVE' THEN 1 END) as ACTIVE,
-                     COUNT(CASE WHEN STATUS = 'SUSPENDED' THEN 1 END) as SUSPENDED
-                     FROM RENTER";
+// Count renters by status
+if (!isset($has_status_col)) {
+    // Check if STATUS column exists (if not already checked)
+    $check_status_sql = "SELECT count(*) as COUNT FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'RENTER' AND COLUMN_NAME = 'STATUS'";
+    $stmt_check = oci_parse($conn, $check_status_sql);
+    oci_execute($stmt_check);
+    $row_check = oci_fetch_assoc($stmt_check);
+    $has_status_col = ($row_check['COUNT'] > 0);
+}
+
+if ($has_status_col) {
+    $renter_count_sql = "SELECT 
+                         COUNT(*) as TOTAL,
+                         COUNT(CASE WHEN NVL(STATUS, 'ACTIVE') = 'ACTIVE' THEN 1 END) as ACTIVE,
+                         COUNT(CASE WHEN STATUS = 'SUSPENDED' THEN 1 END) as SUSPENDED
+                         FROM RENTER";
+} else {
+    // If no STATUS column, all are ACTIVE, none are SUSPENDED
+    $renter_count_sql = "SELECT 
+                         COUNT(*) as TOTAL,
+                         COUNT(*) as ACTIVE,
+                         0 as SUSPENDED
+                         FROM RENTER";
+}
 $stmt_rcount = oci_parse($conn, $renter_count_sql);
 oci_execute($stmt_rcount);
 $rcount = oci_fetch_assoc($stmt_rcount);
@@ -179,246 +227,209 @@ $stats['suspended_lessors'] = $lcount['SUSPENDED'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Users - Admin</title>
+    <title>Manage Users | Royal Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/manage_users.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <h1>👥 Manage Users</h1>
-    
-    <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="verify_lessors.php">Verify Lessors</a> |
-        <a href="manage_users.php">Manage Users</a> |
-        <a href="manage_tickets.php">Support Tickets</a> |
-        <a href="reports.php">Reports</a> |
-        <a href="../auth/logout.php">Logout</a>
-    </nav>
-    
-    <hr>
-    
-    <?php display_flash_message(); ?>
-    
-    <!-- Display errors -->
-    <?php if (!empty($errors)): ?>
-        <div style="background: #ffebee; padding: 10px; margin: 10px 0; border: 1px solid #f44336;">
-            <strong>Error:</strong>
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?php echo htmlspecialchars($error); ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
-    
-    <!-- UC23 Step 6: Display user statistics -->
-    <h2>📊 User Statistics</h2>
-    <table border="1" style="width: 100%;">
-        <thead>
-            <tr style="background: #e3f2fd;">
-                <th colspan="3" style="text-align: center;">Renters</th>
-                <th colspan="5" style="text-align: center;">Lessors</th>
-                <th rowspan="2" style="vertical-align: middle;">Total Users</th>
-            </tr>
-            <tr style="background: #f0f0f0;">
-                <th>Total</th>
-                <th>Active</th>
-                <th>Suspended</th>
-                <th>Total</th>
-                <th>Verified</th>
-                <th>Pending</th>
-                <th>Rejected</th>
-                <th>Suspended</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong><?php echo $stats['total_renters']; ?></strong></td>
-                <td style="color: green;"><?php echo $stats['active_renters']; ?></td>
-                <td style="color: purple;"><?php echo $stats['suspended_renters']; ?></td>
-                <td><strong><?php echo $stats['total_lessors']; ?></strong></td>
-                <td style="color: green;"><?php echo $stats['verified_lessors']; ?></td>
-                <td style="color: orange;"><?php echo $stats['pending_lessors']; ?></td>
-                <td style="color: red;"><?php echo $stats['rejected_lessors']; ?></td>
-                <td style="color: purple;"><?php echo $stats['suspended_lessors']; ?></td>
-                <td style="background: #e8f5e9;"><strong><?php echo $stats['total_renters'] + $stats['total_lessors']; ?></strong></td>
-            </tr>
-        </tbody>
-    </table>
-    
-    <hr>
-    
-    <!-- UC23 Step 3 & 4: Filter and search -->
-    <h2>🔍 Filter & Search Users</h2>
-    
-    <form method="GET" action="">
-        <div style="margin: 15px 0;">
-            <label><strong>User Type:</strong></label><br>
-            <select name="type" style="padding: 5px; width: 200px;">
-                <option value="all" <?php echo $user_type_filter == 'all' ? 'selected' : ''; ?>>All Users</option>
-                <option value="renter" <?php echo $user_type_filter == 'renter' ? 'selected' : ''; ?>>Renters Only</option>
-                <option value="lessor" <?php echo $user_type_filter == 'lessor' ? 'selected' : ''; ?>>Lessors Only</option>
-            </select>
-        </div>
+
+    <aside class="sidebar">
+        <h4>
+            Royal Blue
+            <span>Admin Control Panel</span>
+        </h4>
         
-        <div style="margin: 15px 0;">
-            <label><strong>Status:</strong></label><br>
-            <select name="status" style="padding: 5px; width: 200px;">
-                <option value="all" <?php echo $status_filter == 'all' ? 'selected' : ''; ?>>All Status</option>
-                <optgroup label="Common Status">
-                    <option value="suspended" <?php echo $status_filter == 'suspended' ? 'selected' : ''; ?>>🚫 Suspended (Both)</option>
-                </optgroup>
-                <optgroup label="Renter Status">
-                    <option value="active" <?php echo $status_filter == 'active' ? 'selected' : ''; ?>>✓ Active (Renters)</option>
-                </optgroup>
-                <optgroup label="Lessor Status">
-                    <option value="verified" <?php echo $status_filter == 'verified' ? 'selected' : ''; ?>>✓ Verified (Lessors)</option>
-                    <option value="pending" <?php echo $status_filter == 'pending' ? 'selected' : ''; ?>>⏳ Pending (Lessors)</option>
-                    <option value="rejected" <?php echo $status_filter == 'rejected' ? 'selected' : ''; ?>>✗ Rejected (Lessors)</option>
-                </optgroup>
-            </select>
-            <p style="font-size: 12px; color: #666; margin: 5px 0;">
-                💡 Tip: Use "Suspended" to see all suspended users (renters + lessors)
-            </p>
-        </div>
-        
-        <div style="margin: 15px 0;">
-            <label><strong>Search by Name/Email/Phone:</strong></label><br>
-            <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>" 
-                   placeholder="Enter name, email, or phone" style="padding: 5px; width: 300px;">
-        </div>
-        
-        <button type="submit" style="background: #2196F3; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px;">
-            🔍 Apply Filters
-        </button>
-        <a href="manage_users.php" style="display: inline-block; padding: 10px 20px; background: #ccc; color: #333; text-decoration: none; border-radius: 5px;">
-            Clear Filters
+        <a href="dashboard.php">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
         </a>
-    </form>
-    
-    <hr>
-    
-    <!-- UC23 Step 2: Display list of users -->
-    <h2>👥 All Users (<?php echo count($users); ?>)</h2>
-    
-    <?php if (empty($users)): ?>
-        <p>No users found matching your filters.</p>
-    <?php else: ?>
-        <table border="1" style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background: #f0f0f0;">
-                    <th>ID</th>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Status</th>
-                    <th>Joined</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($users as $user): ?>
-                    <tr>
-                        <td><?php echo $user['USER_ID']; ?></td>
-                        <td>
-                            <span style="padding: 3px 8px; border-radius: 3px; 
-                                <?php echo $user['USER_TYPE'] == 'RENTER' ? 'background: #e3f2fd; color: #0277bd;' : 'background: #f3e5f5; color: #7b1fa2;'; ?>">
-                                <?php echo $user['USER_TYPE']; ?>
-                            </span>
-                        </td>
-                        <td><?php echo htmlspecialchars($user['NAME']); ?></td>
-                        <td><?php echo htmlspecialchars($user['EMAIL']); ?></td>
-                        <td><?php echo htmlspecialchars($user['PHONE'] ?? 'N/A'); ?></td>
-                        <td>
-                            <span style="padding: 3px 8px; border-radius: 3px; color: 
-                                <?php 
-                                if ($user['STATUS'] == 'VERIFIED' || $user['STATUS'] == 'ACTIVE') {
-                                    echo 'green';
-                                } elseif ($user['STATUS'] == 'PENDING') {
-                                    echo 'orange';
-                                } elseif ($user['STATUS'] == 'SUSPENDED') {
-                                    echo 'purple';
-                                } else {
-                                    echo 'red';
-                                }
-                                ?>">
-                                <?php 
-                                if ($user['USER_TYPE'] == 'RENTER' && $user['STATUS'] == 'ACTIVE') {
-                                    echo '✓ ' . $user['STATUS'];
-                                } elseif ($user['STATUS'] == 'SUSPENDED') {
-                                    echo '🚫 ' . $user['STATUS'];
-                                } else {
-                                    echo $user['STATUS'];
-                                }
-                                ?>
-                            </span>
-                        </td>
-                        <td><?php echo htmlspecialchars($user['CREATED_FMT']); ?></td>
-                        <td>
-                            <!-- UC23 Step 5: Select user to view details -->
-                            <a href="view_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>">
-                                View
-                            </a>
-                            |
-                            <!-- UC23 Step 7: Edit user option -->
-                            <a href="edit_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>">
-                                Edit
-                            </a>
-                            
-                            <!-- ✅ NEW: Suspend/Reactivate for BOTH renters and lessors -->
-                            <?php if ($user['USER_TYPE'] == 'LESSOR'): ?>
-                                <?php if ($user['STATUS'] == 'VERIFIED'): ?>
-                                |
-                                <a href="suspend_user.php?type=lessor&id=<?php echo $user['USER_ID']; ?>" 
-                                   onclick="return confirm('Suspend this lessor account?')" 
-                                   style="color: red;">
-                                    Suspend
-                                </a>
-                                <?php elseif ($user['STATUS'] == 'SUSPENDED'): ?>
-                                |
-                                <a href="unsuspend_user.php?type=lessor&id=<?php echo $user['USER_ID']; ?>" 
-                                   onclick="return confirm('Reactivate this account?')" 
-                                   style="color: green;">
-                                    Reactivate
-                                </a>
-                                <?php endif; ?>
-                            <?php elseif ($user['USER_TYPE'] == 'RENTER'): ?>
-                                <?php if ($user['STATUS'] == 'ACTIVE'): ?>
-                                |
-                                <a href="suspend_user.php?type=renter&id=<?php echo $user['USER_ID']; ?>" 
-                                   onclick="return confirm('Suspend this renter account?')" 
-                                   style="color: red;">
-                                    Suspend
-                                </a>
-                                <?php elseif ($user['STATUS'] == 'SUSPENDED'): ?>
-                                |
-                                <a href="unsuspend_user.php?type=renter&id=<?php echo $user['USER_ID']; ?>" 
-                                   onclick="return confirm('Reactivate this account?')" 
-                                   style="color: green;">
-                                    Reactivate
-                                </a>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
-    
-    <hr>
-    
-    <div style="background: #e3f2fd; padding: 15px; margin: 20px 0; border-left: 4px solid #2196F3;">
-        <h3>ℹ️ User Management Guidelines</h3>
-        <ul>
-            <li><strong>View:</strong> See complete user information and activity history</li>
-            <li><strong>Edit:</strong> Update user contact information (name, email, phone)</li>
-            <li><strong>Suspend:</strong> Temporarily block user access (for violations or disputes)</li>
-            <li><strong>Reactivate:</strong> Restore access to suspended accounts</li>
-            <li><strong>Renters:</strong> Can be Active or Suspended</li>
-            <li><strong>Lessors:</strong> Can be Verified, Pending, Rejected, or Suspended</li>
-        </ul>
-    </div>
-    
-    <p><a href="dashboard.php">← Back to Dashboard</a></p>
+        
+        <a href="verify_lessors.php">
+            <i class="fas fa-user-check"></i> <span>Verify Lessors</span>
+            <!-- Logic to fetch pending lessors would go here or be shared -->
+        </a>
+        
+        <a href="manage_users.php" class="active">
+            <i class="fas fa-users"></i> <span>Manage Users</span>
+        </a>
+        
+        <a href="manage_bookings.php">
+            <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+        </a>
+        
+        <a href="manage_tickets.php">
+            <i class="fas fa-headset"></i> <span>Support</span>
+        </a>
+        
+        <a href="reports.php">
+            <i class="fas fa-chart-line"></i> <span>Reports</span>
+        </a>
+
+        <a href="../auth/logout.php" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <!-- Header -->
+        <header class="page-header">
+            <div>
+                <h2>👥 User Management</h2>
+                <p>Monitor and control all system users</p>
+            </div>
+            <div class="admin-badge">
+                <i class="fas fa-users-cog"></i>
+                Access Level: Admin
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        <?php if (function_exists('display_flash_message')) display_flash_message(); ?>
+
+        <!-- Statistics Cards -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon renters-icon"><i class="fas fa-user"></i></div>
+                    <div class="stat-title">Renters Data</div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-item">
+                        <span class="stat-value"><?php echo $stats['total_renters']; ?></span>
+                        <span class="stat-label">Total Users</span>
+                    </div>
+                    <div class="stat-item" style="text-align: right;">
+                        <span class="stat-value" style="color: #059669;"><?php echo $stats['active_renters']; ?></span>
+                        <span class="stat-label">Active Now</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon lessors-icon"><i class="fas fa-store"></i></div>
+                    <div class="stat-title">Lessors Data</div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-item">
+                        <span class="stat-value"><?php echo $stats['total_lessors']; ?></span>
+                        <span class="stat-label">Total Shops</span>
+                    </div>
+                    <div class="stat-item" style="text-align: right;">
+                        <span class="stat-value" style="color: #7c3aed;"><?php echo $stats['verified_lessors']; ?></span>
+                        <span class="stat-label">Verified</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-card">
+            <h3><i class="fas fa-search"></i> Advanced Search & Filters</h3>
+            <form method="GET">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label>User Role</label>
+                        <select name="type">
+                            <option value="all" <?php echo $user_type_filter == 'all' ? 'selected' : ''; ?>>All Roles</option>
+                            <option value="renter" <?php echo $user_type_filter == 'renter' ? 'selected' : ''; ?>>Renters Only</option>
+                            <option value="lessor" <?php echo $user_type_filter == 'lessor' ? 'selected' : ''; ?>>Lessors Only</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Account Status</label>
+                        <select name="status">
+                            <option value="all" <?php echo $status_filter == 'all' ? 'selected' : ''; ?>>Any Status</option>
+                            <option value="suspended" <?php echo $status_filter == 'suspended' ? 'selected' : ''; ?>>Suspended</option>
+                            <option value="verified" <?php echo $status_filter == 'verified' ? 'selected' : ''; ?>>Verified (Lessors)</option>
+                            <option value="pending" <?php echo $status_filter == 'pending' ? 'selected' : ''; ?>>Pending (Lessors)</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Search Keyword</label>
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="Search name or email...">
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="manage_users.php" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </section>
+
+        <!-- Users Table -->
+        <section class="table-card">
+            <div class="table-header">
+                <h3>System Users (<?php echo count($users); ?>)</h3>
+            </div>
+            
+            <?php if (empty($users)): ?>
+                <div style="padding: 60px; text-align: center; color: #64748b;">
+                    <i class="fas fa-user-slash" style="font-size: 40px; margin-bottom: 20px; opacity: 0.3;"></i>
+                    <p>No users found matching your filters.</p>
+                </div>
+            <?php else: ?>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>UID</th>
+                                <th>Role</th>
+                                <th>Full Name</th>
+                                <th>Email Address</th>
+                                <th>Account Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($users as $user): ?>
+                                <tr>
+                                    <td style="font-weight: 700; color: #64748b;">#<?php echo $user['USER_ID']; ?></td>
+                                    <td>
+                                        <span class="badge type-<?php echo strtolower($user['USER_TYPE']); ?>">
+                                            <?php echo $user['USER_TYPE']; ?>
+                                        </span>
+                                    </td>
+                                    <td style="font-weight: 600;"><?php echo htmlspecialchars($user['NAME']); ?></td>
+                                    <td style="color: #64748b; font-size: 13px;"><?php echo htmlspecialchars($user['EMAIL']); ?></td>
+                                    <td>
+                                        <span class="badge status-<?php echo strtolower($user['STATUS']); ?>">
+                                            <?php echo $user['STATUS']; ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="actions">
+                                            <a href="view_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>" title="View Profile"><i class="fas fa-eye"></i></a>
+                                            <a href="edit_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>" title="Edit Info"><i class="fas fa-edit"></i></a>
+                                            
+                                            <?php if ($user['STATUS'] == 'SUSPENDED'): ?>
+                                                <a href="unsuspend_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>" onclick="return confirm('Reactivate this account?')" class="success" title="Reactivate"><i class="fas fa-user-check"></i></a>
+                                            <?php else: ?>
+                                                <a href="suspend_user.php?type=<?php echo strtolower($user['USER_TYPE']); ?>&id=<?php echo $user['USER_ID']; ?>" onclick="return confirm('Suspend this account?')" class="danger" title="Suspend"><i class="fas fa-user-slash"></i></a>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <!-- Guidelines -->
+        <section class="info-section">
+            <h4><i class="fas fa-info-circle"></i> Administrative Guidelines</h4>
+            <ul>
+                <li><strong>Suspend Account:</strong> Restricted for users with severe policy violations.</li>
+                <li><strong>Verification:</strong> Only Lessors require manual verification of shop details.</li>
+                <li><strong>Phone Access:</strong> Ensure phone numbers are verified for secure communication.</li>
+            </ul>
+        </section>
+
+    </main>
 </body>
 </html>

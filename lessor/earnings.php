@@ -1,306 +1,292 @@
 <?php
 /**
- * UC21: Earning Tracking (SRS Pages 71-74)
- * Lessor tracks earnings, escrow status, and payment history
+ * UC21: Earning Tracking (Lessor)
+ * Refactored with Royal Blue Theme & Chart.js
  */
-
 require_once '../config/database.php';
 require_once '../config/session.php';
 
-// Check if lessor is logged in
 require_login('lessor');
 
 $lessorid = get_user_id();
+$user_name = get_user_name();
 
-// UC21 Step 2: Calculate total earnings, pending, and available balance
+/* --- 1. OVERVIEW SUMMARY --- */
 $summary_sql = "SELECT 
                 COUNT(*) as TOTAL_BOOKINGS,
                 COUNT(CASE WHEN b.BOOKING_STATUS = 'CONFIRMED' THEN 1 END) as CONFIRMED_COUNT,
                 COUNT(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN 1 END) as COMPLETED_COUNT,
                 SUM(CASE WHEN b.BOOKING_STATUS = 'CONFIRMED' THEN b.TOTAL_AMOUNT * 0.90 ELSE 0 END) as PENDING_EARNINGS,
-                SUM(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN b.TOTAL_AMOUNT * 0.90 ELSE 0 END) as RELEASED_EARNINGS,
-                SUM(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN b.TOTAL_AMOUNT ELSE 0 END) as TOTAL_BOOKING_VALUE,
-                SUM(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN b.TOTAL_AMOUNT * 0.10 ELSE 0 END) as TOTAL_COMMISSION
+                SUM(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN b.TOTAL_AMOUNT * 0.90 ELSE 0 END) as RELEASED_EARNINGS
                 FROM BOOKING b
                 JOIN CAR c ON b.CARID = c.CARID
                 WHERE c.LESSORID = :lessorid";
 
-$stmt_summary = oci_parse($conn, $summary_sql);
-oci_bind_by_name($stmt_summary, ':lessorid', $lessorid);
-oci_execute($stmt_summary);
-$summary = oci_fetch_assoc($stmt_summary);
+$summary = db_fetch_one($summary_sql, ['lessorid' => $lessorid]);
 
-// UC21 Step 6: View detailed transaction history
-$transactions_sql = "SELECT t.TRANSACTIONID, t.BOOKINGID, t.AMOUNT, t.COMMISSION, t.TRANSACTION_DATE,
-                     b.BOOKING_STATUS, b.TOTAL_AMOUNT, b.START_DATE, b.END_DATE,
-                     c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE,
-                     r.NAME as RENTER_NAME,
-                     TO_CHAR(t.TRANSACTION_DATE, 'DD-MON-YYYY HH24:MI') as TRANS_DATE_FMT,
-                     TO_CHAR(b.START_DATE, 'DD-MON-YYYY') as START_FMT,
-                     TO_CHAR(b.END_DATE, 'DD-MON-YYYY') as END_FMT
-                     FROM TRANSACTION t
-                     JOIN BOOKING b ON t.BOOKINGID = b.BOOKINGID
-                     JOIN CAR c ON b.CARID = c.CARID
-                     JOIN RENTER r ON b.RENTERID = r.RENTERID
-                     WHERE t.LESSORID = :lessorid
-                     ORDER BY t.TRANSACTION_DATE DESC";
+/* --- 2. LAST 100 TRANSACTIONS FOR CHART --- */
+$chart_sql = "SELECT * FROM (
+                SELECT 
+                p.PAYMENTID as REF,
+                (p.AMOUNT * 0.90) as EARNING,
+                TO_CHAR(p.PAYMENT_DATE, 'DD/MM') as SHORT_DATE,
+                p.PAYMENT_DATE
+                FROM PAYMENT p
+                JOIN BOOKING b ON p.BOOKINGID = b.BOOKINGID
+                JOIN CAR c ON b.CARID = c.CARID
+                WHERE c.LESSORID = :lessorid
+                AND p.PAYMENT_STATUS = 'SUCCESS'
+                ORDER BY p.PAYMENT_DATE DESC
+              ) WHERE ROWNUM <= 100
+              ORDER BY PAYMENT_DATE ASC";
 
-$stmt_trans = oci_parse($conn, $transactions_sql);
-oci_bind_by_name($stmt_trans, ':lessorid', $lessorid);
-oci_execute($stmt_trans);
+$chart_data = db_fetch_all($chart_sql, ['lessorid' => $lessorid]);
 
-$transactions = [];
-while ($row = oci_fetch_assoc($stmt_trans)) {
-    $transactions[] = $row;
+// Prepare JS labels and data
+$chart_labels = [];
+$chart_totals = [];
+foreach ($chart_data as $row) {
+    $chart_labels[] = $row['SHORT_DATE'] . " (#" . $row['REF'] . ")";
+    $chart_totals[] = (float)$row['EARNING'];
 }
 
-// UC21 Step 9: Earnings by car
-$by_car_sql = "SELECT c.CARID, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE,
+/* --- 3. TRANSACTION HISTORY (FROM TRANSACTION TABLE) --- */
+$transactions_sql = "
+SELECT
+  t.TRANSACTIONID,
+  t.TRANSACTION_DATE,
+  t.AMOUNT,
+  t.COMMISSION,
+  b.BOOKINGID,
+  b.BOOKING_STATUS,
+  c.BRAND,
+  c.MODEL,
+  c.LICENSE_PLATE,
+  TO_CHAR(t.TRANSACTION_DATE, 'DD-MON-YYYY HH24:MI') AS TRANS_DATE_FMT
+FROM TRANSACTION t
+JOIN BOOKING b ON t.BOOKINGID = b.BOOKINGID
+JOIN CAR c ON b.CARID = c.CARID
+WHERE t.LESSORID = :lessorid
+ORDER BY t.TRANSACTION_DATE DESC
+";
+
+$transactions = db_fetch_all($transactions_sql, ['lessorid' => $lessorid]);
+
+
+/* --- 4. CAR BREAKDOWN --- */
+$by_car_sql = "SELECT c.BRAND, c.MODEL, c.LICENSE_PLATE,
                COUNT(b.BOOKINGID) as TOTAL_BOOKINGS,
-               COUNT(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN 1 END) as COMPLETED_BOOKINGS,
-               SUM(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN b.TOTAL_AMOUNT * 0.90 ELSE 0 END) as TOTAL_EARNINGS
+               SUM(CASE WHEN b.BOOKING_STATUS = 'COMPLETED' THEN b.TOTAL_AMOUNT * 0.90 ELSE 0 END) as EARNINGS
                FROM CAR c
                LEFT JOIN BOOKING b ON c.CARID = b.CARID
                WHERE c.LESSORID = :lessorid
-               GROUP BY c.CARID, c.BRAND, c.MODEL, c.YEAR, c.LICENSE_PLATE
-               ORDER BY TOTAL_EARNINGS DESC";
+               GROUP BY c.BRAND, c.MODEL, c.LICENSE_PLATE
+               ORDER BY EARNINGS DESC";
 
-$stmt_by_car = oci_parse($conn, $by_car_sql);
-oci_bind_by_name($stmt_by_car, ':lessorid', $lessorid);
-oci_execute($stmt_by_car);
-
-$earnings_by_car = [];
-while ($row = oci_fetch_assoc($stmt_by_car)) {
-    $earnings_by_car[] = $row;
-}
+$by_car = db_fetch_all($by_car_sql, ['lessorid' => $lessorid]);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Earnings - Lessor</title>
+    <title>My Earnings - Car Rental System</title>
+    <link rel="stylesheet" href="../assets/css/earning.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>💰 My Earnings</h1>
-    
     <nav>
-        <a href="dashboard.php">Dashboard</a> |
-        <a href="my_cars.php">My Cars</a> |
-        <a href="bookings.php">Bookings</a> |
-        <a href="earnings.php">Earnings</a> |
-        <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2><a href="dashboard.php" style="color:white; text-decoration:none;">Car Rental System</a></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($user_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="my_cars.php">My Cars</a>
+                <a href="bookings.php">Bookings</a>
+                <a href="earnings.php" class="active">Earnings</a>
+                <a href="profile.php">Profile</a>
+                <a href="submit_ticket.php">Support</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
+        </div>
     </nav>
-    
-    <hr>
-    
-    <?php display_flash_message(); ?>
-    
-    <!-- UC21 Step 3: Display earnings summary -->
-    <h2>Earnings Overview</h2>
-    
-    <table border="1" style="width: 100%; margin: 20px 0;">
-        <tr style="background: #e8f5e9;">
-            <th>💵 Released Earnings (Available)</th>
-            <td style="font-size: 24px; font-weight: bold; color: #4CAF50;">
-                RM <?php echo number_format($summary['RELEASED_EARNINGS'] ?? 0, 2); ?>
-            </td>
-        </tr>
-        <tr style="background: #fff3cd;">
-            <th>⏳ Pending Earnings (In Escrow)</th>
-            <td style="font-size: 20px; font-weight: bold; color: #FF9800;">
-                RM <?php echo number_format($summary['PENDING_EARNINGS'] ?? 0, 2); ?>
-            </td>
-        </tr>
-        <tr>
-            <th>📊 Total Earnings (All Time)</th>
-            <td style="font-size: 18px; font-weight: bold;">
-                RM <?php echo number_format(($summary['RELEASED_EARNINGS'] ?? 0) + ($summary['PENDING_EARNINGS'] ?? 0), 2); ?>
-            </td>
-        </tr>
-    </table>
-    
-    <!-- Escrow Explanation -->
-    <div style="background: #e3f2fd; padding: 15px; margin: 20px 0; border-left: 4px solid #2196F3;">
-        <h3>📋 Understanding Your Earnings</h3>
-        <ul>
-            <li><strong>Released Earnings:</strong> Money from completed bookings. Platform will manually transfer to your bank account within 24 hours after completion.</li>
-            <li><strong>Pending Earnings:</strong> Money from confirmed bookings currently held by platform. Released after you mark booking as completed.</li>
-            <li><strong>Platform Commission:</strong> 10% fee automatically deducted from each booking (you receive 90%).</li>
-            <li><strong>Note:</strong> This system tracks your earnings. Platform team handles actual bank transfers manually.</li>
-        </ul>
-    </div>
-    
-    <hr>
-    
-    <!-- Statistics -->
-    <h2>📊 Booking Statistics</h2>
-    <table border="1">
-        <tr>
-            <th>Total Bookings</th>
-            <td><?php echo $summary['TOTAL_BOOKINGS']; ?></td>
-        </tr>
-        <tr>
-            <th>Confirmed (In Progress)</th>
-            <td><?php echo $summary['CONFIRMED_COUNT']; ?></td>
-        </tr>
-        <tr>
-            <th>Completed</th>
-            <td><?php echo $summary['COMPLETED_COUNT']; ?></td>
-        </tr>
-    </table>
-    
-    <hr>
-    
-    <!-- Detailed Breakdown -->
-    <h2>💳 Financial Breakdown</h2>
-    <table border="1">
-        <tr>
-            <th>Total Booking Value (100%)</th>
-            <td>RM <?php echo number_format($summary['TOTAL_BOOKING_VALUE'] ?? 0, 2); ?></td>
-        </tr>
-        <tr style="background: #ffebee;">
-            <th>Platform Commission (10%)</th>
-            <td>- RM <?php echo number_format($summary['TOTAL_COMMISSION'] ?? 0, 2); ?></td>
-        </tr>
-        <tr style="background: #e8f5e9;">
-            <th>Your Net Earnings (90%)</th>
-            <td><strong>RM <?php echo number_format($summary['RELEASED_EARNINGS'] ?? 0, 2); ?></strong></td>
-        </tr>
-    </table>
-    
-    <hr>
-    
-    <!-- UC21 Step 8: Earnings by car -->
-    <h2>🚗 Earnings by Car</h2>
-    
-    <?php if (empty($earnings_by_car)): ?>
-        <p>No cars listed yet.</p>
-    <?php else: ?>
-        <table border="1" style="width: 100%;">
-            <thead>
-                <tr style="background: #f0f0f0;">
-                    <th>Car</th>
-                    <th>License Plate</th>
-                    <th>Total Bookings</th>
-                    <th>Completed</th>
-                    <th>Earnings (90%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($earnings_by_car as $car): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL'] . ' ' . $car['YEAR']); ?></td>
-                        <td><?php echo htmlspecialchars($car['LICENSE_PLATE']); ?></td>
-                        <td><?php echo $car['TOTAL_BOOKINGS']; ?></td>
-                        <td><?php echo $car['COMPLETED_BOOKINGS']; ?></td>
-                        <td><strong>RM <?php echo number_format($car['TOTAL_EARNINGS'] ?? 0, 2); ?></strong></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
-    
-    <hr>
-    
-    <!-- UC21 Step 5: Transaction history -->
-    <h2>📜 Transaction History</h2>
-    
-    <?php if (empty($transactions)): ?>
-        <p>No transactions yet.</p>
-    <?php else: ?>
-        <table border="1" style="width: 100%;">
-            <thead>
-                <tr style="background: #f0f0f0;">
-                    <th>Transaction ID</th>
-                    <th>Booking ID</th>
-                    <th>Date</th>
-                    <th>Car</th>
-                    <th>Renter</th>
-                    <th>Rental Period</th>
-                    <th>Status</th>
-                    <th>Booking Value</th>
-                    <th>Commission</th>
-                    <th>Your Earnings</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($transactions as $trans): ?>
-                    <tr>
-                        <td>#<?php echo $trans['TRANSACTIONID']; ?></td>
-                        <td>#<?php echo $trans['BOOKINGID']; ?></td>
-                        <td><?php echo htmlspecialchars($trans['TRANS_DATE_FMT']); ?></td>
-                        <td><?php echo htmlspecialchars($trans['BRAND'] . ' ' . $trans['MODEL'] . ' ' . $trans['YEAR']); ?></td>
-                        <td><?php echo htmlspecialchars($trans['RENTER_NAME']); ?></td>
-                        <td><?php echo htmlspecialchars($trans['START_FMT'] . ' to ' . $trans['END_FMT']); ?></td>
-                        <td>
-                            <?php if ($trans['BOOKING_STATUS'] == 'CONFIRMED'): ?>
-                                <span style="color: orange;">⏳ IN ESCROW</span>
-                            <?php elseif ($trans['BOOKING_STATUS'] == 'COMPLETED'): ?>
-                                <span style="color: green;">✓ RELEASED</span>
-                            <?php else: ?>
-                                <?php echo htmlspecialchars($trans['BOOKING_STATUS']); ?>
-                            <?php endif; ?>
-                        </td>
-                        <td>RM <?php echo number_format($trans['TOTAL_AMOUNT'], 2); ?></td>
-                        <td style="color: red;">- RM <?php echo number_format($trans['COMMISSION'], 2); ?></td>
-                        <td style="font-weight: bold; color: green;">RM <?php echo number_format($trans['AMOUNT'], 2); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
-    
-    <hr>
-    
-    <!-- UC21 Step 10: Request payout (Future feature) -->
-    <div style="background: #fff3cd; padding: 20px; margin: 20px 0; border-left: 4px solid #ffc107;">
-        <h3>💳 Payout Information</h3>
-        <p><strong>Your Bank Account:</strong> 
-            <?php 
-            // Get lessor bank details
-            $bank_sql = "SELECT BANK_ACCOUNT, BUSINESS_NAME FROM LESSOR WHERE LESSORID = :lessorid";
-            $stmt_bank = oci_parse($conn, $bank_sql);
-            oci_bind_by_name($stmt_bank, ':lessorid', $lessorid);
-            oci_execute($stmt_bank);
-            $bank_info = oci_fetch_assoc($stmt_bank);
-            
-            if ($bank_info && $bank_info['BANK_ACCOUNT']) {
-                echo htmlspecialchars($bank_info['BANK_ACCOUNT']) . ' (' . htmlspecialchars($bank_info['BUSINESS_NAME']) . ')';
-            } else {
-                echo 'Not set - <a href="edit_profile.php">Update your bank details</a>';
+
+    <header class="page-header">
+        <h1>Financial Dashboard</h1>
+        <p>Monitor your performance and track your revenue growth</p>
+    </header>
+
+    <main class="content-container">
+        <!-- Overview Section -->
+        <div class="card" style="margin-bottom: 30px;">
+            <div class="stats-grid">
+                <div class="stat-card available">
+                    <span class="label">Available Balance</span>
+                    <span class="value">RM <?php echo number_format($summary['RELEASED_EARNINGS'] ?? 0, 2); ?></span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Total Bookings</span>
+                    <span class="value"><?php echo $summary['TOTAL_BOOKINGS'] ?? 0; ?></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Left: Chart & Table -->
+            <div class="main-stats">
+                <div class="card chart-card">
+                    <h2>Recent Earnings (Last 100 Transactions)</h2>
+                    <canvas id="earningsChart"></canvas>
+                </div>
+
+                <div class="card">
+                    <h2>🚗 Revenue by Vehicle</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Car Model</th>
+                                    <th>Plate No.</th>
+                                    <th>Bookings</th>
+                                    <th>Total Earnings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($by_car as $car): ?>
+                                <tr>
+                                    <td><strong><?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($car['LICENSE_PLATE']); ?></td>
+                                    <td><?php echo $car['TOTAL_BOOKINGS']; ?></td>
+                                    <td style="color:#1864FF; font-weight:700;">RM <?php echo number_format($car['EARNINGS'] ?? 0, 2); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Payout & info -->
+            <aside class="sidebar">
+                <div class="card guidelines-box">
+                    <h4><i class="fas fa-wallet"></i> Payout Policy</h4>
+                    <ul>
+                        <li>Platform takes 10% commission.</li>
+                        <li>Escrow releases 24h after completion.</li>
+                        <li>Manual bank transfers on Fridays.</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="margin-top:20px;">
+                    <h3>Bank Details</h3>
+                    <?php 
+                    $bank_info = db_fetch_one("SELECT BANK_ACCOUNT, BUSINESS_NAME FROM LESSOR WHERE LESSORID = :id", ['id' => $lessorid]);
+                    if ($bank_info && $bank_info['BANK_ACCOUNT']): ?>
+                        <p style="font-size:14px; margin-top:10px;">
+                            <strong><?php echo htmlspecialchars($bank_info['BUSINESS_NAME']); ?></strong><br>
+                            <span style="color:#64748b;"><?php echo htmlspecialchars($bank_info['BANK_ACCOUNT']); ?></span>
+                        </p>
+                    <?php else: ?>
+                        <p style="font-size:13px; color:#ef4444; margin-top:10px;">Bank details missing.</p>
+                        <a href="edit_profile.php" style="font-size:13px; color:#1864FF; text-decoration:underline;">Update Profile</a>
+                    <?php endif; ?>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Full Width: Transaction History -->
+        <div class="card">
+            <h2>📜 Transaction History</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ref</th>
+                            <th>Date</th>
+                            <th>Details</th>
+                            <th>Status</th>
+                            <th>Comm (10%)</th>
+                            <th>Earning (90%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($transactions)): ?>
+                        <tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">No transactions found.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($transactions as $t): ?>
+                            <tr>
+                                <td style="font-family:monospace; font-size:12px;">TXN-<?php echo $t['TRANSACTIONID']; ?></td>
+                                <td style="font-size:13px;"><?php echo $t['TRANS_DATE_FMT']; ?></td>
+                                <td>
+                                    <span style="display:block; font-weight:600;"><?php echo htmlspecialchars($t['BRAND'] . ' ' . $t['MODEL']); ?></span>
+                                    <span style="font-size:12px; color:#64748b;">Plate: <?php echo $t['LICENSE_PLATE']; ?></span>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo $t['BOOKING_STATUS'] === 'COMPLETED' ? 'badge-success' : 'badge-warning'; ?>">
+                                        <?php echo $t['BOOKING_STATUS'] === 'COMPLETED' ? 'Released' : 'In Escrow'; ?>
+                                    </span>
+                                </td>
+                                <td style="color:#ef4444;">-RM <?php echo number_format($t['COMMISSION'], 2); ?></td>
+                                <td style="font-weight:700; color:#059669;">RM <?php echo number_format($t['AMOUNT'], 2); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const ctx = document.getElementById('earningsChart').getContext('2d');
+        const labels = <?php echo json_encode($chart_labels); ?>;
+        const data = <?php echo json_encode($chart_totals); ?>;
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(24, 100, 255, 0.2)');
+        gradient.addColorStop(1, 'rgba(24, 100, 255, 0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Transaction Earning (RM)',
+                    data: data,
+                    borderColor: '#1864FF',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointBorderColor: '#1864FF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: function(value) { return 'RM' + value; },
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
+                    }
+                }
             }
-            ?>
-        </p>
-        
-        <p><strong>Payment Process:</strong></p>
-        <ol>
-            <li>You mark booking as completed</li>
-            <li>Platform team receives notification</li>
-            <li>Platform manually transfers earnings to your bank account <strong>within 24 hours</strong></li>
-            <li>You receive payment confirmation</li>
-        </ol>
-        
-        <p style="color: #666;"><em>Note: This system is for tracking earnings only. Platform team handles all bank transfers manually to ensure security and accuracy.</em></p>
-        
-        <?php if (($summary['RELEASED_EARNINGS'] ?? 0) > 0): ?>
-            <p style="color: green; font-weight: bold;">✓ You have RM <?php echo number_format($summary['RELEASED_EARNINGS'], 2); ?> pending manual transfer from platform.</p>
-        <?php else: ?>
-            <p style="color: #666;">No pending earnings. Complete bookings to earn money!</p>
-        <?php endif; ?>
-    </div>
-    
-    <!-- UC21 Step 11: Export reports (Future feature) -->
-    <div style="margin: 20px 0;">
-        <h3>📊 Export Reports</h3>
-        <p>Download your earnings report:</p>
-        <button disabled>📄 Export PDF (Coming Soon)</button>
-        <button disabled>📊 Export Excel (Coming Soon)</button>
-    </div>
-    
-    <hr>
-    
-    <p><a href="dashboard.php">← Back to Dashboard</a></p>
+        });
+    </script>
 </body>
 </html>

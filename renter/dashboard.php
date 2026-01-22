@@ -3,7 +3,6 @@
  * Renter Dashboard
  * Main page after customer login
  */
-
 require_once '../config/database.php';
 require_once '../config/session.php';
 require_once '../includes/check_auth.php';
@@ -22,61 +21,77 @@ $booking_count = db_fetch_one($sql_bookings, ['renterid' => $user_id]);
 $total_bookings = $booking_count ? $booking_count['TOTAL'] : 0;
 
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Dashboard - Car Rental</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    
+    <link href="../assets/css/renter-dashboard.css?v=<?php echo time(); ?>" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation Bar -->
     <nav>
-        <h2>Car Rental System</h2>
-        <div>
-            <span>Welcome, <?php echo htmlspecialchars($user_name); ?>!</span>
-            <a href="../auth/logout.php">Logout</a>
+        <div class="nav-container">
+            <h2><a href="dashboard.php">Car Rental System</a></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($user_name); ?>!</span>
+                <a href="dashboard.php" class="active">Dashboard</a>
+                <a href="search_cars.php">Search Cars</a>
+                <a href="booking_history.php">My Bookings</a>
+                <a href="profile.php">Profile</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
         </div>
     </nav>
     
-    <!-- Main Content -->
     <main>
-        <div>
+        <header class="page-header">
             <h1>Welcome to Your Dashboard!</h1>
-            <p>Manage your car rentals, view booking history, and more.</p>
-        </div>
+            <p>Manage your rentals and find your next perfect car easily.</p>
+        </header>
         
-        <!-- Dashboard Cards -->
-        <div>
-            <a href="search_cars.php">
-                <h3>Search Cars</h3>
-                <p>Find and book available cars</p>
-            </a>
-            
-            <div>
-                <h3>My Bookings</h3>
-                <div><?php echo $total_bookings; ?></div>
-                <p>Total bookings made</p>
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>My Bookings</h3>
+                    <div class="stat-number"><?php echo $total_bookings; ?></div>
+                    <p>Total cars you have rented</p>
+                </div>
+
+                <a href="search_cars.php" class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Find a Car</h3>
+                        <p>Browse available vehicles</p>
+                    </div>
+                </a>
+
+                <a href="booking_history.php" class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Booking History</h3>
+                        <p>View past and active rentals</p>
+                    </div>
+                </a>
             </div>
             
-            <a href="booking_history.php">
-                <h3>Booking History</h3>
-                <p>View all your past bookings</p>
-            </a>
-            
-            <a href="submit_ticket.php">
-                <h3>Support</h3>
-                <p>Need help? Submit a ticket</p>
-            </a>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div>
-            <h2>Quick Actions</h2>
-            <div>
-                <a href="search_cars.php">Search Available Cars</a>
-                <a href="booking_history.php">View My Bookings</a>
+            <h2 class="section-title">Quick Actions</h2>
+            <div class="action-buttons-grid">
+                <a href="search_cars.php" class="btn-primary">
+                    <i class="fas fa-car"></i> Search Available Cars
+                </a>
+                <a href="booking_history.php" class="btn-secondary">
+                    <i class="fas fa-calendar-alt"></i> View My Bookings
+                </a>
+                <a href="submit_ticket.php" class="btn-secondary">
+                    <i class="fas fa-headset"></i> Get Support
+                </a>
             </div>
         </div>
     </main>

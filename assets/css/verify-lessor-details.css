@@ -1,0 +1,484 @@
+/* ===================================
+   Royal Blue Admin - Verify Lessor Details
+   =================================== */
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f1f5f9;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+}
+
+/* ===================================
+   SIDEBAR NAVIGATION
+   =================================== */
+
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    background: linear-gradient(180deg, #1864FF 0%, #0042D9 100%);
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.sidebar h4 {
+    padding: 0 25px 20px 25px;
+    font-size: 20px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h4 span {
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 15px;
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.sidebar a.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-left-color: #ffffff;
+    font-weight: 600;
+}
+
+.sidebar a i {
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.logout-link {
+    margin-top: auto;
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.logout-link:hover {
+    color: #ff9494 !important;
+}
+
+/* ===================================
+   MAIN CONTENT AREA
+   =================================== */
+
+.main-content {
+    margin-left: 260px;
+    padding: 40px;
+    min-height: 100vh;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.page-header p {
+    font-size: 15px;
+    color: #64748b;
+}
+
+/* ===================================
+   ALERT MESSAGES
+   =================================== */
+
+.success {
+    background: #ecfdf5;
+    border: 1px solid #d1fae5;
+    color: #059669;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.error {
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: #dc2626;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+/* ===================================
+   DETAILS CARDS
+   =================================== */
+
+.details-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+}
+
+.details-card h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.details-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 25px 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ===================================
+   MODERN TABLE STYLING
+   =================================== */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+table tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+table tr:last-child {
+    border-bottom: none;
+}
+
+table th {
+    text-align: left;
+    padding: 14px 20px;
+    font-weight: 700;
+    color: #64748b;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #f8fafc;
+    width: 35%;
+}
+
+table td {
+    padding: 14px 20px;
+    color: #1e293b;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+table td strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* ===================================
+   STATUS BADGES
+   =================================== */
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.status-verified {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.status-rejected {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.status-pending {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+/* ===================================
+   DOCUMENT SECTION
+   =================================== */
+
+.details-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #475569;
+    margin: 25px 0 12px 0;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.details-card h3:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.details-card img,
+.details-card embed {
+    max-width: 100%;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px;
+    margin-top: 10px;
+    background: #f8fafc;
+}
+
+.details-card p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.details-card p a {
+    color: #1864FF;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.details-card p a:hover {
+    text-decoration: underline;
+}
+
+/* ===================================
+   ACTION BUTTONS
+   =================================== */
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.action-buttons form {
+    display: inline-flex;
+}
+
+.btn {
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    min-width: 180px;
+    width: 180px;
+    height: 48px;
+    line-height: 1;
+}
+
+.btn-approve {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-approve:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-reject:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-back {
+    background: #f1f5f9;
+    color: #475569;
+    border: 2px solid #e2e8f0;
+}
+
+.btn-back:hover {
+    background: #e2e8f0;
+}
+
+/* ===================================
+   MODAL STYLING
+   =================================== */
+
+#reject_modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+#reject_modal>div {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+#reject_modal h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #dc2626;
+    margin-bottom: 15px;
+}
+
+#reject_modal p {
+    color: #475569;
+    margin-bottom: 20px;
+}
+
+#reject_modal label {
+    display: block;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+#reject_modal textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    transition: all 0.2s;
+}
+
+#reject_modal textarea:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 80px;
+    }
+
+    .sidebar h4,
+    .sidebar a span {
+        display: none;
+    }
+
+    .sidebar a {
+        justify-content: center;
+        padding: 20px 0;
+        border-left: none;
+    }
+
+    .sidebar a i {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .main-content {
+        margin-left: 80px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    table th,
+    table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

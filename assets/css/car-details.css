@@ -1,0 +1,477 @@
+/* =========================================
+   Modern Car Details Design
+   Targeting existing PHP structure
+   ========================================= */
+
+/* --- Base Reset & Typography --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+}
+
+/* --- Navigation Bar (Updated to match design) --- */
+nav {
+    background: white;
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 80px;
+    padding: 0 40px;
+    display: flex;
+    /* Align Logo Left, Links Right */
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 1. The Logo / Title (Now Visible) */
+nav h2 {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    font-weight: 800;
+    color: #1e40af;
+    /* Deep Blue */
+    gap: 12px;
+    margin: 0;
+}
+
+/* 2. The Right Side Container (Welcome + Links) */
+nav>div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 3. The "Welcome" Text */
+nav>div>span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 15px;
+    padding-right: 15px;
+    border-right: 2px solid #e2e8f0;
+    /* Vertical divider */
+}
+
+/* 4. The Links */
+nav>div>a {
+    text-decoration: none;
+    color: #475569;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 50px;
+    /* Pill shape */
+    transition: all 0.2s ease;
+}
+
+nav>div>a:hover {
+    color: #3b82f6;
+    background: #eff6ff;
+}
+
+/* Highlight "My Bookings" or current page if needed */
+nav>div>a[href="search_cars.php"] {
+    /* Optional active state styling */
+}
+
+/* Logout Button Special Style */
+nav>div>a[href="../auth/logout.php"] {
+    color: #ef4444;
+    background: rgba(254, 226, 226, 0.5);
+    margin-left: 10px;
+}
+
+nav>div>a[href="../auth/logout.php"]:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+/* --- Main Layout --- */
+main {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* --- Main Title (H1) --- */
+main>h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 10px;
+}
+
+/* --- Generic Card Style --- */
+main>div {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+/* Section Headers */
+main>div h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+/* --- 1. Photo Gallery Section --- */
+main>div:nth-of-type(1) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 15px;
+}
+
+main>div:nth-of-type(1) h2 {
+    display: none;
+}
+
+main>div:nth-of-type(1) img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+main>div:nth-of-type(1) img:first-of-type {
+    grid-column: 1 / -1;
+    height: 400px;
+}
+
+main>div:nth-of-type(1) img:hover {
+    transform: scale(1.02);
+}
+
+/* --- 2. Specifications Table --- */
+main>div:nth-of-type(2) table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+}
+
+main>div:nth-of-type(2) tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+main>div:nth-of-type(2) tr:last-child {
+    border-bottom: none;
+}
+
+main>div:nth-of-type(2) th {
+    text-align: left;
+    padding: 15px;
+    color: #64748b;
+    font-weight: 600;
+    width: 40%;
+    background: #f8fafc;
+    border-radius: 8px 0 0 8px;
+    /* Rounded corners for rows */
+}
+
+main>div:nth-of-type(2) td {
+    padding: 15px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* --- 3 & 4. Features & Description --- */
+main>div:nth-of-type(3) p,
+main>div:nth-of-type(4) p {
+    color: #475569;
+    line-height: 1.8;
+}
+
+/* --- 5. Rental Rates --- */
+main>div:nth-of-type(5) table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    border: none;
+}
+
+main>div:nth-of-type(5) th {
+    text-align: left;
+    padding: 12px;
+    color: #64748b;
+}
+
+main>div:nth-of-type(5) td {
+    text-align: right;
+    padding: 12px;
+    font-weight: 700;
+    color: #3b82f6;
+    font-size: 18px;
+}
+
+/* --- 7. Owner Info --- */
+main>div:nth-of-type(7) table {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+}
+
+main>div:nth-of-type(7) th {
+    text-align: left;
+    padding: 12px;
+    color: #64748b;
+    width: 30%;
+}
+
+/* --- Book Now Section --- */
+main>div:last-of-type {
+    position: sticky;
+    bottom: 20px;
+    background: #1e293b;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    z-index: 50;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+main>div:last-of-type h2 {
+    display: none;
+}
+
+main>div:last-of-type a {
+    text-decoration: none;
+}
+
+main>div:last-of-type button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+main>div:last-of-type button:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+main>div:last-of-type a[href="search_cars.php"] {
+    color: #94a3b8;
+    font-weight: 500;
+    margin-left: 20px;
+}
+
+main>div:last-of-type a[href="search_cars.php"]:hover {
+    color: white;
+}
+
+/* =========================================
+   ICON ADDITIONS
+   ========================================= */
+
+/* 1. Logo Icon in Nav */
+nav h2::before {
+    content: '🚗 ';
+    margin-right: 10px;
+    font-size: 30px;
+}
+
+/* 2. Main Title Icon */
+main>h1::before {
+    content: '✨ ';
+    margin-right: 10px;
+}
+
+/* 3. Navigation Icons (Specific) */
+nav>div>a[href="dashboard.php"]::before {
+    content: '📊 ';
+}
+
+nav>div>a[href="search_cars.php"]::before {
+    content: '🔍 ';
+}
+
+nav>div>a[href="booking_history.php"]::before {
+    content: '📅 ';
+}
+
+nav>div>a[href="../auth/logout.php"]::before {
+    content: '🚪 ';
+}
+
+/* 4. Section Header Icons (Generic) */
+main>div h2::before {
+    content: '🔹 ';
+    margin-right: 8px;
+    color: #3b82f6;
+}
+
+/* 5. Specification Table Icons */
+main>div:nth-of-type(2) table tr:nth-child(1) th::before {
+    content: '🏢 ';
+    margin-right: 8px;
+}
+
+/* Brand */
+main>div:nth-of-type(2) table tr:nth-child(2) th::before {
+    content: '🚘 ';
+    margin-right: 8px;
+}
+
+/* Model */
+main>div:nth-of-type(2) table tr:nth-child(3) th::before {
+    content: '📆 ';
+    margin-right: 8px;
+}
+
+/* Year */
+main>div:nth-of-type(2) table tr:nth-child(4) th::before {
+    content: '🕹️ ';
+    margin-right: 8px;
+}
+
+/* Transmission */
+main>div:nth-of-type(2) table tr:nth-child(5) th::before {
+    content: '⛽ ';
+    margin-right: 8px;
+}
+
+/* Fuel */
+main>div:nth-of-type(2) table tr:nth-child(6) th::before {
+    content: '💺 ';
+    margin-right: 8px;
+}
+
+/* Seats */
+main>div:nth-of-type(2) table tr:nth-child(7) th::before {
+    content: '🎨 ';
+    margin-right: 8px;
+}
+
+/* Color */
+main>div:nth-of-type(2) table tr:nth-child(8) th::before {
+    content: '🛣️ ';
+    margin-right: 8px;
+}
+
+/* Mileage */
+main>div:nth-of-type(2) table tr:nth-child(9) th::before {
+    content: '🔢 ';
+    margin-right: 8px;
+}
+
+/* License */
+
+/* 6. Button Icons */
+main>div:last-of-type button::before {
+    content: '📝 ';
+    margin-right: 8px;
+}
+
+main>div:last-of-type a[href="search_cars.php"]::before {
+    content: '⬅️ ';
+}
+
+/* =========================================
+   ACTION BUTTON STYLES (from my-car.css)
+   Matches button styling in My Cars cards
+   ========================================= */
+
+/* Actions container */
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Base button action style */
+.btn-action {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+/* Edit button */
+.btn-action.edit {
+    background: #eff6ff;
+    color: #1864FF;
+    border: 1px solid #1864FF;
+}
+
+.btn-action.edit:hover {
+    background: #1864FF;
+    color: white;
+}
+
+/* Delete button */
+.btn-action.delete {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
+.btn-action.delete:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* Toggle button */
+.btn-action.toggle {
+    /* Same size as edit/remove buttons */
+}
+
+/* Deactivate button (Inactive toggle) */
+.btn-action.toggle.inactive {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #d97706;
+}
+
+.btn-action.toggle.inactive:hover {
+    background: #d97706;
+    color: white;
+}
+
+/* Activate button (Active toggle) */
+.btn-action.toggle.active {
+    background: #ecfdf5;
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.btn-action.toggle.active:hover {
+    background: #10b981;
+    color: white;
+}

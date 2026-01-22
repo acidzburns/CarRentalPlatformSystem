@@ -1,0 +1,536 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f5f7fa;
+    color: #1a1a1a;
+    line-height: 1.6;
+}
+
+/* Navigation Bar - Admin Style */
+nav {
+    background-color: #ffffff;
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid #6366f1;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* Logo/Title */
+nav h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #6366f1;
+    padding: 1rem 2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+nav h2::before {
+    content: "🚗";
+    font-size: 1.5rem;
+}
+
+/* Navigation Container */
+nav div {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+nav div span {
+    display: none;
+}
+
+/* Navigation Links */
+nav div a {
+    color: #4b5563;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 1.25rem 1.5rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    border-bottom: 4px solid transparent;
+    margin-bottom: -4px;
+    display: inline-block;
+}
+
+nav div a:hover {
+    background-color: #f5f7fa;
+    color: #6366f1;
+}
+
+/* Active Link - Verification page */
+nav div a[href="verify_lessors.php"] {
+    background-color: #6366f1;
+    color: white;
+    border-bottom-color: #6366f1;
+}
+
+/* Logout Button */
+nav div a[href*="logout"] {
+    background-color: #ef4444;
+    color: white;
+    padding: 0.625rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    margin: 0.75rem 2rem 0.75rem 1rem;
+    border-bottom: none;
+}
+
+nav div a[href*="logout"]:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* Main Container */
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Page Header */
+main > div:first-child {
+    margin-bottom: 2rem;
+}
+
+main > div:first-child h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+main > div:first-child p {
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+/* Alert Messages */
+.success {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.error {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+/* Section Containers */
+main > div {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+main > div:first-child {
+    background: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+/* Section Headers */
+main > div h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+/* Empty State */
+main > div > p {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+/* Tables */
+table[border="1"] {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+table[border="1"] thead tr {
+    background-color: #f3f4f6;
+}
+
+table[border="1"] th {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+table[border="1"] td {
+    padding: 0.875rem 1rem;
+    color: #1a1a1a;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+table[border="1"] tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+table[border="1"] tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Status Column Styling - 4th column in Recent Verifications table */
+table[border="1"] tbody tr td:nth-child(4) {
+    font-weight: 600;
+}
+
+/* Status Badge Styling */
+.status-verified {
+    color: #059669;
+    background-color: #d1fae5;
+    padding: 0.375rem 0.875rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.status-rejected {
+    color: #dc2626;
+    background-color: #fee2e2;
+    padding: 0.375rem 0.875rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.status-pending {
+    color: #d97706;
+    background-color: #fef3c7;
+    padding: 0.375rem 0.875rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+/* Action Links and Buttons in Table */
+table[border="1"] td a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: inline-block;
+    font-size: 0.875rem;
+}
+
+table[border="1"] td a:hover {
+    background-color: #eff6ff;
+    text-decoration: underline;
+}
+
+/* Forms in Table */
+table[border="1"] td form {
+    display: inline-block;
+    margin: 0 0.25rem;
+}
+
+/* Approve Button */
+table[border="1"] td form[onsubmit] button {
+    background-color: #059669;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+table[border="1"] td form[onsubmit] button:hover {
+    background-color: #047857;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
+}
+
+/* Reject Button */
+table[border="1"] td button[onclick*="showRejectModal"] {
+    background-color: #ef4444;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+table[border="1"] td button[onclick*="showRejectModal"]:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* Modal Overlay */
+#reject_modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal Content */
+#reject_modal > div {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    margin: 0;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+#reject_modal h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+}
+
+#reject_modal p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+#reject_modal p strong {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+/* Modal Form */
+#reject_modal form {
+    margin: 0;
+}
+
+#reject_modal form > div {
+    margin-bottom: 1.5rem;
+}
+
+#reject_modal label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+#reject_modal textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+}
+
+#reject_modal textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Modal Buttons */
+#reject_modal form > div:last-child {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-bottom: 0;
+}
+
+#reject_modal button[type="submit"] {
+    background-color: #ef4444;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#reject_modal button[type="submit"]:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+#reject_modal button[type="button"] {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#reject_modal button[type="button"]:hover {
+    background-color: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    nav {
+        flex-wrap: wrap;
+    }
+
+    nav h2 {
+        width: 100%;
+        justify-content: center;
+    }
+
+    nav div {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+
+    main > div {
+        padding: 1.5rem;
+    }
+
+    main > div:first-child h1 {
+        font-size: 1.5rem;
+    }
+
+    nav h2 {
+        font-size: 1rem;
+        padding: 0.875rem 1rem;
+    }
+
+    nav div a {
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    nav div a[href*="logout"] {
+        width: calc(100% - 2rem);
+        text-align: center;
+        margin: 0.5rem 1rem;
+    }
+
+    table[border="1"] {
+        display: block;
+        overflow-x: auto;
+    }
+
+    table[border="1"] th,
+    table[border="1"] td {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    table[border="1"] td form,
+    table[border="1"] td button,
+    table[border="1"] td a {
+        display: block;
+        width: 100%;
+        margin: 0.25rem 0;
+    }
+
+    #reject_modal > div {
+        padding: 1.5rem;
+    }
+
+    #reject_modal form > div:last-child {
+        flex-direction: column;
+    }
+
+    #reject_modal button {
+        width: 100%;
+    }
+}
+
+/* Print Styles */
+@media print {
+    nav,
+    table[border="1"] td form,
+    table[border="1"] td button,
+    #reject_modal {
+        display: none !important;
+    }
+
+    main > div {
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+}
+
+/* Accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}

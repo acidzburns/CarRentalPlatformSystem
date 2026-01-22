@@ -31,9 +31,6 @@ body {
 }
 
 .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     color: white;
     font-size: 1.5rem;
     font-weight: bold;
@@ -84,6 +81,7 @@ body {
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -367,7 +365,7 @@ body {
     color: #1e293b;
 }
 
-.contact > p {
+.contact>p {
     text-align: center;
     color: #64748b;
     margin-bottom: 3rem;
@@ -482,30 +480,30 @@ body {
         gap: 1rem;
         font-size: 0.9rem;
     }
-    
+
     .hero h1 {
         font-size: 2rem;
     }
-    
+
     .hero p {
         font-size: 1rem;
     }
-    
+
     .hero-buttons {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .btn {
         width: 100%;
         max-width: 300px;
     }
-    
+
     .feature-grid,
     .services-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .features h2,
     .services h2,
     .about h2,

@@ -1,0 +1,441 @@
+/* ===================================
+   Royal Blue Admin - Unsuspend User Page
+   =================================== */
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f1f5f9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+}
+
+/* ===================================
+   SIDEBAR NAVIGATION
+   =================================== */
+
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    background: linear-gradient(180deg, #1864FF 0%, #0042D9 100%);
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.sidebar h4 {
+    padding: 0 25px 20px 25px;
+    font-size: 20px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h4 span {
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 15px;
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.sidebar a.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-left-color: #ffffff;
+    font-weight: 600;
+}
+
+.sidebar a i {
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.logout-link {
+    margin-top: auto;
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.logout-link:hover {
+    color: #ff9494 !important;
+}
+
+/* ===================================
+   MAIN CONTENT AREA
+   =================================== */
+
+.main-content {
+    margin-left: 260px;
+    padding: 40px;
+    min-height: 100vh;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-header h2 i {
+    color: #059669;
+}
+
+.page-header p {
+    font-size: 15px;
+    color: #64748b;
+}
+
+/* ===================================
+   ALERT MESSAGES
+   =================================== */
+
+.alert {
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-success {
+    background: #ecfdf5;
+    border: 1px solid #d1fae5;
+    color: #059669;
+}
+
+.alert-error {
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: #dc2626;
+}
+
+/* ===================================
+   USER INFO BADGE
+   =================================== */
+
+.user-type-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 25px;
+}
+
+.user-type-badge.renter {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.user-type-badge.lessor {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+/* ===================================
+   SUCCESS CARD
+   =================================== */
+
+.success-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+    border-left: 5px solid #10b981;
+}
+
+.success-card h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #059669;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.success-card h2 i {
+    font-size: 24px;
+}
+
+.success-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 20px 0 12px 0;
+}
+
+.success-card ul {
+    margin-left: 25px;
+    margin-bottom: 15px;
+}
+
+.success-card ul li {
+    margin-bottom: 8px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.success-card ul li strong {
+    color: #059669;
+}
+
+.success-card p {
+    margin-bottom: 12px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.success-card p strong {
+    color: #1e293b;
+}
+
+/* User Details Table */
+.user-details {
+    background: #f0fdf4;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #d1fae5;
+}
+
+.user-details ul {
+    list-style: none;
+    margin: 0;
+}
+
+.user-details ul li {
+    padding: 10px 0;
+    border-bottom: 1px solid #d1fae5;
+    display: flex;
+    justify-content: space-between;
+}
+
+.user-details ul li:last-child {
+    border-bottom: none;
+}
+
+.user-details ul li strong {
+    color: #059669;
+    font-weight: 700;
+}
+
+.status-suspended {
+    color: #dc2626;
+    font-weight: 700;
+    background: #fee2e2;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* ===================================
+   REACTIVATION FORM
+   =================================== */
+
+.form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.form-card h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.form-group label .required {
+    color: #dc2626;
+    margin-left: 3px;
+}
+
+.form-group textarea {
+    width: 100%;
+    max-width: 700px;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-help {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+}
+
+/* ===================================
+   BUTTONS
+   =================================== */
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+.btn i {
+    font-size: 16px;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 2px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 80px;
+    }
+
+    .sidebar h4,
+    .sidebar a span {
+        display: none;
+    }
+
+    .sidebar a {
+        justify-content: center;
+        padding: 20px 0;
+        border-left: none;
+    }
+
+    .sidebar a i {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .main-content {
+        margin-left: 80px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

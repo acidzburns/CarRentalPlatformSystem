@@ -11,6 +11,7 @@ require_once '../config/session.php';
 require_login('renter');
 
 $renterid = get_user_id();
+$renter_name = get_user_name();
 $errors = [];
 $success = "";
 
@@ -50,7 +51,7 @@ if (!$booking) {
 
 // Precondition: Booking must be completed
 if ($booking['BOOKING_STATUS'] != 'COMPLETED') {
-    set_flash_message("You can only review completed bookings. This booking status is: " . $booking['BOOKING_STATUS'], "error");
+    set_flash_message("You can only review completed bookings.", "error");
     header("Location: booking_history.php");
     exit();
 }
@@ -64,42 +65,23 @@ if ($booking['HAS_REVIEW'] > 0) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // UC6 Step 4: Customer enters rating and review
     $rating = isset($_POST['rating']) ? intval($_POST['rating']) : 0;
     $remark = trim($_POST['remark']);
     
-    // UC6 Step 5: System validates input
-    
-    // Exception 1: Review text is empty
     if (empty($remark)) {
         $errors[] = "Please provide a review comment.";
     }
     
-    // Validate rating (1-5)
     if ($rating < 1 || $rating > 5) {
         $errors[] = "Please select a rating between 1 and 5 stars.";
     }
     
-    // Exception 3: Review text exceeds maximum length (500 characters)
     if (strlen($remark) > 500) {
         $errors[] = "Review is too long. Maximum 500 characters.";
     }
     
-    // Exception 2: Inappropriate content check (basic)
-    $inappropriate_words = ['spam', 'scam', 'fake']; // Simple check
-    $lower_remark = strtolower($remark);
-    foreach ($inappropriate_words as $word) {
-        if (strpos($lower_remark, $word) !== false) {
-            $errors[] = "Review contains inappropriate language. Please revise.";
-            break;
-        }
-    }
-    
-    // If no errors, submit review
     if (empty($errors)) {
         try {
-            // UC6 Step 6: Customer submits review
-            // UC6 Step 7: System saves review to database
             $review_sql = "INSERT INTO REVIEW 
                           (REVIEWID, BOOKINGID, RENTERID, CARID, RATING, REMARK, REVIEW_DATE)
                           VALUES 
@@ -114,14 +96,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if (oci_execute($stmt_review)) {
                 oci_commit($conn);
-                
-                // UC6 Step 8: System recalculates car's average rating
-                // (This happens automatically when fetching reviews)
-                
-                // UC6 Step 9: System sends notification to car owner (simulated)
-                // In production: Send email to lessor
-                
-                // UC6 Step 10: System displays success message
                 set_flash_message("Thank you! Your review has been submitted successfully.", "success");
                 header("Location: booking_history.php");
                 exit();
@@ -130,304 +104,166 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $errors[] = "Failed to submit review: " . $e['message'];
             }
         } catch (Exception $e) {
-            $errors[] = "An error occurred while submitting your review. Please try again.";
+            $errors[] = "An error occurred while submitting your review.";
         }
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Review - Car Rental System</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .car-info {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 20px 0;
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        .car-info img {
-            width: 200px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 5px;
-        }
-        .error-box {
-            background: #ffebee;
-            border: 1px solid #f44336;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .error-box ul {
-            margin-left: 20px;
-        }
-        .form-group {
-            margin: 20px 0;
-        }
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        .rating-container {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .star-rating {
-            display: flex;
-            gap: 5px;
-            font-size: 40px;
-        }
-        .star {
-            cursor: pointer;
-            color: #ddd;
-            transition: color 0.2s;
-        }
-        .star:hover,
-        .star.active {
-            color: #ffd700;
-        }
-        input[type="radio"] {
-            display: none;
-        }
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            resize: vertical;
-            min-height: 150px;
-        }
-        textarea:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
-        .char-counter {
-            text-align: right;
-            color: #666;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-        .guidelines {
-            background: #e3f2fd;
-            border-left: 4px solid #2196F3;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-        .guidelines h3 {
-            margin-bottom: 10px;
-            color: #1976D2;
-        }
-        .guidelines ul {
-            margin-left: 20px;
-        }
-        .guidelines li {
-            margin: 5px 0;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-        .btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            text-align: center;
-            flex: 1;
-        }
-        .btn-submit {
-            background: #4CAF50;
-            color: white;
-        }
-        .btn-submit:hover {
-            background: #45a049;
-        }
-        .btn-cancel {
-            background: #f44336;
-            color: white;
-        }
-        .btn-cancel:hover {
-            background: #da190b;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/submit-reviwe.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>📝 Submit Your Review</h1>
-        <p style="color: #666; margin-top: 5px;">Share your experience with other renters</p>
-        
-        <?php display_flash_message(); ?>
-        
-        <!-- Display errors -->
-        <?php if (!empty($errors)): ?>
-            <div class="error-box">
-                <strong>⚠️ Please fix the following errors:</strong>
-                <ul>
-                    <?php foreach ($errors as $error): ?>
-                        <li><?php echo htmlspecialchars($error); ?></li>
-                    <?php endforeach; ?>
-                </ul>
+    <nav>
+        <div class="nav-container">
+            <h2><a href="dashboard.php">Car Rental System</a></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($renter_name); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="booking_history.php" class="active">My Bookings</a>
+                <a href="search_cars.php">Search Cars</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
             </div>
-        <?php endif; ?>
-        
-        <!-- UC6 Step 2: Display booking details -->
-        <div class="car-info">
-            <?php if ($booking['PHOTO1_PATH']): ?>
-                <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
-                     alt="Car Photo">
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Share Your Experience</h1>
+        <p>Booking Reference: #<?php echo htmlspecialchars($booking['BOOKINGID']); ?></p>
+    </header>
+
+    <main class="details-container">
+        <!-- Left Column: Review Form -->
+        <div class="left-column">
+            <?php if (!empty($errors)): ?>
+                <div class="details-card" style="border-left: 4px solid #ef4444; padding: 20px;">
+                    <strong style="color: #b91c1c; display: block; margin-bottom: 10px;">⚠️ Please Correct the Following:</strong>
+                    <ul style="color: #b91c1c; font-size: 14px; margin-left: 20px;">
+                        <?php foreach ($errors as $error): ?>
+                            <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
             <?php endif; ?>
-            
-            <div>
-                <h3><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL'] . ' ' . $booking['YEAR']); ?></h3>
-                <p><strong>License Plate:</strong> <?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></p>
-                <p><strong>Booking ID:</strong> #<?php echo htmlspecialchars($booking['BOOKINGID']); ?></p>
-                <p><strong>Owner:</strong> <?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></p>
-                <p><strong>Status:</strong> <span style="color: #4CAF50;">✓ <?php echo htmlspecialchars($booking['BOOKING_STATUS']); ?></span></p>
-            </div>
-        </div>
-        
-        <!-- Review Guidelines -->
-        <div class="guidelines">
-            <h3>📋 Review Guidelines</h3>
-            <ul>
-                <li>Be honest and constructive in your feedback</li>
-                <li>Focus on your experience with the car and owner</li>
-                <li>Keep your review respectful and appropriate</li>
-                <li>Maximum 500 characters</li>
-                <li>You can only submit one review per booking</li>
-            </ul>
-        </div>
-        
-        <!-- UC6 Step 3: Review Form -->
-        <form method="POST" action="" id="reviewForm">
-            
-            <!-- UC6 Step 4: Rating Input -->
-            <div class="form-group">
-                <label>⭐ Overall Rating *</label>
-                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-                    How would you rate your overall experience?
-                </p>
+
+            <div class="details-card">
+                <h2>📝 Write a Review</h2>
                 
-                <div class="rating-container">
-                    <div class="star-rating">
-                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <label class="star" data-rating="<?php echo $i; ?>">
-                                <input type="radio" name="rating" value="<?php echo $i; ?>" required>
-                                ★
-                            </label>
-                        <?php endfor; ?>
+                <div class="guidelines-card">
+                    <h4><i class="fas fa-info-circle"></i> Review Guidelines</h4>
+                    <ul>
+                        <li>Be honest and constructive in your feedback.</li>
+                        <li>Focus on your experience with the car's condition and the owner.</li>
+                        <li>Maximum 500 characters allowed.</li>
+                    </ul>
+                </div>
+
+                <form method="POST" action="" id="reviewForm">
+                    <div class="form-group">
+                        <label>Overall Rating *</label>
+                        <div class="rating-container">
+                            <div class="star-rating">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <label class="star" data-rating="<?php echo $i; ?>">
+                                        <input type="radio" name="rating" value="<?php echo $i; ?>" 
+                                               style="display:none;" required>
+                                        ★
+                                    </label>
+                                <?php endfor; ?>
+                            </div>
+                            <div class="rating-text" id="rating-text">Select stars to rate</div>
+                        </div>
                     </div>
-                    <span id="rating-text" style="color: #666; font-size: 16px;"></span>
+
+                    <div class="form-group">
+                        <label for="remark">Your Experience *</label>
+                        <textarea name="remark" id="remark" required 
+                                  placeholder="How was the car? Was the owner helpful? Share your thoughts..."><?php echo isset($_POST['remark']) ? htmlspecialchars($_POST['remark']) : ''; ?></textarea>
+                        <div class="char-counter">
+                            <span id="char-count">0</span> / 500 Characters
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">Submit My Review</button>
+                        <a href="booking_history.php" class="btn-outline">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Car Summary -->
+        <aside class="summary-card">
+            <div class="details-card">
+                <h2>Car Details</h2>
+                <?php if ($booking['PHOTO1_PATH']): ?>
+                    <img src="../uploads/cars/<?php echo htmlspecialchars($booking['PHOTO1_PATH']); ?>" 
+                         class="car-summary-img" alt="Car">
+                <?php endif; ?>
+                
+                <h3><?php echo htmlspecialchars($booking['BRAND'] . ' ' . $booking['MODEL']); ?></h3>
+                
+                <div class="summary-details">
+                    <p><span>License Plate</span> <?php echo htmlspecialchars($booking['LICENSE_PLATE']); ?></p>
+                    <p><span>Car Owner</span> <?php echo htmlspecialchars($booking['LESSOR_NAME']); ?></p>
+                </div>
+
+                <div class="status-row">
+                    <p><span>Booking Status</span></p>
+                    <div style="margin-top: 8px;">
+                        <span class="badge-success">✓ COMPLETED</span>
+                    </div>
                 </div>
             </div>
-            
-            <!-- UC6 Step 4: Review Text Input -->
-            <div class="form-group">
-                <label for="remark">📖 Your Review *</label>
-                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-                    Tell us about your experience with this car and the owner
-                </p>
-                <textarea name="remark" id="remark" required 
-                          placeholder="Share details about the car condition, cleanliness, owner communication, and overall experience..."
-                          maxlength="500"></textarea>
-                <div class="char-counter">
-                    <span id="char-count">0</span> / 500 characters
-                </div>
-            </div>
-            
-            <!-- UC6 Step 6: Submit Button -->
-            <div class="btn-group">
-                <button type="submit" class="btn btn-submit">
-                    ✓ Submit Review
-                </button>
-                <a href="booking_history.php" class="btn btn-cancel">
-                    ✗ Cancel
-                </a>
-            </div>
-        </form>
-    </div>
-    
+        </aside>
+    </main>
+
     <script>
-    // Star rating functionality
+    // Star rating interaction
     const stars = document.querySelectorAll('.star');
     const ratingText = document.getElementById('rating-text');
-    const ratingLabels = {
-        1: '⭐ Poor',
-        2: '⭐⭐ Fair',
-        3: '⭐⭐⭐ Good',
-        4: '⭐⭐⭐⭐ Very Good',
-        5: '⭐⭐⭐⭐⭐ Excellent'
+    const labels = {
+        1: 'Poor - Not recommended',
+        2: 'Fair - Could be better',
+        3: 'Good - Met expectations',
+        4: 'Very Good - Highly satisfied',
+        5: 'Excellent - Perfect experience!'
     };
     
-    let selectedRating = 0;
-    
+    let currentRating = 0;
+
     stars.forEach(star => {
-        // Hover effect
-        star.addEventListener('mouseenter', function() {
-            const rating = this.dataset.rating;
-            highlightStars(rating);
-            ratingText.textContent = ratingLabels[rating];
+        star.addEventListener('mouseenter', () => {
+            const rating = star.dataset.rating;
+            updateStars(rating);
+            ratingText.textContent = labels[rating];
         });
-        
-        // Click to select
-        star.addEventListener('click', function() {
-            selectedRating = this.dataset.rating;
-            this.querySelector('input').checked = true;
+
+        star.addEventListener('mouseleave', () => {
+            if (currentRating === 0) {
+                resetStars();
+                ratingText.textContent = 'Select stars to rate';
+            } else {
+                updateStars(currentRating);
+                ratingText.textContent = labels[currentRating];
+            }
+        });
+
+        star.addEventListener('click', () => {
+            currentRating = star.dataset.rating;
+            star.querySelector('input').checked = true;
+            updateStars(currentRating);
+            ratingText.textContent = labels[currentRating];
+            ratingText.style.color = '#1e293b';
         });
     });
-    
-    // Reset on mouse leave
-    document.querySelector('.star-rating').addEventListener('mouseleave', function() {
-        if (selectedRating > 0) {
-            highlightStars(selectedRating);
-            ratingText.textContent = ratingLabels[selectedRating];
-        } else {
-            resetStars();
-            ratingText.textContent = '';
-        }
-    });
-    
-    function highlightStars(rating) {
+
+    function updateStars(rating) {
         stars.forEach((star, index) => {
             if (index < rating) {
                 star.classList.add('active');
@@ -436,64 +272,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         });
     }
-    
+
     function resetStars() {
         stars.forEach(star => star.classList.remove('active'));
     }
-    
+
     // Character counter
-    const remarkTextarea = document.getElementById('remark');
+    const remark = document.getElementById('remark');
     const charCount = document.getElementById('char-count');
-    
-    remarkTextarea.addEventListener('input', function() {
-        const length = this.value.length;
+
+    remark.addEventListener('input', () => {
+        const length = remark.value.length;
         charCount.textContent = length;
         
-        // Change color when approaching limit
         if (length > 450) {
-            charCount.style.color = '#f44336';
+            charCount.style.color = '#ef4444';
         } else if (length > 400) {
-            charCount.style.color = '#ff9800';
+            charCount.style.color = '#f59e0b';
         } else {
-            charCount.style.color = '#666';
+            charCount.style.color = '#94a3b8';
         }
     });
-    
-    // Form validation before submit
-    document.getElementById('reviewForm').addEventListener('submit', function(e) {
-        const rating = document.querySelector('input[name="rating"]:checked');
-        const remark = remarkTextarea.value.trim();
-        
-        if (!rating) {
-            e.preventDefault();
-            alert('Please select a rating.');
-            return false;
-        }
-        
-        if (remark.length === 0) {
-            e.preventDefault();
-            alert('Please write a review.');
-            return false;
-        }
-        
-        if (remark.length > 500) {
-            e.preventDefault();
-            alert('Review is too long. Maximum 500 characters.');
-            return false;
-        }
-        
-        // Confirm submission
-        if (!confirm('Submit this review? You cannot edit it later.')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+
+    // Initial check
+    if (remark.value.length > 0) {
+        charCount.textContent = remark.value.length;
+    }
     </script>
-    
-    <p style="text-align: center; margin-top: 30px;">
-        <a href="booking_history.php" style="color: #2196F3; text-decoration: none;">
-            ← Back to Booking History
-        </a>
-    </p>
 </body>
 </html>

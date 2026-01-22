@@ -129,17 +129,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_cancel'])) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cancel Booking - Renter</title>
+    <link rel="stylesheet" href="../assets/css/cancel-booking.css">
 </head>
 <body>
-<h1>Cancel Booking</h1>
-<p>Renter: <?php echo htmlspecialchars($renter_name); ?></p>
-<a href="booking_history.php">← Back to Booking History</a> | 
-<a href="dashboard.php">Dashboard</a> | 
-<a href="../auth/logout.php">Logout</a>
-<hr>
+    <nav>
+        <div>
+            <h2>Car Rental System</h2>
+            <div>
+                <span>Welcome, <?php echo htmlspecialchars($renter_name); ?>!</span>
+                <a href="../auth/logout.php">Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <main>
+        <div class="hero-section">
+            <h1>Cancel Booking</h1>
+            <p>Review your booking details and confirm cancellation if needed</p>
+        </div>
+        
+        <div class="content-container">
 
 <?php if (isset($_SESSION['error'])): ?>
     <div style="background: #ffcccc; padding: 10px; margin: 10px 0; border: 1px solid #cc0000;">
@@ -209,5 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_cancel'])) {
     </div>
 <?php endif; ?>
 
+        </div>
+    </main>
 </body>
 </html>

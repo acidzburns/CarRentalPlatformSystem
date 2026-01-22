@@ -180,193 +180,187 @@ $renter = oci_fetch_assoc($stmt_renter);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Booking - Car Rental System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link href="../assets/css/create-booking.css?v=<?php echo time(); ?>" rel="stylesheet">
 </head>
 <body>
-    <h1>Create Booking</h1>
-    
-    <?php display_flash_message(); ?>
-    
-    <!-- Display errors -->
-    <?php if (!empty($errors)): ?>
-        <div style="background: #ffebee; padding: 10px; margin: 10px 0; border: 1px solid #f44336;">
-            <strong>Error:</strong>
-            <ul>
-                <?php foreach ($errors as $error): ?>
-                    <li><?php echo htmlspecialchars($error); ?></li>
-                <?php endforeach; ?>
-            </ul>
+    <nav>
+        <div class="nav-container">
+            <h2><a href="dashboard.php">Car Rental System</a></h2>
+            <div class="nav-links">
+                <span class="welcome-text">Welcome, <?php echo htmlspecialchars($renter['NAME']); ?>!</span>
+                <a href="dashboard.php">Dashboard</a>
+                <a href="search_cars.php" class="active">Search Cars</a>
+                <a href="booking_history.php">My Bookings</a>
+                <a href="../auth/logout.php" class="logout-btn">Logout</a>
+            </div>
         </div>
-    <?php endif; ?>
-    
-    <!-- UC11: Booking History -->
-    <?php if (!empty($booking_history)): ?>
-    <div style="border: 1px solid #ddd; padding: 15px; margin: 20px 0; background: #f9f9f9;">
-        <h3>Your Recent Bookings</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background: #eee;">
-                    <th style="padding: 8px; border: 1px solid #ddd;">Booking ID</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Car</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Dates</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Status</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($booking_history as $history): ?>
-                <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;">#<?php echo htmlspecialchars($history['BOOKINGID']); ?></td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">
-                        <?php echo htmlspecialchars($history['BRAND'] . ' ' . $history['MODEL'] . ' ' . $history['YEAR']); ?>
-                    </td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">
-                        <?php echo date('d M Y', strtotime($history['START_DATE'])) . ' - ' . date('d M Y', strtotime($history['END_DATE'])); ?>
-                    </td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">
-                        <span style="padding: 3px 8px; background: 
-                            <?php 
-                            echo $history['BOOKING_STATUS'] == 'CONFIRMED' ? '#4CAF50' : 
-                                 ($history['BOOKING_STATUS'] == 'PENDING' ? '#FF9800' : '#f44336'); 
-                            ?>; 
-                            color: white; border-radius: 3px;">
-                            <?php echo htmlspecialchars($history['BOOKING_STATUS']); ?>
-                        </span>
-                    </td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">
-                        RM <?php echo number_format($history['TOTAL_AMOUNT'], 2); ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+    </nav>
+
+    <div class="hero">
+        <h1>Create Your Booking</h1>
+        <p>Confirm dates and details for your rental</p>
     </div>
-    <?php endif; ?>
-    
-    <!-- Car Details Summary -->
-    <div style="border: 1px solid #ccc; padding: 20px; margin: 20px 0;">
-        <h2>Car Details</h2>
-        <div style="display: flex; gap: 20px;">
-            <?php if ($car['PHOTO1_PATH']): ?>
-                <img src="../uploads/cars/<?php echo htmlspecialchars($car['PHOTO1_PATH']); ?>" 
-                     alt="Car" style="width: 250px; height: 180px; object-fit: cover;">
+
+    <main class="details-container">
+        <!-- Left Column: Form & History -->
+        <div class="left-column">
+            <?php display_flash_message(); ?>
+            
+            <?php if (!empty($errors)): ?>
+                <div class="alert alert-error">
+                    <strong>Please correct the following:</strong>
+                    <ul>
+                        <?php foreach ($errors as $error): ?>
+                            <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
             <?php endif; ?>
-            
-            <div>
-                <h3><?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL'] . ' ' . $car['YEAR']); ?></h3>
-                <p><strong>Daily Rate:</strong> RM <?php echo number_format($car['DAILY_RATE'], 2); ?></p>
-                <p><strong>Transmission:</strong> <?php echo htmlspecialchars($car['TRANSMISSION']); ?></p>
-                <p><strong>Fuel Type:</strong> <?php echo htmlspecialchars($car['FUEL_TYPE']); ?></p>
-                <p><strong>Seats:</strong> <?php echo htmlspecialchars($car['SEATS']); ?></p>
-                <p><strong>Location:</strong> <?php echo htmlspecialchars($car['LOCATION']); ?></p>
+
+            <!-- Booking Form Card -->
+            <div class="details-card">
+                <h2>Booking Details</h2>
+                <form method="POST" action="" id="bookingForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Pickup Date</label>
+                            <input type="date" name="start_date" id="start_date" 
+                                   min="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Return Date</label>
+                            <input type="date" name="end_date" id="end_date" 
+                                   min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Pickup Time</label>
+                            <input type="time" name="pickup_time" value="09:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Return Time</label>
+                            <input type="time" name="return_time" value="09:00" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Pickup/Return Location</label>
+                            <input type="text" name="pickup_location" 
+                                   value="<?php echo htmlspecialchars($car['LOCATION']); ?>" required>
+                        </div>
+                    </div>
+
+                    <h3>Optional Extras</h3>
+                    <label class="extras-item">
+                        <input type="checkbox" name="add_insurance" id="add_insurance" value="1">
+                        <span>Collision Damage Waiver (RM <?php echo number_format($car['INSURANCE_FEE'], 2); ?>/day)</span>
+                    </label>
+                    <label class="extras-item">
+                        <input type="checkbox" name="add_delivery" id="add_delivery" value="1">
+                        <span>Home Delivery & Pickup (RM <?php echo number_format($car['DELIVERY_FEE'], 2); ?> one-time)</span>
+                    </label>
+
+                    <div class="form-group full-width" style="margin-top: 20px;">
+                        <label>Special Requests</label>
+                        <textarea name="special_requests" rows="3" placeholder="Any special requirements..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Proceed to Payment</button>
+                    <div style="text-align: center;">
+                        <a href="car_details.php?carid=<?php echo $carid; ?>" class="back-btn">Cancel and Go Back</a>
+                    </div>
+                </form>
             </div>
+
+            <!-- Recent History Card -->
+            <?php if (!empty($booking_history)): ?>
+            <div class="details-card">
+                <h2>Your Recent Bookings</h2>
+                <div style="overflow-x: auto;">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Car</th>
+                                <th>Dates</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($booking_history as $history): ?>
+                            <tr>
+                                <td>#<?php echo htmlspecialchars($history['BOOKINGID']); ?></td>
+                                <td><?php echo htmlspecialchars($history['BRAND'] . ' ' . $history['MODEL']); ?></td>
+                                <td><?php echo date('d M', strtotime($history['START_DATE'])) . ' - ' . date('d M', strtotime($history['END_DATE'])); ?></td>
+                                <td>
+                                    <?php 
+                                    $status_class = 'status-' . strtolower($history['BOOKING_STATUS']);
+                                    ?>
+                                    <span class="status-badge <?php echo $status_class; ?>">
+                                        <?php echo htmlspecialchars($history['BOOKING_STATUS']); ?>
+                                    </span>
+                                </td>
+                                <td>RM <?php echo number_format($history['TOTAL_AMOUNT'], 2); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
-    </div>
-    
-    <!-- Booking Form -->
-    <div style="border: 1px solid #ccc; padding: 20px; margin: 20px 0;">
-        <h2>Booking Details</h2>
-        
-        <form method="POST" action="" id="bookingForm">
-            <div style="margin: 15px 0;">
-                <label><strong>Pickup Date:</strong></label><br>
-                <input type="date" name="start_date" id="start_date" 
-                       min="<?php echo date('Y-m-d'); ?>" 
-                       required style="padding: 8px; width: 250px;">
-            </div>
-            
-            <div style="margin: 15px 0;">
-                <label><strong>Return Date:</strong></label><br>
-                <input type="date" name="end_date" id="end_date" 
-                       min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" 
-                       required style="padding: 8px; width: 250px;">
-            </div>
-            
-            <div style="margin: 15px 0;">
-                <label><strong>Pickup Time:</strong></label><br>
-                <input type="time" name="pickup_time" value="09:00" required style="padding: 8px;">
-            </div>
-            
-            <div style="margin: 15px 0;">
-                <label><strong>Return Time:</strong></label><br>
-                <input type="time" name="return_time" value="09:00" required style="padding: 8px;">
-            </div>
-            
-            <div style="margin: 15px 0;">
-                <label><strong>Pickup Location:</strong></label><br>
-                <input type="text" name="pickup_location" 
-                       value="<?php echo htmlspecialchars($car['LOCATION']); ?>" 
-                       required style="padding: 8px; width: 400px;">
-            </div>
-            
-            <hr>
-            
-            <h3>Optional Extras</h3>
-            
-            <div style="margin: 15px 0;">
-                <label>
-                    <input type="checkbox" name="add_insurance" id="add_insurance" value="1">
-                    Add Insurance (RM <?php echo number_format($car['INSURANCE_FEE'], 2); ?>/day)
-                </label>
-            </div>
-            
-            <div style="margin: 15px 0;">
-                <label>
-                    <input type="checkbox" name="add_delivery" id="add_delivery" value="1">
-                    Home Delivery (RM <?php echo number_format($car['DELIVERY_FEE'], 2); ?> one-time)
-                </label>
-            </div>
-            
-            <div style="margin: 15px 0;">
-                <label><strong>Special Requests:</strong></label><br>
-                <textarea name="special_requests" rows="3" style="width: 400px; padding: 8px;"
-                          placeholder="Any special requirements or requests..."></textarea>
-            </div>
-            
-            <hr>
-            
-            <!-- Cost Breakdown -->
-            <div style="background: #f5f5f5; padding: 15px; margin: 20px 0;">
-                <h3>Cost Breakdown</h3>
-                <table style="width: 100%;">
+
+        <!-- Right Column: Car Summary & Cost -->
+        <aside class="summary-card">
+            <div class="details-card">
+                <h2>Booking Summary</h2>
+                <?php if ($car['PHOTO1_PATH']): ?>
+                    <img src="../uploads/cars/<?php echo htmlspecialchars($car['PHOTO1_PATH']); ?>" 
+                         class="car-summary-img" alt="Car">
+                <?php endif; ?>
+                
+                <h3><?php echo htmlspecialchars($car['BRAND'] . ' ' . $car['MODEL']); ?></h3>
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+                    <i class="fa fa-gas-pump"></i> <?php echo htmlspecialchars($car['FUEL_TYPE']); ?> &bull; 
+                    <i class="fa fa-cog"></i> <?php echo htmlspecialchars($car['TRANSMISSION']); ?>
+                </div>
+
+                <table class="cost-table">
                     <tr>
-                        <td>Rental Duration:</td>
-                        <td style="text-align: right;"><span id="duration_days">0</span> days</td>
+                        <td>Daily Rate</td>
+                        <td>RM <?php echo number_format($car['DAILY_RATE'], 2); ?></td>
                     </tr>
                     <tr>
-                        <td>Rental Cost:</td>
-                        <td style="text-align: right;">RM <span id="rental_cost">0.00</span></td>
+                        <td>Rental Duration</td>
+                        <td><span id="duration_days">0</span> Days</td>
+                    </tr>
+                    <tr>
+                        <td>Base Rental</td>
+                        <td>RM <span id="rental_cost">0.00</span></td>
                     </tr>
                     <tr id="insurance_row" style="display: none;">
-                        <td>Insurance:</td>
-                        <td style="text-align: right;">RM <span id="insurance_cost">0.00</span></td>
+                        <td>Insurance Add-on</td>
+                        <td>RM <span id="insurance_cost">0.00</span></td>
                     </tr>
                     <tr id="delivery_row" style="display: none;">
-                        <td>Delivery Fee:</td>
-                        <td style="text-align: right;">RM <span id="delivery_cost"><?php echo number_format($car['DELIVERY_FEE'], 2); ?></span></td>
+                        <td>Delivery Service</td>
+                        <td>RM <span id="delivery_cost"><?php echo number_format($car['DELIVERY_FEE'], 2); ?></span></td>
                     </tr>
-                    <tr style="border-top: 2px solid #333; font-weight: bold; font-size: 18px;">
-                        <td>Total Amount:</td>
-                        <td style="text-align: right;">RM <span id="total_amount">0.00</span></td>
+                    <tr class="total-row">
+                        <td>Estimated Total</td>
+                        <td>RM <span id="total_amount">0.00</span></td>
                     </tr>
                 </table>
+                <p style="font-size: 11px; color: #94a3b8; text-align: center;">
+                    Final payment including taxes will be calculated at checkout.
+                </p>
             </div>
-            
-            <div style="margin: 20px 0;">
-                <button type="submit" style="background: #4CAF50; color: white; padding: 15px 30px; border: none; cursor: pointer; font-size: 16px;">
-                    Proceed to Payment
-                </button>
-                <a href="car_details.php?carid=<?php echo $carid; ?>" 
-                   style="display: inline-block; padding: 15px 30px; background: #ccc; color: #333; text-decoration: none; margin-left: 10px;">
-                    Cancel
-                </a>
-            </div>
-        </form>
-    </div>
-    
+        </aside>
+    </main>
+
     <script>
-    const dailyRate = <?php echo $car['DAILY_RATE']; ?>;
-    const insuranceFee = <?php echo $car['INSURANCE_FEE']; ?>;
-    const deliveryFee = <?php echo $car['DELIVERY_FEE']; ?>;
+    const dailyRate = <?php echo (float)$car['DAILY_RATE']; ?>;
+    const insuranceFee = <?php echo (float)$car['INSURANCE_FEE']; ?>;
+    const deliveryFee = <?php echo (float)$car['DELIVERY_FEE']; ?>;
     
     function calculateCost() {
         const startDate = document.getElementById('start_date').value;
@@ -404,6 +398,11 @@ $renter = oci_fetch_assoc($stmt_renter);
                 
                 const totalAmount = rentalCost + insuranceCost + deliveryCost;
                 document.getElementById('total_amount').textContent = totalAmount.toFixed(2);
+            } else {
+                // Reset if duration invalid
+                document.getElementById('duration_days').textContent = "0";
+                document.getElementById('rental_cost').textContent = "0.00";
+                document.getElementById('total_amount').textContent = "0.00";
             }
         }
     }
@@ -418,10 +417,15 @@ $renter = oci_fetch_assoc($stmt_renter);
         const startDate = new Date(this.value);
         startDate.setDate(startDate.getDate() + 1);
         const minReturnDate = startDate.toISOString().split('T')[0];
-        document.getElementById('end_date').min = minReturnDate;
+        const endDateInput = document.getElementById('end_date');
+        endDateInput.min = minReturnDate;
+        if (endDateInput.value && endDateInput.value < minReturnDate) {
+            endDateInput.value = minReturnDate;
+        }
     });
+
+    // Initial calculation on load if dates exist (e.g. after error redirect)
+    window.addEventListener('load', calculateCost);
     </script>
-    
-    <p><a href="dashboard.php">Back to Dashboard</a></p>
 </body>
 </html>

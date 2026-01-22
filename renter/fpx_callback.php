@@ -66,7 +66,7 @@ if ($status === 'SUCCESS') {
         // Insert payment record
         $sql_insert_payment = "INSERT INTO PAYMENT 
                               (PAYMENTID, BOOKINGID, RENTERID, PAYMENT_METHOD, AMOUNT, PAYMENT_STATUS, PAYMENT_DATE)
-                              VALUES (SEQ_PAYMENT.NEXTVAL, :bookingid, :renterid, 'ONLINE_BANKING', :amount, 'SUCCESS', SYSDATE)";
+                              VALUES (SEQ_PAYMENT.NEXTVAL, :bookingid, :renterid, 'FPX', :amount, 'SUCCESS', SYSDATE)";
         
         $payment_result = db_execute($sql_insert_payment, [
             'bookingid' => $booking_id,

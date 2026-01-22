@@ -122,6 +122,7 @@ $locations = db_fetch_all($sql_locations);
                 <a href="dashboard.php">Dashboard</a>
                 <a href="search_cars.php" class="active">Search Cars</a>
                 <a href="booking_history.php">My Bookings</a>
+                <a href="profile.php">Profile</a>
                 <a href="../auth/logout.php" class="logout-btn">Logout</a>
             </div>
         </div>

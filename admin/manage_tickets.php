@@ -56,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <p>Your support ticket <strong>#{$ticket_id}</strong> has been resolved by the admin.</p>
                             <p><strong>Subject:</strong> {$ticket_info['SUBJECT']}</p>
                             <p><strong>Description:</strong><br>" . nl2br(htmlspecialchars($ticket_info['DESCRIPTION'])) . "</p>
+                              <p><strong>Resolution Notes from Admin:</strong><br>" . nl2br(htmlspecialchars($resolution)) . "</p>
                             <p>If you have further issues, please reply or submit a new ticket.</p>
                             <p>Thank you,<br>Car Rental Platform Team</p>
                         ";

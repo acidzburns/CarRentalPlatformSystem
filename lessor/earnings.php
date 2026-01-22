@@ -50,20 +50,28 @@ foreach ($chart_data as $row) {
     $chart_totals[] = (float)$row['EARNING'];
 }
 
-/* --- 3. TRANSACTION HISTORY (Using Payment for backup) --- */
-$transactions_sql = "SELECT p.PAYMENTID as TRANSACTIONID, p.PAYMENT_DATE as TRANSACTION_DATE,
-                     (p.AMOUNT * 0.90) as AMOUNT, (p.AMOUNT * 0.10) as COMMISSION,
-                     b.BOOKINGID, b.BOOKING_STATUS, b.TOTAL_AMOUNT,
-                     c.BRAND, c.MODEL, c.LICENSE_PLATE,
-                     TO_CHAR(p.PAYMENT_DATE, 'DD-MON-YYYY HH24:MI') as TRANS_DATE_FMT
-                     FROM PAYMENT p
-                     JOIN BOOKING b ON p.BOOKINGID = b.BOOKINGID
-                     JOIN CAR c ON b.CARID = c.CARID
-                     WHERE c.LESSORID = :lessorid
-                     AND p.PAYMENT_STATUS = 'SUCCESS'
-                     ORDER BY p.PAYMENT_DATE DESC";
+/* --- 3. TRANSACTION HISTORY (FROM TRANSACTION TABLE) --- */
+$transactions_sql = "
+SELECT
+  t.TRANSACTIONID,
+  t.TRANSACTION_DATE,
+  t.AMOUNT,
+  t.COMMISSION,
+  b.BOOKINGID,
+  b.BOOKING_STATUS,
+  c.BRAND,
+  c.MODEL,
+  c.LICENSE_PLATE,
+  TO_CHAR(t.TRANSACTION_DATE, 'DD-MON-YYYY HH24:MI') AS TRANS_DATE_FMT
+FROM TRANSACTION t
+JOIN BOOKING b ON t.BOOKINGID = b.BOOKINGID
+JOIN CAR c ON b.CARID = c.CARID
+WHERE t.LESSORID = :lessorid
+ORDER BY t.TRANSACTION_DATE DESC
+";
 
 $transactions = db_fetch_all($transactions_sql, ['lessorid' => $lessorid]);
+
 
 /* --- 4. CAR BREAKDOWN --- */
 $by_car_sql = "SELECT c.BRAND, c.MODEL, c.LICENSE_PLATE,

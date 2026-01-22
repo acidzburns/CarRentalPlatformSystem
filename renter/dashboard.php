@@ -40,6 +40,7 @@ $total_bookings = $booking_count ? $booking_count['TOTAL'] : 0;
                 <a href="dashboard.php" class="active">Dashboard</a>
                 <a href="search_cars.php">Search Cars</a>
                 <a href="booking_history.php">My Bookings</a>
+                <a href="profile.php">Profile</a>
                 <a href="../auth/logout.php" class="logout-btn">Logout</a>
             </div>
         </div>

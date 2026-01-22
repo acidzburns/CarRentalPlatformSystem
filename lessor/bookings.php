@@ -116,6 +116,7 @@ $stats = oci_fetch_assoc($stmt_stats);
                 <a href="my_cars.php">My Cars</a>
                 <a href="bookings.php" class="active">Bookings</a>
                 <a href="earnings.php">Earnings</a>
+                <a href="profile.php">Profile</a>
                 <a href="submit_ticket.php">Support</a>
                 <a href="../auth/logout.php" class="logout-btn">Logout</a>
             </div>
@@ -305,7 +306,7 @@ $stats = oci_fetch_assoc($stmt_stats);
 
     <?php endif; ?>
     
-    <p style="margin-top: 30px;"><a href="dashboard.php">← Back to Dashboard</a></p>
+    
     </div>
 </body>
 </html>

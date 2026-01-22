@@ -213,12 +213,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <div class="register-link">
             Don't have an account? <a href="renter_register.php">Register here</a>
+
+            <p>
+                <a href="forgot_password.php">Forgot Password?</a>
+            </p>
         </div>
-        <p><a href="forgot_password.php">Forgot Password?</a></p>
+        
 
         <div class="other-login">
             <a href="lessor_login.php">Login as Car Owner</a> | 
-            <a href="admin_login.php">Admin Login</a>
+            <a href="admin_login.php">Admin Login</a> |
+            <a href="../index.php">Home</a>
         </div>
     </div>
 </body>

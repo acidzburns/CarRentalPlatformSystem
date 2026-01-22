@@ -99,6 +99,7 @@ $stats = db_fetch_one($stats_sql, ['id' => $lessorid]);
                 <a href="my_cars.php">My Cars</a>
                 <a href="bookings.php">Bookings</a>
                 <a href="earnings.php">Earnings</a>
+                <a href="profile.php">Profile</a>
                 <a href="submit_ticket.php" class="active">Support</a>
                 <a href="../auth/logout.php" class="logout-btn">Logout</a>
             </div>

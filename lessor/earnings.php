@@ -97,6 +97,7 @@ $by_car = db_fetch_all($by_car_sql, ['lessorid' => $lessorid]);
                 <a href="my_cars.php">My Cars</a>
                 <a href="bookings.php">Bookings</a>
                 <a href="earnings.php" class="active">Earnings</a>
+                <a href="profile.php">Profile</a>
                 <a href="submit_ticket.php">Support</a>
                 <a href="../auth/logout.php" class="logout-btn">Logout</a>
             </div>
@@ -115,10 +116,6 @@ $by_car = db_fetch_all($by_car_sql, ['lessorid' => $lessorid]);
                 <div class="stat-card available">
                     <span class="label">Available Balance</span>
                     <span class="value">RM <?php echo number_format($summary['RELEASED_EARNINGS'] ?? 0, 2); ?></span>
-                </div>
-                <div class="stat-card pending">
-                    <span class="label">Pending Escrow</span>
-                    <span class="value">RM <?php echo number_format($summary['PENDING_EARNINGS'] ?? 0, 2); ?></span>
                 </div>
                 <div class="stat-card">
                     <span class="label">Total Bookings</span>

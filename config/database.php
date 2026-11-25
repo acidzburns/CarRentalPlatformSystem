@@ -4,7 +4,9 @@ define('DB_HOST', 'localhost');
 define('DB_PORT', '1521');
 define('DB_SERVICE_NAME', 'FREEPDB1');
 define('DB_USERNAME', 'car');
-define('DB_PASSWORD', 'car');
+// Password lives in config/secrets.php (not on GitHub). See secrets.example.php.
+$secrets = require __DIR__ . '/secrets.php';
+define('DB_PASSWORD', $secrets['db_password']);
 
 // Connection String
 $tns = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=" . DB_HOST . ")(PORT=" . DB_PORT . "))(CONNECT_DATA=(SERVICE_NAME=" . DB_SERVICE_NAME . ")))";
@@ -116,4 +118,3 @@ function db_last_insert_id($sequence_name) {
     return $row['ID'];
 }
 ?>
-

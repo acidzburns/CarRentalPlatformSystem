@@ -32,3 +32,6 @@ sessions/
 # Ignore uploaded files
 uploads/
 files/
+
+# Ignore private passwords
+config/secrets.php
